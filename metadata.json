@@ -1,0 +1,6 @@
+{
+  "name": "Barakah",
+  "description": "Comprehensive, modern, ad-free Muslim Prayer and Devotional app featuring offline Quran, GPS prayer times, Qiblah compass, and Tasbih counter.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
