@@ -32,8 +32,7 @@ android {
       keyPassword = System.getenv("KEY_PASSWORD")
     }
     create("debugConfig") {
-      // Safe fallback path that works seamlessly on both your local machine and GitHub Actions CI
-      storeFile = file(System.getProperty("user.home") + "/.android/debug.keystore")
+      storeFile = file("${project.rootDir}/debug.keystore")
       storePassword = "android"
       keyAlias = "androiddebugkey"
       keyPassword = "android"
@@ -128,7 +127,7 @@ dependencies {
 
 tasks.register("downloadHisn") {
   doLast {
-    val dest = file("/app/src/main/res/raw/hisn_en.json")
+    val dest = file("src/main/res/raw/hisn_en.json")
     dest.parentFile.mkdirs()
     println("Downloading Hisn data to ${dest.absolutePath}...")
     val url = URL("https://raw.githubusercontent.com/4thel00z/hadith.json/refs/heads/master/hisnulmuslim/hisnulmuslim.json")
