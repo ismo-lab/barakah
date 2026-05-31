@@ -12,24 +12,15 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6  # Updated to fix Node 24 deprecation
+      uses: actions/checkout@v6
     
-    - name: Set up JDK 17
-      uses: actions/setup-java@v5  # Updated to fix Node 24 deprecation
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: gradle
+    # Optional: Only add this 'defaults' block if your project is in a subfolder
+    defaults:
+      run:
+        working-directory: ./YourSubfolderName # <-- Change this to your folder name
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v6
 
-    - name: Build with Gradle
-      # Adding --stacktrace helps you see exactly why your compilation failed
-      run: ./gradlew assembleDebug --stacktrace 
-
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: app-debug
-        path: app/build/outputs/apk/debug/app-debug.apk
+    # ... rest of your steps remain the same
