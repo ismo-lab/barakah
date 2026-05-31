@@ -26,17 +26,61 @@ object PrayerScheduler {
             val tz = TimeZone.getDefault()
             val offsetHours = tz.getOffset(calendar.timeInMillis) / 3600000.0
             
-            val times = PrayerCalculator.calculate(lat, lng, offsetHours, calendar, PrayerCalculator.CalculationMethod.MWL)
+            val asrMethod = prefs.getString("asr_method", "standard") ?: "standard"
+            val ishaMethod = prefs.getString("isha_method", "standard") ?: "standard"
+            val m = try {
+                PrayerCalculator.CalculationMethod.valueOf(prefs.getString("calc_method", "MWL") ?: "MWL")
+            } catch(e: Exception) {
+                PrayerCalculator.CalculationMethod.MWL
+            }
+            
+            val times = PrayerCalculator.calculate(
+                lat, lng, offsetHours, calendar, 
+                method = m,
+                asrMethod = asrMethod,
+                ishaMethod = ishaMethod
+            )
             
             val db = AppDatabase.getDatabase(context)
             val settings = db.prayerAlertDao().getAllAlertSettings().first()
             val isEnabled = { name: String -> settings.find { it.prayerName == name }?.isEnabled != false }
+            val showNawafil = prefs.getBoolean("show_nawafil", false)
             
+            // Primary Prayers
             scheduleAlarm(context, "Fajr", times.fajr, 1, isEnabled("Fajr"))
             scheduleAlarm(context, "Dhuhr", times.dhuhr, 2, isEnabled("Dhuhr"))
             scheduleAlarm(context, "Asr", times.asr, 3, isEnabled("Asr"))
             scheduleAlarm(context, "Maghrib", times.maghrib, 4, isEnabled("Maghrib"))
             scheduleAlarm(context, "Isha", times.isha, 5, isEnabled("Isha"))
+
+            if (showNawafil) {
+                // Secondary / Nawafil
+                val duhaTime = calculateOffsetTime(times.sunrise, 20)
+                val witrTime = calculateOffsetTime(times.isha, 45)
+                val tahajjudTime = calculateOffsetTime(times.fajr, -90)
+                val qiyamTime = calculateOffsetTime(times.fajr, -150)
+                
+                scheduleAlarm(context, "Duha (Nafilah)", duhaTime, 6, isEnabled("Duha (Nafilah)"))
+                scheduleAlarm(context, "Witr (Nafilah)", witrTime, 7, isEnabled("Witr (Nafilah)"))
+                scheduleAlarm(context, "Tahajjud (Nafilah)", tahajjudTime, 8, isEnabled("Tahajjud (Nafilah)"))
+                scheduleAlarm(context, "Qiyam-ul-Layl (Nafilah)", qiyamTime, 9, isEnabled("Qiyam-ul-Layl (Nafilah)"))
+            }
+        }
+    }
+
+    private fun calculateOffsetTime(timeStr: String, offsetMinutes: Int): String {
+        return try {
+            val parts = timeStr.trim().split(":")
+            val h = parts[0].toInt()
+            val m = parts[1].split(" ")[0].trim().toInt()
+            val cal = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, h)
+                set(Calendar.MINUTE, m)
+                add(Calendar.MINUTE, offsetMinutes)
+            }
+            String.format(java.util.Locale.US, "%02d:%02d", cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
+        } catch (e: Exception) {
+            ""
         }
     }
 
@@ -47,18 +91,24 @@ object PrayerScheduler {
         val h = parts[0].toIntOrNull() ?: return
         val m = parts[1].split(" ")[0].toIntOrNull() ?: return
         
+        val now = System.currentTimeMillis()
         val cal = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, h)
             set(Calendar.MINUTE, m)
             set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
         }
         
-        if (cal.timeInMillis <= System.currentTimeMillis()) {
-            cal.add(Calendar.DAY_OF_YEAR, 1) // Next day if time already passed
+        // Ensure alarm is in the future
+        if (cal.timeInMillis <= now) {
+            cal.add(Calendar.DAY_OF_YEAR, 1)
         }
         
         val intent = Intent(context, PrayerNotificationReceiver::class.java).apply {
+            action = "dev.barakah.app.ACTION_PRAYER_NOTIFICATION"
             putExtra("PRAYER_NAME", name)
+            putExtra("PRAYER_ID", id)
+            putExtra("SCHEDULED_TIME", cal.timeInMillis)
         }
         
         val pendingIntent = PendingIntent.getBroadcast(

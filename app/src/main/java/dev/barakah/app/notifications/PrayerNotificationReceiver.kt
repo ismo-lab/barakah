@@ -14,6 +14,26 @@ import dev.barakah.app.notifications.PrayerScheduler
 class PrayerNotificationReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val prayerName = intent.getStringExtra("PRAYER_NAME") ?: "Prayer"
+        val prayerId = intent.getIntExtra("PRAYER_ID", prayerName.hashCode())
+        val scheduledTime = intent.getLongExtra("SCHEDULED_TIME", 0L)
+        
+        // Prevent duplicate firing by checking if we already notified for this exact scheduled time
+        val prefs = context.getSharedPreferences("notif_history", Context.MODE_PRIVATE)
+        val lastNotifiedTime = prefs.getLong("last_notified_$prayerId", 0L)
+        
+        // If scheduledTime is provided and matches last notified, skip to avoid duplicates
+        if (scheduledTime != 0L && scheduledTime == lastNotifiedTime) {
+            return
+        }
+        
+        // Also skip if current time is way off from scheduled time (e.g. system re-running old alarms)
+        val now = System.currentTimeMillis()
+        if (scheduledTime != 0L && Math.abs(now - scheduledTime) > 30 * 60 * 1000) { // 30 minutes threshold
+            return
+        }
+
+        // Persist notified time
+        prefs.edit().putLong("last_notified_$prayerId", scheduledTime).apply()
         
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         
@@ -38,7 +58,7 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             
-        notificationManager.notify(prayerName.hashCode(), builder.build())
+        notificationManager.notify(prayerId, builder.build())
         
         // Play the standard DEFAULT notification sound
         try {

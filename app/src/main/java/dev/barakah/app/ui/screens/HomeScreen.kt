@@ -465,21 +465,17 @@ fun HomeScreen(
                             letterSpacing = (-0.5).sp
                         )
 
-                        if (!isNawafil) {
-                            val isAlertEnabled = alertSettings.find { it.prayerName == name }?.isEnabled != false
-                            IconButton(
-                                onClick = {
-                                    viewModel.togglePrayerAlert(name, !isAlertEnabled)
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = if (isAlertEnabled) Icons.Outlined.NotificationsActive else Icons.Outlined.Notifications,
-                                    contentDescription = "Toggle alert for $name",
-                                    tint = if (isCurrent) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                                )
+                        val isAlertEnabled = alertSettings.find { it.prayerName == name }?.isEnabled != false
+                        IconButton(
+                            onClick = {
+                                viewModel.togglePrayerAlert(name, !isAlertEnabled)
                             }
-                        } else {
-                            Spacer(modifier = Modifier.width(48.dp)) // Maintain horizontal alignment placeholder sizing
+                        ) {
+                            Icon(
+                                imageVector = if (isAlertEnabled) Icons.Outlined.NotificationsActive else Icons.Outlined.Notifications,
+                                contentDescription = "Toggle alert for $name",
+                                tint = if (isCurrent) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                            )
                         }
                     }
                 }
