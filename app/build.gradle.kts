@@ -1,6 +1,9 @@
 import java.net.URL
 import java.net.HttpURLConnection
 import java.net.URI
+import java.util.Date
+import java.util.Locale
+import java.text.SimpleDateFormat
 
 plugins {
   alias(libs.plugins.android.application)
@@ -18,8 +21,9 @@ android {
     applicationId = "dev.barakah.app"
     minSdk = 24
     targetSdk = 36
-    versionCode = 1
-    versionName = "1.0"
+    val buildTime = (System.currentTimeMillis() / 60000).toInt()
+    versionCode = buildTime
+    versionName = "1.0." + SimpleDateFormat("yyMMddHHmm", Locale.US).format(Date())
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
