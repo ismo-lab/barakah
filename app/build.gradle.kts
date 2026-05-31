@@ -1,5 +1,6 @@
 import java.net.URL
 import java.net.HttpURLConnection
+import java.net.URI
 
 plugins {
   alias(libs.plugins.android.application)
@@ -123,7 +124,7 @@ tasks.register("downloadHisn") {
     val dest = file("src/main/res/raw/hisn_en.json")
     dest.parentFile.mkdirs()
     println("Downloading Hisn data to ${dest.absolutePath}...")
-    val url = URL("https://raw.githubusercontent.com/4thel00z/hadith.json/refs/heads/master/hisnulmuslim/hisnulmuslim.json")
+    val url = URI("https://raw.githubusercontent.com/4thel00z/hadith.json/refs/heads/master/hisnulmuslim/hisnulmuslim.json").toURL()
     val conn = url.openConnection() as HttpURLConnection
     conn.requestMethod = "GET"
     conn.connectTimeout = 30000
