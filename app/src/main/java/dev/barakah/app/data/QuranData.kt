@@ -4,6 +4,10 @@ import android.content.Context
 import dev.barakah.app.R
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 data class Verse(
     val index: Int,
@@ -34,35 +38,43 @@ object QuranData {
     fun load(context: Context) {
         if (surahs.isNotEmpty()) return
         
-        android.util.Log.d("QuranData", "Starting optimized Quran data load...")
-        
-        try {
-            val resId = R.raw.quran
-            if (resId == 0) {
-                android.util.Log.e("QuranData", "R.raw.quran NOT FOUND!")
-                return
-            }
+        CoroutineScope(Dispatchers.IO).launch {
+            android.util.Log.d("QuranData", "Starting multi-part async Quran data load...")
             
-            val list = mutableListOf<Surah>()
-            context.resources.openRawResource(resId).use { rawInputStream ->
-                val size = rawInputStream.available()
-                android.util.Log.d("QuranData", "Raw resource size (compressed): $size bytes")
-                
-                val gzipInputStream = java.util.zip.GZIPInputStream(rawInputStream)
-                val reader = android.util.JsonReader(gzipInputStream.bufferedReader(Charsets.UTF_8))
-                reader.beginArray()
-                while (reader.hasNext()) {
-                    list.add(readSurah(reader))
+            try {
+                val list = mutableListOf<Surah>()
+                val resIds = listOf(
+                    R.raw.quran_part_1,
+                    R.raw.quran_part_2,
+                    R.raw.quran_part_3,
+                    R.raw.quran_part_4,
+                    R.raw.quran_part_5,
+                    R.raw.quran_part_6
+                )
+
+                for (resId in resIds) {
+                    if (resId == 0) continue
+                    
+                    context.resources.openRawResource(resId).use { rawInputStream ->
+                        val gzipInputStream = java.util.zip.GZIPInputStream(rawInputStream)
+                        val reader = android.util.JsonReader(gzipInputStream.bufferedReader(Charsets.UTF_8))
+                        reader.beginArray()
+                        while (reader.hasNext()) {
+                            list.add(readSurah(reader))
+                        }
+                        reader.endArray()
+                        reader.close()
+                    }
                 }
-                reader.endArray()
-                reader.close()
+                
+                withContext(Dispatchers.Main) {
+                    surahs = list.sortedBy { it.id }
+                    _surahsFlow.value = surahs
+                    android.util.Log.d("QuranData", "Successfully loaded ${surahs.size} surahs")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("QuranData", "Critical error parsing multi-part quran: ${e.message}", e)
             }
-            
-            surahs = list.sortedBy { it.id }
-            _surahsFlow.value = surahs
-            android.util.Log.d("QuranData", "Successfully loaded ${surahs.size} surahs")
-        } catch (e: Exception) {
-            android.util.Log.e("QuranData", "Critical error parsing quran.json: ${e.message}", e)
         }
     }
 
