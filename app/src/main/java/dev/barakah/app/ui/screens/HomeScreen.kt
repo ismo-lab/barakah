@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material.icons.outlined.Place
@@ -273,7 +274,9 @@ fun HomeScreen(
                     )
 
                     val gregorianDateStr = remember(isAr) {
-                        SimpleDateFormat("EEE, d MMM", if (isAr) Locale("ar") else Locale.getDefault()).format(Date())
+                        @Suppress("DEPRECATION")
+                        val locale = if (isAr) Locale("ar") else Locale.getDefault()
+                        SimpleDateFormat("EEE, d MMM", locale).format(Date())
                     }
                     Text(
                         text = gregorianDateStr,
@@ -516,7 +519,7 @@ fun HomeScreen(
                     ) {
                         IconButton(onClick = { viewModel.setShowSettingsDialog(false) }) {
                             Icon(
-                                imageVector = if (isAr) Icons.Default.ArrowForward else Icons.Default.ArrowBack,
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "Back",
                                 tint = MaterialTheme.colorScheme.onBackground
                             )

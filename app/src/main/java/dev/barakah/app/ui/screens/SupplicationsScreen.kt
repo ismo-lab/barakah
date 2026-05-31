@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -52,6 +53,7 @@ fun SupplicationsScreen(
 
     val context = LocalContext.current
     val vibrator = remember {
+        @Suppress("DEPRECATION")
         context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
     }
 
@@ -93,7 +95,7 @@ fun SupplicationsScreen(
         return if (clean.contains("bookmark") || clean.contains("favorite") || clean.contains("المفضلة") || clean.contains("مرجعية")) {
             Icons.Default.Bookmark
         } else {
-            Icons.Default.MenuBook
+            Icons.AutoMirrored.Filled.MenuBook
         }
     }
 
@@ -146,7 +148,7 @@ fun SupplicationsScreen(
                             )
                         ) {
                             Icon(
-                                imageVector = if (isAr) Icons.Default.ArrowBack else Icons.Default.ArrowForward,
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "Back to categories",
                                 tint = MaterialTheme.colorScheme.onPrimary
                             )
