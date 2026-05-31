@@ -9,6 +9,7 @@ import android.content.Intent
 import androidx.core.app.NotificationCompat
 import dev.barakah.app.MainActivity
 import dev.barakah.app.R
+import dev.barakah.app.notifications.PrayerScheduler
 
 class PrayerNotificationReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -29,13 +30,14 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
             context, 0, activityIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         
-        val builder = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("Prayer Time")
-            .setContentText("It's time for $prayerName prayer.")
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-            .setContentIntent(pendingIntent)
+        val builder = NotificationCompat.Builder(context, channelId).apply {
+            setSmallIcon(R.drawable.ic_notification)
+            setContentTitle("Prayer Time")
+            setContentText("It's time for $prayerName prayer.")
+            setPriority(NotificationCompat.PRIORITY_HIGH)
+            setAutoCancel(true)
+            setContentIntent(pendingIntent)
+        }
             
         notificationManager.notify(prayerName.hashCode(), builder.build())
         
