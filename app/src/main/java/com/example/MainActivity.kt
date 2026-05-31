@@ -137,6 +137,7 @@ fun MainNavigationContainer(
                     NavigationBarItem(
                         selected = isSelected,
                         onClick = {
+                            viewModel.setShowSettingsDialog(false)
                             if (!isSelected) {
                                 navController.navigate(item.route) {
                                     popUpTo(navController.graph.startDestinationId) { saveState = true }

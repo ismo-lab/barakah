@@ -28,7 +28,15 @@ object PrayerCalculator {
         longitude: Double,
         timezoneOffset: Double,
         calendar: Calendar = Calendar.getInstance(),
-        method: CalculationMethod = CalculationMethod.MWL
+        method: CalculationMethod = CalculationMethod.MWL,
+        asrMethod: String = "standard",
+        ishaMethod: String = "standard",
+        adjFajr: Int = 0,
+        adjSunrise: Int = 0,
+        adjDhuhr: Int = 0,
+        adjAsr: Int = 0,
+        adjMaghrib: Int = 0,
+        adjIsha: Int = 0
     ): PrayerTimes {
         val year = calendar.get(Calendar.YEAR)
         val month = calendar.get(Calendar.MONTH) + 1
@@ -39,21 +47,25 @@ object PrayerCalculator {
 
         // 2. Solar calculations
         val d = jd - 2451545.0
-        val g = (357.529 + 0.98560028 * d) % 360.0
-        val q = (280.459 + 0.98564736 * d) % 360.0
+        val g = scaleTo360(357.529 + 0.98560028 * d)
+        val q = scaleTo360(280.459 + 0.98564736 * d)
         val gRad = Math.toRadians(g)
         val qRad = Math.toRadians(q)
 
-        val l = (q + 1.915 * sin(gRad) + 0.020 * sin(2.0 * gRad)) % 360.0
+        val l = scaleTo360(q + 1.915 * sin(gRad) + 0.020 * sin(2.0 * gRad))
         val lRad = Math.toRadians(l)
 
         val r = 1.00014 - 0.01671 * cos(gRad) - 0.00014 * cos(2.0 * gRad)
         val obliq = 23.439 - 0.00000036 * d
         val obliqRad = Math.toRadians(obliq)
 
-        val ra = Math.toDegrees(atan2(cos(obliqRad) * sin(lRad), cos(lRad))) % 360.0
+        val ra = scaleTo360(Math.toDegrees(atan2(cos(obliqRad) * sin(lRad), cos(lRad))))
         val declination = Math.toDegrees(asin(sin(obliqRad) * sin(lRad)))
-        val equationOfTime = (q - ra) / 15.0 // in hours
+        
+        var eqDiff = q - ra
+        while (eqDiff < -180.0) eqDiff += 360.0
+        while (eqDiff > 180.0) eqDiff -= 360.0
+        val equationOfTime = eqDiff / 15.0 // in hours
 
         // Midday (Dhuhr)
         val timezoneDiff = timezoneOffset - longitude / 15.0
@@ -75,25 +87,27 @@ object PrayerCalculator {
         val ishaTime = if (method == CalculationMethod.UMM_AL_QURA) {
             maghribTime + 1.5 // 90 minutes after Maghrib
         } else {
-            val ishaHourAngle = hourAngle(-method.ishaAngle, latitude, declination) ?: 6.2
+            val angle = if (ishaMethod == "hanafi") 18.0 else method.ishaAngle
+            val ishaHourAngle = hourAngle(-angle, latitude, declination) ?: 6.2
             dhuhrTime + ishaHourAngle
         }
 
-        // Asr (Shafi/Standard method: shadow ratio = 1)
+        // Asr (Shafi/Standard method vs Hanafi shadow factors)
         val declRad = Math.toRadians(declination)
         val latRad = Math.toRadians(latitude)
-        val altitudeAsrRad = atan(1.0 / (1.0 + tan(abs(latRad - declRad))))
+        val shadowFactor = if (asrMethod == "hanafi") 2.0 else 1.0
+        val altitudeAsrRad = atan(1.0 / (shadowFactor + tan(abs(latRad - declRad))))
         val altitudeAsr = Math.toDegrees(altitudeAsrRad)
         val asrHourAngle = hourAngle(altitudeAsr, latitude, declination) ?: 3.5
         val asrTime = dhuhrTime + asrHourAngle
 
         return PrayerTimes(
-            fajr = formatTime(fajrTime),
-            sunrise = formatTime(sunriseTime),
-            dhuhr = formatTime(dhuhrTime),
-            asr = formatTime(asrTime),
-            maghrib = formatTime(maghribTime),
-            isha = formatTime(ishaTime)
+            fajr = formatTime(fajrTime, adjFajr),
+            sunrise = formatTime(sunriseTime, adjSunrise),
+            dhuhr = formatTime(dhuhrTime, adjDhuhr),
+            asr = formatTime(asrTime, adjAsr),
+            maghrib = formatTime(maghribTime, adjMaghrib),
+            isha = formatTime(ishaTime, adjIsha)
         )
     }
 
@@ -118,13 +132,19 @@ object PrayerCalculator {
         return Math.toDegrees(acos(cosH)) / 15.0
     }
 
-    private fun formatTime(hours: Double): String {
-        var h = hours
+    private fun formatTime(hours: Double, adjMinutes: Int = 0): String {
+        var h = hours + (adjMinutes / 60.0)
         while (h < 0) h += 24.0
         while (h >= 24) h -= 24.0
         val totalMinutes = (h * 60.0).roundToInt()
         val m = totalMinutes % 60
         val hh = (totalMinutes / 60) % 24
         return String.format("%02d:%02d", hh, m)
+    }
+
+    private fun scaleTo360(angle: Double): Double {
+        var a = angle % 360.0
+        if (a < 0) a += 360.0
+        return a
     }
 }

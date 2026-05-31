@@ -36,6 +36,47 @@ import com.google.accompanist.permissions.rememberPermissionState
 import java.text.SimpleDateFormat
 import java.util.*
 
+fun formatDisplayTime(context: android.content.Context, timeStr: String, isAr: Boolean = false): String {
+    return try {
+        val is24Hour = android.text.format.DateFormat.is24HourFormat(context)
+        val parts = timeStr.trim().split(":")
+        val h = parts[0].toInt()
+        val m = parts[1].split(" ")[0].trim().toInt()
+        
+        if (is24Hour) {
+            String.format(Locale.getDefault(), "%02d:%02d", h, m)
+        } else {
+            val hour12 = if (h % 12 == 0) 12 else h % 12
+            val amPm = if (h < 12) {
+                if (isAr) "ص" else "AM"
+            } else {
+                if (isAr) "م" else "PM"
+            }
+            String.format(Locale.getDefault(), "%02d:%02d %s", hour12, m, amPm)
+        }
+    } catch (e: Exception) {
+        timeStr
+    }
+}
+
+fun calculateOffsetTime(timeStr: String, offsetMinutes: Int): String {
+    return try {
+        val parts = timeStr.trim().split(":")
+        val h = parts[0].toInt()
+        val m = parts[1].split(" ")[0].trim().toInt()
+        val cal = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, h)
+            set(Calendar.MINUTE, m)
+            add(Calendar.MINUTE, offsetMinutes)
+        }
+        val nh = cal.get(Calendar.HOUR_OF_DAY)
+        val nm = cal.get(Calendar.MINUTE)
+        String.format(Locale.US, "%02d:%02d", nh, nm)
+    } catch (e: Exception) {
+        timeStr
+    }
+}
+
 @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -54,9 +95,21 @@ fun HomeScreen(
     val appTheme by viewModel.appTheme.collectAsState()
     val useDynamicColor by viewModel.useDynamicColor.collectAsState()
     val amoledDark by viewModel.amoledDark.collectAsState()
+    val enableAdhanSound by viewModel.enableAdhanSound.collectAsState()
+    val adhanSoundType by viewModel.adhanSoundType.collectAsState()
     val fontAr by viewModel.arabicFontSize.collectAsState()
     val fontEn by viewModel.englishFontSize.collectAsState()
     val locationMethod by viewModel.locationMethod.collectAsState()
+
+    val showNawafil by viewModel.showNawafil.collectAsState()
+    val asrMethod by viewModel.asrMethod.collectAsState()
+    val ishaMethod by viewModel.ishaMethod.collectAsState()
+    val adjFajr by viewModel.adjFajr.collectAsState()
+    val adjSunrise by viewModel.adjSunrise.collectAsState()
+    val adjDhuhr by viewModel.adjDhuhr.collectAsState()
+    val adjAsr by viewModel.adjAsr.collectAsState()
+    val adjMaghrib by viewModel.adjMaghrib.collectAsState()
+    val adjIsha by viewModel.adjIsha.collectAsState()
 
     val isAr = currentLang == "ar"
 
@@ -86,7 +139,11 @@ fun HomeScreen(
         }
     }
 
-    var showSettingsDialog by remember { mutableStateOf(false) }
+    val showSettingsDialog by viewModel.showSettingsDialog.collectAsState()
+
+    androidx.activity.compose.BackHandler(enabled = showSettingsDialog) {
+        viewModel.setShowSettingsDialog(false)
+    }
 
     // Translations maps
     val prayerTranslations = mapOf(
@@ -97,7 +154,11 @@ fun HomeScreen(
         "Maghrib" to "المغرب",
         "Isha" to "العشاء",
         "Sunrise / Duha" to "الشروق / الضحى",
-        "Isha (Last Night)" to "عشاء الليلة الماضية"
+        "Isha (Last Night)" to "عشاء الليلة الماضية",
+        "Tahajjud (Nafilah)" to "التهجد",
+        "Duha (Nafilah)" to "صلاة الضحى",
+        "Witr (Nafilah)" to "الوتر",
+        "Qiyam-ul-Layl (Nafilah)" to "قيام الليل"
     )
 
     fun translatePrayer(name: String): String {
@@ -107,12 +168,10 @@ fun HomeScreen(
     }
 
     val subtitleTranslations = mapOf(
-        "Dawn Prayer" to "صلاة الفجر – أول النهار",
-        "Sunrise Shuruq" to "شروق الشمس – وقت الضحى",
-        "Midday Prayer" to "صلاة الظهر – زوال الشمس",
-        "Afternoon Prayer" to "صلاة العصر – منتصف المساء",
-        "Sunset Prayer" to "صلاة المغرب – أول الليل",
-        "Night Prayer" to "صلاة العشاء – عمق الليل"
+        "Duha Voluntary Prayer" to "صلاة الضحى – ركعتين نافلة",
+        "Tahajjud Night Prayer" to "صلاة التهجد – قيام الليل نافلة",
+        "Witr Voluntary Prayer" to "صلاة الوتر – ركعة أو ثلاث خاتمة الصلاة",
+        "Late Night Prayer" to "صلاة قيام الليل – تفضل في أول الليل أو وسطه"
     )
 
     fun translateSubtitle(sub: String): String {
@@ -129,17 +188,50 @@ fun HomeScreen(
             .replace("AH", "هـ")
     }
 
-    LazyColumn(
+    val schedule = remember(times, showNawafil) {
+        val list = mutableListOf(
+            Triple("Fajr", times.fajr, "Dawn Prayer"),
+            Triple("Sunrise", times.sunrise, "Sunrise Shuruq")
+        )
+        if (showNawafil) {
+            val duhaTime = calculateOffsetTime(times.sunrise, 20)
+            list.add(Triple("Duha (Nafilah)", duhaTime, "Duha Voluntary Prayer"))
+        }
+        list.add(Triple("Dhuhr", times.dhuhr, "Midday Prayer"))
+        list.add(Triple("Asr", times.asr, "Afternoon Prayer"))
+        list.add(Triple("Maghrib", times.maghrib, "Sunset Prayer"))
+        list.add(Triple("Isha", times.isha, "Night Prayer"))
+        if (showNawafil) {
+            val witrTime = calculateOffsetTime(times.isha, 45)
+            list.add(Triple("Witr (Nafilah)", witrTime, "Witr Voluntary Prayer"))
+
+            val tahajjudTime = calculateOffsetTime(times.fajr, -90)
+            list.add(0, Triple("Tahajjud (Nafilah)", tahajjudTime, "Tahajjud Night Prayer"))
+
+            val qiyamTime = calculateOffsetTime(times.fajr, -150)
+            list.add(0, Triple("Qiyam-ul-Layl (Nafilah)", qiyamTime, "Late Night Prayer"))
+        }
+        list
+    }
+
+    if (!showSettingsDialog) {
+    Box(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(
-            start = 16.dp, 
-            end = 16.dp, 
-            top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 12.dp,
-            bottom = 12.dp
-        )
+        contentAlignment = Alignment.TopCenter
     ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .widthIn(max = 680.dp),
+            contentPadding = PaddingValues(
+                start = 16.dp, 
+                end = 16.dp, 
+                top = 12.dp,
+                bottom = 12.dp
+            )
+        ) {
         // 1. LOCATION SELECTION HEADER (Bold Typography style)
         item {
             Row(
@@ -199,7 +291,7 @@ fun HomeScreen(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(RoundedCornerShape(24.dp))
-                        .clickable { showSettingsDialog = true }
+                        .clickable { viewModel.setShowSettingsDialog(true) }
                         .testTag("settings_button")
                 ) {
                     Box(contentAlignment = Alignment.Center) {
@@ -286,22 +378,14 @@ fun HomeScreen(
             }
         }
 
-        // 4. VERTICAL TIMELINE OF THE 5 DAILY PRAYERS
-        val schedule = listOf(
-            Triple("Fajr", times.fajr, "Dawn Prayer"),
-            Triple("Sunrise", times.sunrise, "Sunrise Shuruq"),
-            Triple("Dhuhr", times.dhuhr, "Midday Prayer"),
-            Triple("Asr", times.asr, "Afternoon Prayer"),
-            Triple("Maghrib", times.maghrib, "Sunset Prayer"),
-            Triple("Isha", times.isha, "Night Prayer")
-        )
-
+        // 4. VERTICAL TIMELINE OF THE PRAYERS (including Nawafil if enabled)
         items(schedule.size) { index ->
             val item = schedule[index]
             val name = item.first
             val time = item.second
             val subtitle = item.third
-            val isCurrent = (name == activePrayer || (name == "Sunrise" && activePrayer == "Sunrise / Duha"))
+            val isNawafil = name.endsWith("(Nafilah)")
+            val isCurrent = !isNawafil && (name == activePrayer || (name == "Sunrise" && activePrayer == "Sunrise / Duha"))
 
             // Elegant high contrast timeline cards as requested
             Card(
@@ -313,6 +397,8 @@ fun HomeScreen(
                 colors = CardDefaults.cardColors(
                     containerColor = if (isCurrent) {
                         MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.82f)
+                    } else if (isNawafil) {
+                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.1f)
                     } else {
                         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f)
                     },
@@ -324,6 +410,8 @@ fun HomeScreen(
                 ),
                 border = if (isCurrent) {
                     androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                } else if (isNawafil) {
+                    androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                 } else {
                     androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
                 }
@@ -336,17 +424,31 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = translatePrayer(name),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isCurrent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
-                        )
-                        Text(
-                            text = translateSubtitle(subtitle),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (isCurrent) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = translatePrayer(name),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isCurrent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
+                            )
+                            if (isNawafil) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = if (isAr) "نافلة" else "Nafilah",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                                    )
+                                }
+                            }
+                        }
+
                     }
 
                     Row(
@@ -354,308 +456,380 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text = time,
+                            text = formatDisplayTime(context, time, isAr),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Black,
                             letterSpacing = (-0.5).sp
                         )
 
-                        val isAlertEnabled = alertSettings.find { it.prayerName == name }?.isEnabled != false
-                        IconButton(
-                            onClick = {
-                                viewModel.togglePrayerAlert(name, !isAlertEnabled)
+                        if (!isNawafil) {
+                            val isAlertEnabled = alertSettings.find { it.prayerName == name }?.isEnabled != false
+                            IconButton(
+                                onClick = {
+                                    viewModel.togglePrayerAlert(name, !isAlertEnabled)
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = if (isAlertEnabled) Icons.Outlined.NotificationsActive else Icons.Outlined.Notifications,
+                                    contentDescription = "Toggle alert for $name",
+                                    tint = if (isCurrent) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                )
                             }
-                        ) {
-                            Icon(
-                                imageVector = if (isAlertEnabled) Icons.Outlined.NotificationsActive else Icons.Outlined.Notifications,
-                                contentDescription = "Toggle alert for $name",
-                                tint = if (isCurrent) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                            )
+                        } else {
+                            Spacer(modifier = Modifier.width(48.dp)) // Maintain horizontal alignment placeholder sizing
                         }
                     }
                 }
             }
         }
     }
+    }
+    }
 
-    // Unified Settings Dialog (Language, Theme, Location auto/manual with search query, Sizing)
+    // Unified Settings Section (Language, Theme, Location auto/manual with search query, Sizing)
     if (showSettingsDialog) {
-        var locationQuery by remember { mutableStateOf("") }
-        val keyboardController = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
-        val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+        val layoutDirection = remember(currentLang) {
+            if (currentLang == "ar") androidx.compose.ui.unit.LayoutDirection.Rtl else androidx.compose.ui.unit.LayoutDirection.Ltr
+        }
+        androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides layoutDirection) {
+            var locationQuery by remember { mutableStateOf("") }
+            val keyboardController = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
+            val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
 
-        AlertDialog(
-            onDismissRequest = { showSettingsDialog = false },
-            title = {
-                Text(
-                    text = if (isAr) "الضبط والإعدادات" else "Settings & Preferences",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = if (isAr) TextAlign.Right else TextAlign.Left
-                )
-            },
-            text = {
-                Box(
+            Box(
+                modifier = modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background),
+                contentAlignment = Alignment.TopCenter
+            ) {
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(max = 420.dp)
+                        .widthIn(max = 680.dp)
+                        .padding(16.dp)
                 ) {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                        modifier = Modifier.fillMaxWidth()
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // 1. Language preference
-                        item {
-                            Column(modifier = Modifier.fillMaxWidth()) {
-                                Text(
-                                    text = if (isAr) "لغة التطبيق" else "App Language",
-                                    style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.secondary,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    textAlign = if (isAr) TextAlign.Right else TextAlign.Left
-                                )
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    OutlinedButton(
-                                        onClick = { viewModel.setAppLanguage("ar") },
-                                        modifier = Modifier.weight(1f),
-                                        colors = ButtonDefaults.outlinedButtonColors(
-                                            containerColor = if (currentLang == "ar") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
-                                        ),
-                                        border = androidx.compose.foundation.BorderStroke(
-                                            width = 1.dp,
-                                            color = if (currentLang == "ar") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-                                        )
-                                    ) {
-                                        Text("العربية", fontWeight = FontWeight.Bold, color = if (currentLang == "ar") MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface)
-                                    }
-                                    OutlinedButton(
-                                        onClick = { viewModel.setAppLanguage("en") },
-                                        modifier = Modifier.weight(1f),
-                                        colors = ButtonDefaults.outlinedButtonColors(
-                                            containerColor = if (currentLang == "en") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
-                                        ),
-                                        border = androidx.compose.foundation.BorderStroke(
-                                            width = 1.dp,
-                                            color = if (currentLang == "en") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-                                        )
-                                    ) {
-                                        Text("English", fontWeight = FontWeight.Bold, color = if (currentLang == "en") MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface)
-                                    }
-                                }
-                            }
+                        IconButton(onClick = { viewModel.setShowSettingsDialog(false) }) {
+                            Icon(
+                                imageVector = if (isAr) Icons.Default.ArrowForward else Icons.Default.ArrowBack,
+                                contentDescription = "Back",
+                                tint = MaterialTheme.colorScheme.onBackground
+                            )
                         }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (isAr) "الضبط والإعدادات" else "Settings & Preferences",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
 
-                        // Divider
-                        item { HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)) }
-
-                        // 2. Theme Preferences
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxWidth().weight(1f)
+                    ) {
+                        // Card 1: Language & Theme Preferences
                         item {
-                            Column(modifier = Modifier.fillMaxWidth()) {
-                                Text(
-                                    text = if (isAr) "مظهر التطبيق" else "Theme Preference",
-                                    style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.secondary,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    textAlign = if (isAr) TextAlign.Right else TextAlign.Left
-                                )
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                            ) {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
-                                    OutlinedButton(
-                                        onClick = { viewModel.setAppTheme("light") },
-                                        modifier = Modifier.weight(1f),
-                                        contentPadding = PaddingValues(horizontal = 4.dp),
-                                        colors = ButtonDefaults.outlinedButtonColors(
-                                            containerColor = if (appTheme == "light") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
-                                        ),
-                                        border = androidx.compose.foundation.BorderStroke(
-                                            width = 1.dp,
-                                            color = if (appTheme == "light") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.Palette, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = if (isAr) "اللغة ومظهر التطبيق" else "Language & Theme",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
                                         )
-                                    ) {
-                                        Text(if (isAr) "مضيء" else "Light", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium, color = if (appTheme == "light") MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface)
                                     }
-                                    OutlinedButton(
-                                        onClick = { viewModel.setAppTheme("dark") },
-                                        modifier = Modifier.weight(1f),
-                                        contentPadding = PaddingValues(horizontal = 4.dp),
-                                        colors = ButtonDefaults.outlinedButtonColors(
-                                            containerColor = if (appTheme == "dark") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
-                                        ),
-                                        border = androidx.compose.foundation.BorderStroke(
-                                            width = 1.dp,
-                                            color = if (appTheme == "dark") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-                                        )
-                                    ) {
-                                        Text(if (isAr) "مظلم" else "Dark", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium, color = if (appTheme == "dark") MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface)
-                                    }
-                                    OutlinedButton(
-                                        onClick = { viewModel.setAppTheme("system") },
-                                        modifier = Modifier.weight(1f),
-                                        contentPadding = PaddingValues(horizontal = 4.dp),
-                                        colors = ButtonDefaults.outlinedButtonColors(
-                                            containerColor = if (appTheme == "system") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
-                                        ),
-                                        border = androidx.compose.foundation.BorderStroke(
-                                            width = 1.dp,
-                                            color = if (appTheme == "system") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-                                        )
-                                    ) {
-                                        Text(if (isAr) "تلقائي" else "Auto", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium, color = if (appTheme == "system") MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface)
-                                    }
-                                }
 
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
                                     Text(
-                                        text = if (isAr) "مظهر AMOLED أسود بالكامل" else "AMOLED Black Theme",
+                                        text = if (isAr) "لغة التطبيق" else "App Language",
                                         style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurface
+                                        fontWeight = FontWeight.SemiBold
                                     )
-                                    Switch(
-                                        checked = amoledDark,
-                                        onCheckedChange = { viewModel.setAmoledDark(it) }
-                                    )
-                                }
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        text = if (isAr) "الألوان الديناميكية من النظام" else "Dynamic Device Colors",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                    Switch(
-                                        checked = useDynamicColor,
-                                        onCheckedChange = { viewModel.setUseDynamicColor(it) }
-                                    )
-                                }
-                            }
-                        }
-
-                        // Divider
-                        item { HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)) }
-
-                        // 3. Location Select preferences (select either automatically or manually through search)
-                        item {
-                            Column(modifier = Modifier.fillMaxWidth()) {
-                                Text(
-                                    text = if (isAr) "تحديد الموقع الجغرافي" else "Location Settings",
-                                    style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.secondary,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    textAlign = if (isAr) TextAlign.Right else TextAlign.Left
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = if (isAr) "الموقع الحالي: $locationLabel" else "Selected: $locationLabel",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
-                                    textAlign = if (isAr) TextAlign.Right else TextAlign.Left
-                                )
-                                Spacer(modifier = Modifier.height(6.dp))
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    OutlinedButton(
-                                        onClick = {
-                                            viewModel.setLocationMethod("auto")
-                                            if (locationPermissionState.status.isGranted) {
-                                                viewModel.triggerGPSManual()
-                                            } else {
-                                                locationPermissionState.launchPermissionRequest()
-                                            }
-                                        },
-                                        modifier = Modifier.weight(1f),
-                                        colors = ButtonDefaults.outlinedButtonColors(
-                                            containerColor = if (locationMethod == "auto") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
-                                        )
-                                    ) {
-                                        Icon(Icons.Default.MyLocation, contentDescription = null, modifier = Modifier.size(16.dp))
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text(if (isAr) "تلقائي (GPS)" else "Auto (GPS)", style = MaterialTheme.typography.bodySmall)
-                                    }
-
-                                    OutlinedButton(
-                                        onClick = { viewModel.setLocationMethod("manual") },
-                                        modifier = Modifier.weight(1f),
-                                        colors = ButtonDefaults.outlinedButtonColors(
-                                            containerColor = if (locationMethod == "manual") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
-                                        )
-                                    ) {
-                                        Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(16.dp))
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text(if (isAr) "يدوي بالبحث" else "Manual Search", style = MaterialTheme.typography.bodySmall)
-                                    }
-                                }
-
-                                if (locationMethod == "manual") {
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                    OutlinedTextField(
-                                        value = locationQuery,
-                                        onValueChange = { locationQuery = it },
-                                        placeholder = { Text(if (isAr) "ابحث عن مدينة..." else "Search city name...") },
+                                    Row(
                                         modifier = Modifier.fillMaxWidth(),
-                                        singleLine = true,
-                                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) }
-                                    )
-
-                                    val suggestions = if (locationQuery.isBlank()) {
-                                        emptyList()
-                                    } else {
-                                        com.example.data.CityData.cities.filter { city ->
-                                            city.name.contains(locationQuery, ignoreCase = true) ||
-                                            city.nameAr.contains(locationQuery, ignoreCase = true) ||
-                                            city.country.contains(locationQuery, ignoreCase = true) ||
-                                            city.countryAr.contains(locationQuery, ignoreCase = true)
-                                        }.take(5)
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        OutlinedButton(
+                                            onClick = { viewModel.setAppLanguage("ar") },
+                                            modifier = Modifier.weight(1f),
+                                            colors = ButtonDefaults.outlinedButtonColors(
+                                                containerColor = if (currentLang == "ar") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                                            ),
+                                            border = androidx.compose.foundation.BorderStroke(
+                                                width = if (currentLang == "ar") 2.dp else 1.dp,
+                                                color = if (currentLang == "ar") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                            )
+                                        ) {
+                                            Text("العربية", fontWeight = FontWeight.Bold, color = if (currentLang == "ar") MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface)
+                                        }
+                                        OutlinedButton(
+                                            onClick = { viewModel.setAppLanguage("en") },
+                                            modifier = Modifier.weight(1f),
+                                            colors = ButtonDefaults.outlinedButtonColors(
+                                                containerColor = if (currentLang == "en") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                                            ),
+                                            border = androidx.compose.foundation.BorderStroke(
+                                                width = if (currentLang == "en") 2.dp else 1.dp,
+                                                color = if (currentLang == "en") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                            )
+                                        ) {
+                                            Text("English", fontWeight = FontWeight.Bold, color = if (currentLang == "en") MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface)
+                                        }
                                     }
 
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Column(
-                                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                                        modifier = Modifier.fillMaxWidth().heightIn(max = 180.dp)
+                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+                                    Text(
+                                        text = if (isAr) "الوضع العام" else "Dark / Light Mode",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                                     ) {
-                                        suggestions.forEach { city ->
-                                            val displayName = if (isAr) "${city.nameAr}، ${city.countryAr}" else "${city.name}, ${city.country}"
-                                            Row(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .clip(RoundedCornerShape(8.dp))
-                                                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
-                                                    .clickable {
-                                                        viewModel.updateLocation(city.lat, city.lng, if (isAr) city.nameAr else city.name, isSuccessFeedback = true)
-                                                        locationQuery = ""
-                                                        keyboardController?.hide()
-                                                        focusManager.clearFocus()
-                                                        showSettingsDialog = false
-                                                    }
-                                                    .padding(10.dp),
-                                                verticalAlignment = Alignment.CenterVertically
+                                        listOf("light" to (if (isAr) "مضيء" else "Light"), "dark" to (if (isAr) "مظلم" else "Dark"), "system" to (if (isAr) "تلقائي" else "System")).forEach { (mode, flag) ->
+                                            OutlinedButton(
+                                                onClick = { viewModel.setAppTheme(mode) },
+                                                modifier = Modifier.weight(1f),
+                                                contentPadding = PaddingValues(horizontal = 4.dp),
+                                                colors = ButtonDefaults.outlinedButtonColors(
+                                                    containerColor = if (appTheme == mode) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                                                ),
+                                                border = androidx.compose.foundation.BorderStroke(
+                                                    width = if (appTheme == mode) 2.dp else 1.dp,
+                                                    color = if (appTheme == mode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                                )
                                             ) {
-                                                Icon(Icons.Default.LocationCity, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                                Text(displayName, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                                                Text(flag, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium, color = if (appTheme == mode) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface)
+                                            }
+                                        }
+                                    }
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = if (isAr) "مظهر AMOLED أسود بالكامل" else "AMOLED Black Theme",
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                        Switch(
+                                            checked = amoledDark,
+                                            onCheckedChange = { viewModel.setAmoledDark(it) }
+                                        )
+                                    }
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = if (isAr) "الألوان الديناميكية من النظام" else "Dynamic Device Colors",
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                        Switch(
+                                            checked = useDynamicColor,
+                                            onCheckedChange = { viewModel.setUseDynamicColor(it) }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // Card 2: Alerts & Voluntary Prayers (Nawafil)
+                        item {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                            ) {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = if (isAr) "التنبيهات والصلوات المستحبة" else "Notifications & Voluntary",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = if (isAr) "عرض النوافل وقيام الليل" else "Show Voluntary Prayers",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = if (isAr) "تضمين الضحى وقيام الليل والوتر والتهجد لجدول الصلوات" else "Include Duha, Qiyam-ul-Layl, Witr & Tahajjud in schedule",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Switch(
+                                            checked = showNawafil,
+                                            onCheckedChange = { viewModel.setShowNawafil(it) }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // Card 3: Location Settings
+                        item {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                            ) {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.Place, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = if (isAr) "تحديد الموقع الجغرافي" else "Location Settings",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+
+                                    Text(
+                                        text = if (isAr) "الموقع الحالي: $locationLabel" else "Selected: $locationLabel",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.Bold
+                                    )
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        OutlinedButton(
+                                            onClick = {
+                                                viewModel.setLocationMethod("auto")
+                                                if (locationPermissionState.status.isGranted) {
+                                                    viewModel.triggerGPSManual()
+                                                } else {
+                                                    locationPermissionState.launchPermissionRequest()
+                                                }
+                                            },
+                                            modifier = Modifier.weight(1f),
+                                            colors = ButtonDefaults.outlinedButtonColors(
+                                                containerColor = if (locationMethod == "auto") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                                            ),
+                                            border = androidx.compose.foundation.BorderStroke(
+                                                width = if (locationMethod == "auto") 2.dp else 1.dp,
+                                                color = if (locationMethod == "auto") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                            )
+                                        ) {
+                                            Icon(Icons.Default.MyLocation, contentDescription = null, modifier = Modifier.size(16.dp))
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(if (isAr) "تلقائي (GPS)" else "Auto (GPS)", style = MaterialTheme.typography.bodySmall)
+                                        }
+
+                                        OutlinedButton(
+                                            onClick = { viewModel.setLocationMethod("manual") },
+                                            modifier = Modifier.weight(1f),
+                                            colors = ButtonDefaults.outlinedButtonColors(
+                                                containerColor = if (locationMethod == "manual") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                                            ),
+                                            border = androidx.compose.foundation.BorderStroke(
+                                                width = if (locationMethod == "manual") 2.dp else 1.dp,
+                                                color = if (locationMethod == "manual") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                            )
+                                        ) {
+                                            Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(16.dp))
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(if (isAr) "يدوي بالبحث" else "Manual Search", style = MaterialTheme.typography.bodySmall)
+                                        }
+                                    }
+
+                                    if (locationMethod == "manual") {
+                                        OutlinedTextField(
+                                            value = locationQuery,
+                                            onValueChange = { locationQuery = it },
+                                            placeholder = { Text(if (isAr) "ابحث عن مدينة..." else "Search city name...") },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            singleLine = true,
+                                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                                            shape = RoundedCornerShape(12.dp)
+                                        )
+
+                                        val suggestions = if (locationQuery.isBlank()) {
+                                            emptyList()
+                                        } else {
+                                            com.example.data.CityData.cities.filter { city ->
+                                                city.name.contains(locationQuery, ignoreCase = true) ||
+                                                city.nameAr.contains(locationQuery, ignoreCase = true) ||
+                                                city.country.contains(locationQuery, ignoreCase = true) ||
+                                                city.countryAr.contains(locationQuery, ignoreCase = true)
+                                            }.take(5)
+                                        }
+
+                                        if (suggestions.isNotEmpty()) {
+                                            Column(
+                                                verticalArrangement = Arrangement.spacedBy(4.dp),
+                                                modifier = Modifier.fillMaxWidth().heightIn(max = 180.dp)
+                                            ) {
+                                                suggestions.forEach { city ->
+                                                    val displayName = if (isAr) "${city.nameAr}، ${city.countryAr}" else "${city.name}, ${city.country}"
+                                                    Row(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .clip(RoundedCornerShape(8.dp))
+                                                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
+                                                            .clickable {
+                                                                viewModel.updateLocation(city.lat, city.lng, if (isAr) city.nameAr else city.name, isSuccessFeedback = true)
+                                                                locationQuery = ""
+                                                                keyboardController?.hide()
+                                                                focusManager.clearFocus()
+                                                                viewModel.setShowSettingsDialog(false)
+                                                            }
+                                                            .padding(10.dp),
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        Icon(Icons.Default.LocationCity, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                                                        Spacer(modifier = Modifier.width(8.dp))
+                                                        Text(displayName, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                                                    }
+                                                }
                                             }
                                         }
                                     }
@@ -663,88 +837,309 @@ fun HomeScreen(
                             }
                         }
 
-                        // Divider
-                        item { HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)) }
-
-                        // 4. Custom font sizing of Quran (Moved here from Quran screen!)
+                        // Card 4: Juristic & School Options (Shafi'i vs Hanafi)
                         item {
-                            Column(modifier = Modifier.fillMaxWidth()) {
-                                Text(
-                                    text = if (isAr) "حجم خط آيات السور والمصاحف" else "Quran Text Formatting",
-                                    style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.secondary,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    textAlign = if (isAr) TextAlign.Right else TextAlign.Left
-                                )
-                                Spacer(modifier = Modifier.height(10.dp))
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                            ) {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
-                                    Text(text = if (isAr) "الخط العربي: " else "Arabic font: ", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(100.dp))
-                                    Slider(
-                                        value = fontAr,
-                                        onValueChange = { viewModel.setArabicFontSize(it) },
-                                        valueRange = 18f..40f,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                    Text(text = "${fontAr.toInt()}sp", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, modifier = Modifier.width(40.dp), textAlign = TextAlign.End)
-                                }
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.School, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = if (isAr) "المذهب والحساب الفقهي" else "Juristic Calculations",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
 
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(text = if (isAr) "الترجمة الإنجليزية: " else "English font: ", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(100.dp))
-                                    Slider(
-                                        value = fontEn,
-                                        onValueChange = { viewModel.setEnglishFontSize(it) },
-                                        valueRange = 12f..28f,
-                                        modifier = Modifier.weight(1f)
+                                    Text(
+                                        text = if (isAr) "صلاة العصر: وقت المذهب الشافعي أم الحنفي" else "Asr Prayer: Shafi'i vs Hanafi School",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
-                                    Text(text = "${fontEn.toInt()}sp", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, modifier = Modifier.width(40.dp), textAlign = TextAlign.End)
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        OutlinedButton(
+                                            onClick = { viewModel.setAsrMethod("standard") },
+                                            modifier = Modifier.weight(1f),
+                                            colors = ButtonDefaults.outlinedButtonColors(
+                                                containerColor = if (asrMethod == "standard") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                                            ),
+                                            border = androidx.compose.foundation.BorderStroke(
+                                                width = if (asrMethod == "standard") 2.dp else 1.dp,
+                                                color = if (asrMethod == "standard") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                            )
+                                        ) {
+                                            Text(if (isAr) "الجمهور (شافعي، مالكي...)" else "Standard (Shafi'i)", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                                        }
+                                        OutlinedButton(
+                                            onClick = { viewModel.setAsrMethod("hanafi") },
+                                            modifier = Modifier.weight(1f),
+                                            colors = ButtonDefaults.outlinedButtonColors(
+                                                containerColor = if (asrMethod == "hanafi") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                                            ),
+                                            border = androidx.compose.foundation.BorderStroke(
+                                                width = if (asrMethod == "hanafi") 2.dp else 1.dp,
+                                                color = if (asrMethod == "hanafi") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                            )
+                                        ) {
+                                            Text(if (isAr) "حنفي" else "Hanafi", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+
+                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+                                    Text(
+                                        text = if (isAr) "صلاة العشاء: التقدير الفلكي أم الحنفي (زاوية 18°)" else "Isha Prayer: Standard Angle vs Hanafi Angle (18°)",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        OutlinedButton(
+                                            onClick = { viewModel.setIshaMethod("standard") },
+                                            modifier = Modifier.weight(1f),
+                                            colors = ButtonDefaults.outlinedButtonColors(
+                                                containerColor = if (ishaMethod == "standard") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                                            ),
+                                            border = androidx.compose.foundation.BorderStroke(
+                                                width = if (ishaMethod == "standard") 2.dp else 1.dp,
+                                                color = if (ishaMethod == "standard") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                            )
+                                        ) {
+                                            Text(if (isAr) "طريقة الحساب فلكياً" else "Calculation", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                                        }
+                                        OutlinedButton(
+                                            onClick = { viewModel.setIshaMethod("hanafi") },
+                                            modifier = Modifier.weight(1f),
+                                            colors = ButtonDefaults.outlinedButtonColors(
+                                                containerColor = if (ishaMethod == "hanafi") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                                            ),
+                                            border = androidx.compose.foundation.BorderStroke(
+                                                width = if (ishaMethod == "hanafi") 2.dp else 1.dp,
+                                                color = if (ishaMethod == "hanafi") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                            )
+                                        ) {
+                                            Text(if (isAr) "حنفي (18 درجة)" else "Hanafi Angle (18°)", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
                                 }
                             }
                         }
 
-                        // Divider
-                        item { HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)) }
-
-                        // 5. About app
+                        // Card 5: Manual Adjustments
                         item {
-                            Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
-                                Text(
-                                    text = if (isAr) "عن التطبيق" else "About this App",
-                                    style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.secondary,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    textAlign = if (isAr) TextAlign.Right else TextAlign.Left
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                            ) {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.Schedule, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = if (isAr) "تعديل الدقائق يدويًّا" else "Manual Adjustments",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+
+                                    Text(
+                                        text = if (isAr) "أضف أو نقص دقائق مخصصة لكل صلاة حسب مدينتك بدقة" else "Add or deduct minutes manually for each prayer calculation",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+
+                                    val adjList = listOf(
+                                        Quadruple("Fajr", if (isAr) "الفجر" else "Fajr", adjFajr) { v: Int -> viewModel.setAdjFajr(v) },
+                                        Quadruple("Sunrise", if (isAr) "الشروق" else "Sunrise", adjSunrise) { v: Int -> viewModel.setAdjSunrise(v) },
+                                        Quadruple("Dhuhr", if (isAr) "الظهر" else "Dhuhr", adjDhuhr) { v: Int -> viewModel.setAdjDhuhr(v) },
+                                        Quadruple("Asr", if (isAr) "العصر" else "Asr", adjAsr) { v: Int -> viewModel.setAdjAsr(v) },
+                                        Quadruple("Maghrib", if (isAr) "المغرب" else "Maghrib", adjMaghrib) { v: Int -> viewModel.setAdjMaghrib(v) },
+                                        Quadruple("Isha", if (isAr) "العشاء" else "Isha", adjIsha) { v: Int -> viewModel.setAdjIsha(v) }
+                                    )
+
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        adjList.forEach { adjItem ->
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .clip(RoundedCornerShape(8.dp))
+                                                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f))
+                                                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.SpaceBetween
+                                            ) {
+                                                Text(
+                                                    text = adjItem.second,
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    fontWeight = FontWeight.Bold,
+                                                    modifier = Modifier.width(80.dp)
+                                                )
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                                ) {
+                                                    IconButton(
+                                                        onClick = { adjItem.fourth(adjItem.third - 1) },
+                                                        modifier = Modifier.size(32.dp)
+                                                    ) {
+                                                        Icon(Icons.Default.Remove, contentDescription = "Deduct minute", modifier = Modifier.size(16.dp))
+                                                    }
+                                                    val prefix = if (adjItem.third > 0) "+" else ""
+                                                    Text(
+                                                        text = "$prefix${adjItem.third} m",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        fontWeight = FontWeight.Bold,
+                                                        textAlign = TextAlign.Center,
+                                                        modifier = Modifier.width(50.dp)
+                                                    )
+                                                    IconButton(
+                                                        onClick = { adjItem.fourth(adjItem.third + 1) },
+                                                        modifier = Modifier.size(32.dp)
+                                                    ) {
+                                                        Icon(Icons.Default.Add, contentDescription = "Add minute", modifier = Modifier.size(16.dp))
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Card 6: Quran Font Formatting
+                        item {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                            ) {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.TextFields, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = if (isAr) "تنسيق خط المصاحف والسور" else "Quran Font Scale",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(text = if (isAr) "الخط العربي: " else "Arabic: ", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(100.dp))
+                                        Slider(
+                                            value = fontAr,
+                                            onValueChange = { viewModel.setArabicFontSize(it) },
+                                            valueRange = 18f..40f,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        Text(text = "${fontAr.toInt()}sp", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, modifier = Modifier.width(40.dp), textAlign = TextAlign.End)
+                                    }
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(text = if (isAr) "الترجمة الإنجليزية: " else "English: ", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(100.dp))
+                                        Slider(
+                                            value = fontEn,
+                                            onValueChange = { viewModel.setEnglishFontSize(it) },
+                                            valueRange = 12f..28f,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        Text(text = "${fontEn.toInt()}sp", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, modifier = Modifier.width(40.dp), textAlign = TextAlign.End)
+                                    }
+                                }
+                            }
+                        }
+
+                        // Card 8: About App
+                        item {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                            ) {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = if (isAr) "عن التطبيق" else "About this App",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+
+                                    Text(
+                                        text = if (isAr) "هذا التطبيق مجاني بالكامل ومفتوح المصدر (FOSS)، خالي من الإعلانات إلى الأبد، ويحترم خصوصيتك. لقد قمت ببرمجة هذا التطبيق كعمل صالح للتقرب إلى الله، وأرجو من كل من يستخدمه أن يدعو لي بالخير. شكرًا لكم وجزاكم الله خيرًا."
+                                                else "This application is fully Free and Open Source Software (FOSS), forever ad-free, and respects your privacy. I made this app for a good deed, and I hope whoever uses it will do dua for me. Thank you and Jazakum Allah Khair.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        lineHeight = 18.sp
+                                    )
+                                }
+                            }
+                        }
+
+                        item {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            TextButton(
+                                onClick = { viewModel.resetToDefaults() },
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+                                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = "Reset Settings",
+                                    modifier = Modifier.size(16.dp)
                                 )
-                                Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = if (isAr) "هذا التطبيق مجاني بالكامل ومفتوح المصدر (FOSS)، خالي من الإعلانات إلى الأبد، ويحترم خصوصيتك. لقد قمت ببرمجة هذا التطبيق كعمل صالح للتقرب إلى الله، وأرجو من كل من يستخدمه أن يدعو لي بالخير. شكرًا لكم وجزاكم الله خيرًا."
-                                            else "This application is fully Free and Open Source Software (FOSS), forever ad-free, and respects your privacy. I made this app for a good deed, and I hope whoever uses it will do dua for me. Thank you and Jazakum Allah Khair.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    textAlign = if (isAr) TextAlign.Right else TextAlign.Left,
-                                    lineHeight = 18.sp
+                                    text = if (isAr) "إعادة الضبط الافتراضي" else "Reset to Defaults",
+                                    fontWeight = FontWeight.Bold
                                 )
                             }
                         }
                     }
                 }
-            },
-            confirmButton = {
-                TextButton(onClick = { showSettingsDialog = false }) {
-                    Text(if (isAr) "إغلاق" else "Close", fontWeight = FontWeight.Bold)
-                }
-            },
-            shape = RoundedCornerShape(28.dp),
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+            }
+        }
     }
 }
 
@@ -764,3 +1159,10 @@ private fun getHijriDateString(): String {
     }
     return "13 Dhul-Hijjah 1447 AH"
 }
+
+data class Quadruple<A, B, C, D>(
+    val first: A,
+    val second: B,
+    val third: C,
+    val fourth: D
+)

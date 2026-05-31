@@ -1,16 +1,19 @@
 package com.example
 
-import org.junit.Assert.*
 import org.junit.Test
+import java.net.URL
 
-/**
- * Example local unit test, which will execute on the development machine (host).
- *
- * See [testing documentation](http://d.android.com/tools/testing).
- */
 class ExampleUnitTest {
   @Test
-  fun addition_isCorrect() {
-    assertEquals(4, 2 + 2)
+  fun testDownloadQuranSchema() {
+    try {
+      val url = URL("https://raw.githubusercontent.com/rn0x/Quran-Data/refs/heads/version-2.0/data/mainDataQuran.json")
+      val text = url.readText()
+      println("DOWNLOAD_SUCCESS: Length is ${text.length}")
+      println("FIRST_1000_CHARS:")
+      println(text.take(1500))
+    } catch (e: Exception) {
+      e.printStackTrace()
+    }
   }
 }

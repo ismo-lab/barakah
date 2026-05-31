@@ -70,6 +70,48 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     private val _locationMethod = MutableStateFlow(prefs.getString("location_method", "manual") ?: "manual")
     val locationMethod: StateFlow<String> = _locationMethod
 
+    // Adhan settings states
+    private val _enableAdhanSound = MutableStateFlow(prefs.getBoolean("enable_adhan_sound", false))
+    val enableAdhanSound: StateFlow<Boolean> = _enableAdhanSound
+
+    private val _adhanSoundType = MutableStateFlow(prefs.getString("adhan_sound_type", "short") ?: "short")
+    val adhanSoundType: StateFlow<String> = _adhanSoundType
+
+    // Nawafil state flow
+    private val _showNawafil = MutableStateFlow(prefs.getBoolean("show_nawafil", false))
+    val showNawafil: StateFlow<Boolean> = _showNawafil
+
+    // Settings dialog visibility
+    private val _showSettingsDialog = MutableStateFlow(false)
+    val showSettingsDialog: StateFlow<Boolean> = _showSettingsDialog
+
+    fun setShowSettingsDialog(show: Boolean) {
+        _showSettingsDialog.value = show
+    }
+
+    // Juristic / School states
+    private val _asrMethod = MutableStateFlow(prefs.getString("asr_method", "standard") ?: "standard")
+    val asrMethod: StateFlow<String> = _asrMethod
+
+    private val _ishaMethod = MutableStateFlow(prefs.getString("isha_method", "standard") ?: "standard")
+    val ishaMethod: StateFlow<String> = _ishaMethod
+
+    // Manual adjustments
+    val adjFajr = MutableStateFlow(prefs.getInt("adj_fajr", 0))
+    val adjSunrise = MutableStateFlow(prefs.getInt("adj_sunrise", 0))
+    val adjDhuhr = MutableStateFlow(prefs.getInt("adj_dhuhr", 0))
+    val adjAsr = MutableStateFlow(prefs.getInt("adj_asr", 0))
+    val adjMaghrib = MutableStateFlow(prefs.getInt("adj_maghrib", 0))
+    val adjIsha = MutableStateFlow(prefs.getInt("adj_isha", 0))
+
+    // Cached parsed prayer seconds to eliminate 1s loop allocations
+    private var CachedFajrSec = 0
+    private var CachedSunriseSec = 0
+    private var CachedDhuhrSec = 0
+    private var CachedAsrSec = 0
+    private var CachedMaghribSec = 0
+    private var CachedIshaSec = 0
+
     // 1. LOCATION STATE
     private val _currentLocation = MutableStateFlow<Pair<Double, Double>>(
         Pair(
@@ -100,14 +142,56 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         City("Toronto, Canada", 43.6532, -79.3832)
     )
 
-    // 2. PRAYER TIMES STATE
+    private val _calculationMethod = MutableStateFlow(
+        run {
+            try {
+                PrayerCalculator.CalculationMethod.valueOf(prefs.getString("calc_method", "MWL") ?: "MWL")
+            } catch(e: Exception) {
+                PrayerCalculator.CalculationMethod.MWL
+            }
+        }
+    )
+    val calculationMethod: StateFlow<PrayerCalculator.CalculationMethod> = _calculationMethod
+
+    // 2. PRAYER TIMES STATE initialized dynamically with stored values and proper TZ offset from launch
     private val _prayerTimes = MutableStateFlow(
-        PrayerCalculator.calculate(21.4225, 39.8262, 3.0)
+        run {
+            val lat = prefs.getFloat("loc_lat", 21.4225f).toDouble()
+            val lng = prefs.getFloat("loc_lng", 39.8262f).toDouble()
+            val m = try {
+                PrayerCalculator.CalculationMethod.valueOf(prefs.getString("calc_method", "MWL") ?: "MWL")
+            } catch(e: Exception) {
+                PrayerCalculator.CalculationMethod.MWL
+            }
+            val asrM = prefs.getString("asr_method", "standard") ?: "standard"
+            val ishaM = prefs.getString("isha_method", "standard") ?: "standard"
+            val adjF = prefs.getInt("adj_fajr", 0)
+            val adjS = prefs.getInt("adj_sunrise", 0)
+            val adjD = prefs.getInt("adj_dhuhr", 0)
+            val adjA = prefs.getInt("adj_asr", 0)
+            val adjM = prefs.getInt("adj_maghrib", 0)
+            val adjI = prefs.getInt("adj_isha", 0)
+            val cal = Calendar.getInstance()
+            val tz = TimeZone.getDefault()
+            val offsetHours = tz.getOffset(cal.timeInMillis) / 3600000.0
+            PrayerCalculator.calculate(
+                latitude = lat,
+                longitude = lng,
+                timezoneOffset = offsetHours,
+                calendar = cal,
+                method = m,
+                asrMethod = asrM,
+                ishaMethod = ishaM,
+                adjFajr = adjF,
+                adjSunrise = adjS,
+                adjDhuhr = adjD,
+                adjAsr = adjA,
+                adjMaghrib = adjM,
+                adjIsha = adjI
+            )
+        }
     )
     val prayerTimes: StateFlow<PrayerCalculator.PrayerTimes> = _prayerTimes
-
-    private val _calculationMethod = MutableStateFlow(PrayerCalculator.CalculationMethod.MWL)
-    val calculationMethod: StateFlow<PrayerCalculator.CalculationMethod> = _calculationMethod
 
     // Next Prayer Indicator
     private val _nextPrayerName = MutableStateFlow("Fajr")
@@ -149,7 +233,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     private val _selectedDuaCategory = MutableStateFlow("Menu")
     val selectedDuaCategory: StateFlow<String> = _selectedDuaCategory
 
-    private val _filteredDuas = MutableStateFlow<List<Dua>>(DuaData.duas)
+    private val _filteredDuas = MutableStateFlow<List<Dua>>(emptyList())
     val filteredDuas: StateFlow<List<Dua>> = _filteredDuas
 
     val duaBookmarks: StateFlow<List<DuaBookmark>> = repository.allDuaBookmarks
@@ -174,10 +258,15 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     private var countdownJob: Job? = null
 
     init {
-        // Initialize databases & values
-        QuranData.load(application)
-        DuaData.load(application)
-        _filteredDuas.value = DuaData.duas
+        // Initialize parsed seconds
+        updateParsedSeconds(_prayerTimes.value)
+
+        // Initialize databases & values asynchronously in the background
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            QuranData.load(application)
+            DuaData.load(application)
+            _filteredDuas.value = if (_appLanguage.value == "ar") DuaData.duasAr else DuaData.duasEn
+        }
         viewModelScope.launch {
             repository.initDefaultAlertSettings()
             
@@ -216,14 +305,15 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             combine(_duaSearchQuery, _selectedDuaCategory, _appLanguage, duaBookmarks) { query, category, lang, bookmarks ->
                 val favIds = bookmarks.map { it.duaId }.toSet()
-                val searchResult = DuaData.duas.filter { dua ->
+                val currentDuas = if (lang == "ar") DuaData.duasAr else DuaData.duasEn
+                val searchResult = currentDuas.filter { dua ->
                     val title = if (lang == "ar") dua.titleAr else dua.titleEn
                     val matchesQuery = query.isEmpty() || title.contains(query, ignoreCase = true) ||
                             dua.arabic.contains(query) ||
                             dua.transliteration.contains(query, ignoreCase = true) ||
                             dua.translation.contains(query, ignoreCase = true)
                     
-                    val isFavCat = (category == "Favorites" || category == "المفضلة")
+                    val isFavCat = (category == "Favorites" || category == "المفضلة" || category == "Bookmarks" || category == "الإشارات المرجعية" || category == "الأذكار المحفوظة")
                     val matchesCategory = (isFavCat && favIds.contains(dua.id)) ||
                             (!isFavCat && (category == "All" || category == "الكل" || category == "Menu" ||
                             dua.categoryAr == category || dua.categoryEn == category))
@@ -375,6 +465,16 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun setEnableAdhanSound(enable: Boolean) {
+        _enableAdhanSound.value = enable
+        prefs.edit().putBoolean("enable_adhan_sound", enable).apply()
+    }
+
+    fun setAdhanSoundType(type: String) {
+        _adhanSoundType.value = type
+        prefs.edit().putString("adhan_sound_type", type).apply()
+    }
+
     fun setFirstRunComplete() {
         _isFirstRun.value = false
         prefs.edit().putBoolean("is_first_run", false).apply()
@@ -424,14 +524,120 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         val tz = TimeZone.getDefault()
         val offsetHours = tz.getOffset(calendar.timeInMillis) / 3600000.0
 
-        _prayerTimes.value = PrayerCalculator.calculate(
-            _currentLocation.value.first,
-            _currentLocation.value.second,
-            offsetHours,
-            calendar,
-            _calculationMethod.value
+        val newTimes = PrayerCalculator.calculate(
+            latitude = _currentLocation.value.first,
+            longitude = _currentLocation.value.second,
+            timezoneOffset = offsetHours,
+            calendar = calendar,
+            method = _calculationMethod.value,
+            asrMethod = _asrMethod.value,
+            ishaMethod = _ishaMethod.value,
+            adjFajr = adjFajr.value,
+            adjSunrise = adjSunrise.value,
+            adjDhuhr = adjDhuhr.value,
+            adjAsr = adjAsr.value,
+            adjMaghrib = adjMaghrib.value,
+            adjIsha = adjIsha.value
         )
+        _prayerTimes.value = newTimes
+        updateParsedSeconds(newTimes)
         try { com.example.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
+    }
+
+    fun setShowNawafil(value: Boolean) {
+        _showNawafil.value = value
+        prefs.edit().putBoolean("show_nawafil", value).apply()
+        recalculatePrayerTimes()
+    }
+
+    fun setAsrMethod(value: String) {
+        _asrMethod.value = value
+        prefs.edit().putString("asr_method", value).apply()
+        recalculatePrayerTimes()
+    }
+
+    fun setIshaMethod(value: String) {
+        _ishaMethod.value = value
+        prefs.edit().putString("isha_method", value).apply()
+        recalculatePrayerTimes()
+    }
+
+    fun setAdjFajr(value: Int) {
+        adjFajr.value = value
+        prefs.edit().putInt("adj_fajr", value).apply()
+        recalculatePrayerTimes()
+    }
+
+    fun setAdjSunrise(value: Int) {
+        adjSunrise.value = value
+        prefs.edit().putInt("adj_sunrise", value).apply()
+        recalculatePrayerTimes()
+    }
+
+    fun setAdjDhuhr(value: Int) {
+        adjDhuhr.value = value
+        prefs.edit().putInt("adj_dhuhr", value).apply()
+        recalculatePrayerTimes()
+    }
+
+    fun setAdjAsr(value: Int) {
+        adjAsr.value = value
+        prefs.edit().putInt("adj_asr", value).apply()
+        recalculatePrayerTimes()
+    }
+
+    fun setAdjMaghrib(value: Int) {
+        adjMaghrib.value = value
+        prefs.edit().putInt("adj_maghrib", value).apply()
+        recalculatePrayerTimes()
+    }
+
+    fun setAdjIsha(value: Int) {
+        adjIsha.value = value
+        prefs.edit().putInt("adj_isha", value).apply()
+        recalculatePrayerTimes()
+    }
+
+    fun resetToDefaults() {
+        setAppTheme("system")
+        setUseDynamicColor(true)
+        setAmoledDark(true)
+        setArabicFontSize(24f)
+        setEnglishFontSize(16f)
+        setLocationMethod("manual")
+        updateLocation(21.4225, 39.8262, "Mecca, KSA", false)
+        setAsrMethod("standard")
+        setIshaMethod("standard")
+        setShowNawafil(false)
+        setEnableAdhanSound(false)
+        setAdhanSoundType("short")
+        setAdjFajr(0)
+        setAdjSunrise(0)
+        setAdjDhuhr(0)
+        setAdjAsr(0)
+        setAdjMaghrib(0)
+        setAdjIsha(0)
+    }
+
+
+
+    private fun updateParsedSeconds(times: PrayerCalculator.PrayerTimes) {
+        fun parseTimeToSec(timeStr: String): Int {
+            return try {
+                val parts = timeStr.split(":")
+                val h = parts[0].toInt()
+                val m = parts[1].split(" ")[0].trim().toInt()
+                h * 3600 + m * 60
+            } catch (e: Exception) {
+                0
+            }
+        }
+        CachedFajrSec = parseTimeToSec(times.fajr)
+        CachedSunriseSec = parseTimeToSec(times.sunrise)
+        CachedDhuhrSec = parseTimeToSec(times.dhuhr)
+        CachedAsrSec = parseTimeToSec(times.asr)
+        CachedMaghribSec = parseTimeToSec(times.maghrib)
+        CachedIshaSec = parseTimeToSec(times.isha)
     }
 
     // COUNTER ACTIONS
@@ -563,32 +769,19 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    private val prayerTimeFormat = SimpleDateFormat("HH:mm", Locale.US)
-
     private fun calculateNextPrayer() {
-        val times = _prayerTimes.value
         val now = Calendar.getInstance()
         val currentHour = now.get(Calendar.HOUR_OF_DAY)
         val currentMinute = now.get(Calendar.MINUTE)
         val currentSecond = now.get(Calendar.SECOND)
         val currentTimeInSec = currentHour * 3600 + currentMinute * 60 + currentSecond
 
-        fun parseTimeToSec(timeStr: String): Int {
-            return try {
-                val date = prayerTimeFormat.parse(timeStr) ?: return 0
-                val cal = Calendar.getInstance().apply { time = date }
-                cal.get(Calendar.HOUR_OF_DAY) * 3600 + cal.get(Calendar.MINUTE) * 60
-            } catch (e: Exception) {
-                0
-            }
-        }
-
-        val fajrSec = parseTimeToSec(times.fajr)
-        val sunriseSec = parseTimeToSec(times.sunrise)
-        val dhuhrSec = parseTimeToSec(times.dhuhr)
-        val asrSec = parseTimeToSec(times.asr)
-        val maghribSec = parseTimeToSec(times.maghrib)
-        val ishaSec = parseTimeToSec(times.isha)
+        val fajrSec = CachedFajrSec
+        val sunriseSec = CachedSunriseSec
+        val dhuhrSec = CachedDhuhrSec
+        val asrSec = CachedAsrSec
+        val maghribSec = CachedMaghribSec
+        val ishaSec = CachedIshaSec
 
         // Find active and next prayer
         val active: String
@@ -598,7 +791,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
         when {
             currentTimeInSec < fajrSec -> {
-                active = "Isha (Last Night)"
+                active = "Isha"
                 nextName = "Fajr"
                 nextSec = fajrSec
             }

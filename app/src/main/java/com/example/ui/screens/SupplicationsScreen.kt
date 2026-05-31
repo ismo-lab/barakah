@@ -10,7 +10,9 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -55,14 +57,17 @@ fun SupplicationsScreen(
 
     val categoryList = remember(isAr) {
         val list = mutableListOf<String>()
-        list.add(if (isAr) "المفضلة" else "Favorites")
-        list.addAll(com.example.data.DuaData.duas.map { if (isAr) it.categoryAr else it.categoryEn }.distinct())
+        list.add(if (isAr) "الأذكار المحفوظة" else "Bookmarks")
+        val currentList = if (isAr) com.example.data.DuaData.duasAr else com.example.data.DuaData.duasEn
+        list.addAll(currentList.map { if (isAr) it.categoryAr else it.categoryEn }.distinct())
         list
     }
 
     val duaBookmarks by viewModel.duaBookmarks.collectAsState()
     val favoriteDuaIds = remember(duaBookmarks) { duaBookmarks.map { it.duaId }.toSet() }
     val duaTapCounts = remember { mutableStateMapOf<String, Int>() }
+
+    val menuScrollState = rememberLazyListState()
 
     BackHandler(enabled = activeCategory != "Menu" || searchPattern.isNotEmpty()) {
         if (searchPattern.isNotEmpty()) {
@@ -84,7 +89,12 @@ fun SupplicationsScreen(
     }
 
     fun getCategoryIcon(category: String): androidx.compose.ui.graphics.vector.ImageVector {
-        return Icons.Default.MenuBook
+        val clean = category.lowercase()
+        return if (clean.contains("bookmark") || clean.contains("favorite") || clean.contains("المفضلة") || clean.contains("مرجعية")) {
+            Icons.Default.Bookmark
+        } else {
+            Icons.Default.MenuBook
+        }
     }
 
     @Composable
@@ -191,6 +201,7 @@ fun SupplicationsScreen(
         ) { isMenu ->
             if (isMenu) {
                 LazyColumn(
+                    state = menuScrollState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -336,8 +347,8 @@ fun SupplicationsScreen(
                                             .testTag("fav_${dua.id}")
                                     ) {
                                         Icon(
-                                            imageVector = if (isFavorite) Icons.Default.Star else Icons.Outlined.StarBorder,
-                                            contentDescription = "Favorite",
+                                            imageVector = if (isFavorite) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
+                                            contentDescription = "Bookmark",
                                             tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                                         )
                                     }

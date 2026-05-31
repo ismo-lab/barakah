@@ -26,6 +26,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.CityData
 import com.example.ui.BarakahViewModel
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.isGranted
 
 @Composable
 fun WelcomeScreen(viewModel: BarakahViewModel) {
@@ -148,43 +151,51 @@ fun LanguageCard(label: String, isSelected: Boolean, onClick: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun LocationStep(viewModel: BarakahViewModel, onFinish: () -> Unit) {
-    val currentLang by viewModel.appLanguage.collectAsState()
-    val isAr = currentLang == "ar"
-    var query by remember { mutableStateOf("") }
-    
-    val filteredCities = if (query.isEmpty()) emptyList() else CityData.cities.filter {
-        it.name.contains(query, ignoreCase = true) || it.nameAr.contains(query)
-    }.take(5)
+ fun LocationStep(viewModel: BarakahViewModel, onFinish: () -> Unit) {
+     val currentLang by viewModel.appLanguage.collectAsState()
+     val isAr = currentLang == "ar"
+     var query by remember { mutableStateOf("") }
+     
+     val locationPermissionState = rememberPermissionState(
+         android.Manifest.permission.ACCESS_FINE_LOCATION
+     )
 
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Icon(
-            imageVector = Icons.Default.LocationOn,
-            contentDescription = null,
-            modifier = Modifier.size(80.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        Text(
-            text = if (isAr) "تحديد الموقع" else "Set Your Location",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = if (isAr) "لحساب مواقيت الصلاة واتجاه القبلة بدقة" else "For accurate prayer times and Qibla",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.outline
-        )
-        
-        Spacer(modifier = Modifier.height(32.dp))
+     val filteredCities = if (query.isEmpty()) emptyList() else CityData.cities.filter {
+         it.name.contains(query, ignoreCase = true) || it.nameAr.contains(query)
+     }.take(5)
 
-        // GPS Button
-        Button(
-            onClick = {
-                viewModel.setLocationMethod("auto")
-                onFinish()
-            },
+     Column(horizontalAlignment = Alignment.CenterHorizontally) {
+         Icon(
+             imageVector = Icons.Default.LocationOn,
+             contentDescription = null,
+             modifier = Modifier.size(80.dp),
+             tint = MaterialTheme.colorScheme.primary
+         )
+         Spacer(modifier = Modifier.height(24.dp))
+         Text(
+             text = if (isAr) "تحديد الموقع" else "Set Your Location",
+             style = MaterialTheme.typography.titleLarge,
+             fontWeight = FontWeight.Bold
+         )
+         Text(
+             text = if (isAr) "لحساب مواقيت الصلاة واتجاه القبلة بدقة" else "For accurate prayer times and Qibla",
+             style = MaterialTheme.typography.bodyMedium,
+             color = MaterialTheme.colorScheme.outline
+         )
+         
+         Spacer(modifier = Modifier.height(32.dp))
+
+         // GPS Button
+         Button(
+             onClick = {
+                 if (!locationPermissionState.status.isGranted) {
+                     locationPermissionState.launchPermissionRequest()
+                 }
+                 viewModel.setLocationMethod("auto")
+                 onFinish()
+             },
             modifier = Modifier.fillMaxWidth().height(56.dp),
             shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)

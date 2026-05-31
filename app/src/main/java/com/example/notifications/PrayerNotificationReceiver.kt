@@ -30,7 +30,7 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
         )
         
         val builder = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("Prayer Time")
             .setContentText("It's time for $prayerName prayer.")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -38,6 +38,13 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
             .setContentIntent(pendingIntent)
             
         notificationManager.notify(prayerName.hashCode(), builder.build())
+        
+        // Play the standard DEFAULT notification sound
+        try {
+            val notificationUri = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_NOTIFICATION)
+            val r = android.media.RingtoneManager.getRingtone(context, notificationUri)
+            r.play()
+        } catch (e: Exception) {}
         
         // Reschedule for next days
         PrayerScheduler.scheduleNextPrayers(context)

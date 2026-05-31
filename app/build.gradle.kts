@@ -1,3 +1,6 @@
+import java.net.URL
+import java.net.HttpURLConnection
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.compose)
@@ -7,11 +10,11 @@ plugins {
 }
 
 android {
-  namespace = "com.example"
+  namespace = "dev.barakah.app"
   compileSdk { version = release(36) { minorApiLevel = 1 } }
 
   defaultConfig {
-    applicationId = "com.aistudio.barakah.kjpqtw"
+    applicationId = "dev.barakah.app"
     minSdk = 24
     targetSdk = 36
     versionCode = 1
@@ -121,3 +124,32 @@ dependencies {
   "ksp"(libs.androidx.room.compiler)
   "ksp"(libs.moshi.kotlin.codegen)
 }
+
+tasks.register("downloadHisn") {
+  doLast {
+    val dest = file("/app/src/main/res/raw/hisn_en.json")
+    dest.parentFile.mkdirs()
+    println("Downloading Hisn data to ${dest.absolutePath}...")
+    val url = URL("https://raw.githubusercontent.com/4thel00z/hadith.json/refs/heads/master/hisnulmuslim/hisnulmuslim.json")
+    val conn = url.openConnection() as HttpURLConnection
+    conn.requestMethod = "GET"
+    conn.connectTimeout = 30000
+    conn.readTimeout = 30000
+    if (conn.responseCode == 200) {
+      conn.inputStream.use { input ->
+        dest.outputStream().use { output ->
+          input.copyTo(output)
+        }
+      }
+      println("Hisn data downloaded successfully! Size: ${dest.length()} bytes")
+      println("FIRST 1000 CHARS:")
+      val firstChars = dest.readText().take(1500)
+      println(firstChars)
+    } else {
+      throw GradleException("Failed to download Hisn data. HTTP Response Code: ${conn.responseCode}")
+    }
+  }
+}
+
+
+

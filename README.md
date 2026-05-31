@@ -1,21 +1,34 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Barakah
 
-# Run and deploy your AI Studio app
+Barakah is a privacy-respecting, Free and Open Source (FOSS) Islamic devotional companion for Android. It provides essential tools for Muslims, including prayer times, Qibla direction, Quran reading, and supplications (Hisnul Muslim), all within a modern and refined Material 3 interface.
 
-This contains everything you need to run your app locally.
+## Features
 
-View your app in AI Studio: https://ai.studio/apps/87ad798f-e0a2-43d3-9d58-a3de72a2671e
+- **Prayer Times**: Accurate prayer time calculations based on your location with customizable notification alerts.
+- **Quran**: Read the Holy Quran with translations and bookmarks.
+- **Supplications (Hisnul Muslim)**: A comprehensive collection of authentic daily supplications.
+- **Tasbih**: A digital counter for dhikr with customizable targets.
+- **Qibla Finder**: An interactive compass to find the direction of the Kaaba.
+- **Privacy First**: No tracking, no ads, and no data collection. All data stays on your device.
 
-## Run Locally
+## Data Sources & Attributions
 
-**Prerequisites:**  [Android Studio](https://developer.android.com/studio)
+This project relies on several open-source datasets and resources:
 
+- **Hadith Data**: [hadith.json](https://github.com/4thel00z/hadith.json)
+- **Hisnul Muslim Supplications**: [HisnElMuslim](https://github.com/asellam/HisnElMuslim)
+- **Quran Data**: [Quran-Data](https://github.com/rn0x/Quran-Data)
+- **Prayer Calculations**: Based on the [Adhan](https://github.com/batoulapps/adhan-java) algorithm.
 
-1. Open Android Studio
-2. Select **Open** and choose the directory containing this project
-3. Allow Android Studio to fix any incompatibilities as it imports the project.
-4. Create a file named `.env` in the project directory and set `GEMINI_API_KEY` in that file to your Gemini API key (see `.env.example` for an example)
-5. Remove this line from the app's `build.gradle.kts` file: `signingConfig = signingConfigs.getByName("debugConfig")`
-6. Run the app on an emulator or physical device
+## Development
+
+Barakah is built using modern Android technologies:
+- **Kotlin**
+- **Jetpack Compose**
+- **Material 3 Design System**
+- **Room Database** for local persistence
+- **Glance** for home screen widgets
+
+## License
+
+This project is Free and Open Source Software.

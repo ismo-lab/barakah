@@ -70,19 +70,25 @@ fun TasbihScreen(
         }
     }
 
-    Column(
-        modifier = modifier
+    Box(
+        modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(
-                start = 16.dp, 
-                end = 16.dp, 
-                top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 16.dp,
-                bottom = 16.dp
-            ),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween
+            .background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.Center
     ) {
+        Column(
+            modifier = modifier
+                .fillMaxHeight()
+                .widthIn(max = 680.dp)
+                .padding(
+                    start = 16.dp, 
+                    end = 16.dp, 
+                    top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 16.dp,
+                    bottom = 16.dp
+                ),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
         // 1. TOP HEADER & DHIKR SELECTOR
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -384,5 +390,6 @@ fun TasbihScreen(
             shape = RoundedCornerShape(24.dp),
             containerColor = MaterialTheme.colorScheme.surface
         )
+    }
     }
 }
