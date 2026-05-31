@@ -31,11 +31,11 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     // Hardware managers
     private val sensorManager = QiblaManager(application)
     @Suppress("DEPRECATION")
-    private val vibrator: Vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+    private val vibrator: Vibrator? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         val vibratorManager = application.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
-        vibratorManager?.defaultVibrator ?: (application.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator)
+        vibratorManager?.defaultVibrator ?: (application.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator)
     } else {
-        application.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        application.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
     }
 
     private val prefs = application.getSharedPreferences("barakah_prefs", Context.MODE_PRIVATE)
@@ -405,9 +405,9 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
     private fun isLocationEnabled(): Boolean {
         return try {
-            val locationManager = getApplication<Application>().getSystemService(Context.LOCATION_SERVICE) as android.location.LocationManager
-            locationManager.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER) ||
-                    locationManager.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER)
+            val locationManager = getApplication<Application>().getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
+            locationManager?.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER) == true ||
+                    locationManager?.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER) == true
         } catch (e: Exception) {
             false
         }
@@ -749,10 +749,10 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     private fun triggerVibration(duration: Long) {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrator.vibrate(VibrationEffect.createOneShot(duration, VibrationEffect.DEFAULT_AMPLITUDE))
+                vibrator?.vibrate(VibrationEffect.createOneShot(duration, VibrationEffect.DEFAULT_AMPLITUDE))
             } else {
                 @Suppress("DEPRECATION")
-                vibrator.vibrate(duration)
+                vibrator?.vibrate(duration)
             }
         } catch (e: Exception) {
             e.printStackTrace()
