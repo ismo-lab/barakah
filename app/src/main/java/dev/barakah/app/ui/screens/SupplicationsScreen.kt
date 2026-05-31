@@ -95,7 +95,7 @@ fun SupplicationsScreen(
         return if (clean.contains("bookmark") || clean.contains("favorite") || clean.contains("المفضلة") || clean.contains("مرجعية")) {
             Icons.Default.Bookmark
         } else {
-            Icons.Default.MenuBook
+            Icons.AutoMirrored.Filled.MenuBook
         }
     }
 

@@ -94,8 +94,8 @@ fun MainNavigationContainer(
         NavigationTabItem(
             route = "quran",
             label = if (isAr) "القرآن" else "Quran",
-            selectedIcon = Icons.Default.MenuBook,
-            unselectedIcon = Icons.Outlined.MenuBook,
+            selectedIcon = Icons.AutoMirrored.Filled.MenuBook,
+            unselectedIcon = Icons.AutoMirrored.Outlined.MenuBook,
             tag = "tab_quran"
         ),
         NavigationTabItem(
