@@ -44,11 +44,12 @@ object QuranData {
             }
             
             val list = mutableListOf<Surah>()
-            context.resources.openRawResource(resId).use { inputStream ->
-                val size = inputStream.available()
-                android.util.Log.d("QuranData", "Raw resource size: $size bytes")
+            context.resources.openRawResource(resId).use { rawInputStream ->
+                val size = rawInputStream.available()
+                android.util.Log.d("QuranData", "Raw resource size (compressed): $size bytes")
                 
-                val reader = android.util.JsonReader(inputStream.bufferedReader(Charsets.UTF_8))
+                val gzipInputStream = java.util.zip.GZIPInputStream(rawInputStream)
+                val reader = android.util.JsonReader(gzipInputStream.bufferedReader(Charsets.UTF_8))
                 reader.beginArray()
                 while (reader.hasNext()) {
                     list.add(readSurah(reader))
@@ -118,7 +119,7 @@ object QuranData {
             translation = nameEn,
             type = if (type.isNotEmpty()) {
                 type.replaceFirstChar { if (it.isLowerCase()) it.titlecase(java.util.Locale.US) else it.toString() }
-            } else "Meccan",
+            } else "",
             versesCount = versesCount,
             versesList = versesList.sortedBy { it.index }
         )

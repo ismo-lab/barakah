@@ -130,16 +130,16 @@ fun SupplicationsScreen(
             Column {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = if (isAr) "حصن المسلم" else "Hisnul Muslim",
                         style = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onPrimary
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.weight(1f)
                     )
-                    
+
                     if (activeCategory != "Menu" && searchPattern.isEmpty()) {
                         IconButton(
                             onClick = { viewModel.selectDuaCategory("Menu") },
@@ -148,7 +148,7 @@ fun SupplicationsScreen(
                             )
                         ) {
                             Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                                 contentDescription = "Back to categories",
                                 tint = MaterialTheme.colorScheme.onPrimary
                             )

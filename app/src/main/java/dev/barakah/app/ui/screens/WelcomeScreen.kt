@@ -72,7 +72,7 @@ fun WelcomeScreen(viewModel: BarakahViewModel) {
                 color = MaterialTheme.colorScheme.primary
             )
             Text(
-                text = if (isAr) "رفيقك المسلم اليومي" else "Your Daily Muslim Companion",
+                text = if (isAr) "تطبيقك الإسلامي المجاني ومفتوح المصدر" else "Your free and open source Islam app",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.secondary
             )
