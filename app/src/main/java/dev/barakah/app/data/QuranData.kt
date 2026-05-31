@@ -37,9 +37,18 @@ object QuranData {
         android.util.Log.d("QuranData", "Starting optimized Quran data load...")
         
         try {
+            val resId = R.raw.quran
+            if (resId == 0) {
+                android.util.Log.e("QuranData", "R.raw.quran NOT FOUND!")
+                return
+            }
+            
             val list = mutableListOf<Surah>()
-            context.resources.openRawResource(R.raw.quran).use { inputStream ->
-                val reader = android.util.JsonReader(inputStream.bufferedReader())
+            context.resources.openRawResource(resId).use { inputStream ->
+                val size = inputStream.available()
+                android.util.Log.d("QuranData", "Raw resource size: $size bytes")
+                
+                val reader = android.util.JsonReader(inputStream.bufferedReader(Charsets.UTF_8))
                 reader.beginArray()
                 while (reader.hasNext()) {
                     list.add(readSurah(reader))
@@ -52,8 +61,7 @@ object QuranData {
             _surahsFlow.value = surahs
             android.util.Log.d("QuranData", "Successfully loaded ${surahs.size} surahs")
         } catch (e: Exception) {
-            android.util.Log.e("QuranData", "Critical error parsing quran.json with JsonReader", e)
-            e.printStackTrace()
+            android.util.Log.e("QuranData", "Critical error parsing quran.json: ${e.message}", e)
         }
     }
 

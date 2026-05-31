@@ -23,19 +23,9 @@ android {
     targetSdk = 36
     val buildTime = (System.currentTimeMillis() / 60000).toInt()
     versionCode = buildTime
-    versionName = "1.0." + SimpleDateFormat("yyMMddHHmm", Locale.US).format(Date())
+    versionName = "1.0." + buildTime
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-  }
-
-  signingConfigs {
-    create("release") {
-      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
-      storeFile = file(keystorePath)
-      storePassword = System.getenv("STORE_PASSWORD")
-      keyAlias = "upload"
-      keyPassword = System.getenv("KEY_PASSWORD")
-    }
   }
 
   buildTypes {
@@ -43,7 +33,6 @@ android {
       isCrunchPngs = false
       isMinifyEnabled = false
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-      signingConfig = signingConfigs.getByName("release")
     }
     debug {
     }
