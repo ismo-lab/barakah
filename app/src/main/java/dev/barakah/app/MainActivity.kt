@@ -20,6 +20,8 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
 import androidx.compose.animation.*
@@ -32,6 +34,11 @@ import dev.barakah.app.ui.theme.BarakahTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            android.util.Log.e("BarakahCrash", "CRASH in ${thread.name}", throwable)
+            // Just let it die
+            kotlin.system.exitProcess(1)
+        }
         enableEdgeToEdge()
         setContent {
             val viewModel: BarakahViewModel = viewModel()
@@ -94,8 +101,8 @@ fun MainNavigationContainer(
         NavigationTabItem(
             route = "quran",
             label = if (isAr) "القرآن" else "Quran",
-            selectedIcon = Icons.AutoMirrored.Filled.MenuBook,
-            unselectedIcon = Icons.AutoMirrored.Outlined.MenuBook,
+            selectedIcon = Icons.Default.MenuBook,
+            unselectedIcon = Icons.Outlined.MenuBook,
             tag = "tab_quran"
         ),
         NavigationTabItem(

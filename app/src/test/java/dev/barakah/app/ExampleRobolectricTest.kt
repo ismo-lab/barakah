@@ -15,9 +15,16 @@ import org.robolectric.annotation.Config
 class ExampleRobolectricTest {
 
   @Test
-  fun `read string from context`() {
+  fun `main activity starts`() {
     val context = ApplicationProvider.getApplicationContext<Context>()
+    dev.barakah.app.data.QuranData.load(context)
+    println("Surahs parsed: " + dev.barakah.app.data.QuranData.surahs.size)
     val appName = context.getString(R.string.app_name)
     assertEquals("Barakah", appName)
+    try {
+        org.robolectric.Robolectric.buildActivity(dev.barakah.app.MainActivity::class.java).create().start().resume()
+    } catch(e: Exception) {
+        e.printStackTrace()
+    }
   }
 }

@@ -66,10 +66,12 @@ fun QuranScreen(
     val isAr = appLanguage == "ar"
 
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    
+    val allSurahs by QuranData.surahsFlow.collectAsState()
 
     // Filter surahs list
-    val filteredSurahs = remember(searchQuery, activeFilterTab, bookmarks) {
-        QuranData.surahs.filter { surah ->
+    val filteredSurahs = remember(searchQuery, activeFilterTab, bookmarks, allSurahs) {
+        allSurahs.filter { surah ->
             val matchesQuery = surah.name.contains(searchQuery, ignoreCase = true) ||
                     surah.translation.contains(searchQuery, ignoreCase = true) ||
                     surah.arabic.contains(searchQuery) ||

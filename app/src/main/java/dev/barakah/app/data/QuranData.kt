@@ -3,6 +3,8 @@ package dev.barakah.app.data
 import android.content.Context
 import dev.barakah.app.R
 import org.json.JSONArray
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 data class Verse(
     val index: Int,
@@ -22,6 +24,9 @@ data class Surah(
 
 object QuranData {
     var surahs: List<Surah> = listOf()
+    
+    private val _surahsFlow = MutableStateFlow<List<Surah>>(emptyList())
+    val surahsFlow: StateFlow<List<Surah>> = _surahsFlow
 
     fun getSurahById(id: Int): Surah {
         return surahs.find { it.id == id } ?: if (surahs.isNotEmpty()) surahs[0] else Surah(1, "Loading", "جاري التحميل", "Loading", "Meccan", 0)
@@ -68,7 +73,9 @@ object QuranData {
                 ))
             }
             surahs = list
+            _surahsFlow.value = list
         } catch (e: Exception) {
+            android.util.Log.e("QuranData", "Error parsing quran.json", e)
             e.printStackTrace()
         }
     }
