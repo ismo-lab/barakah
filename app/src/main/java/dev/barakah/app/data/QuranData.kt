@@ -109,7 +109,9 @@ object QuranData {
             name = nameTrans,
             arabic = nameAr,
             translation = nameEn,
-            type = type.replaceFirstChar { if (it.isLowerCase()) it.titlecase(java.util.Locale.getDefault()) else it.toString() },
+            type = if (type.isNotEmpty()) {
+                type.replaceFirstChar { if (it.isLowerCase()) it.titlecase(java.util.Locale.US) else it.toString() }
+            } else "Meccan",
             versesCount = versesCount,
             versesList = versesList
         )

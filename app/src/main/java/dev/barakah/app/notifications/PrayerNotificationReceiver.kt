@@ -28,7 +28,7 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
         
         // Also skip if current time is way off from scheduled time (e.g. system re-running old alarms)
         val now = System.currentTimeMillis()
-        if (scheduledTime != 0L && Math.abs(now - scheduledTime) > 30 * 60 * 1000) { // 30 minutes threshold
+        if (scheduledTime != 0L && kotlin.math.abs(now - scheduledTime) > 30 * 60 * 1000) { // 30 minutes threshold
             return
         }
 

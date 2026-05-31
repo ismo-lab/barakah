@@ -34,11 +34,6 @@ import dev.barakah.app.ui.theme.BarakahTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
-            android.util.Log.e("BarakahCrash", "CRASH in ${thread.name}", throwable)
-            // Just let it die
-            kotlin.system.exitProcess(1)
-        }
         enableEdgeToEdge()
         setContent {
             val viewModel: BarakahViewModel = viewModel()
