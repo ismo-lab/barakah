@@ -14,7 +14,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v6
     
-    # We keep this so the runner knows which Java version to use to compile
     - name: Set up JDK 17
       uses: actions/setup-java@v5
       with:
@@ -22,11 +21,17 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
-    # REMOVED: The 'chmod +x gradlew' step is gone since we aren't using it.
+    # 1. This step generates the missing gradlew wrapper files automatically on the runner
+    - name: Generate Gradle Wrapper
+      run: gradle wrapper
 
-    - name: Build with Gradle
-      # CHANGED: Using global 'gradle' instead of './gradlew'
-      run: gradle assembleDebug --stacktrace 
+    # 2. Grant execution permissions to the newly generated wrapper
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    # 3. Build using the wrapper (./gradlew) instead of global gradle
+    - name: Build with Gradle Wrapper
+      run: ./gradlew assembleDebug --stacktrace 
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
