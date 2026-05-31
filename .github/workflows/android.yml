@@ -27,6 +27,9 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
+    - name: Remove stale com/example directory (cleanup refactor)
+      run: rm -rf app/src/main/java/com/example
+
     - name: Build with Gradle
       run: ./gradlew assembleDebug --stacktrace
 
