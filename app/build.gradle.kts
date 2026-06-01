@@ -15,10 +15,13 @@ val keystoreFile = file("keystore.jks")
 val base64File = rootProject.file("debug.keystore.base64")
 if (base64File.exists()) {
   try {
-    val base64Content = base64File.readText().trim()
-    if (base64Content.isNotEmpty()) {
-      val decodedBytes = Base64.getDecoder().decode(base64Content)
+    // Strip any possible whitespace, newlines, carriage returns, or non-base64 characters
+    val rawContent = base64File.readText().trim()
+    if (rawContent.isNotEmpty()) {
+      // Use MimeDecoder to handle any line breaks (CRLF/LF) added during git/checkout operations
+      val decodedBytes = Base64.getMimeDecoder().decode(rawContent)
       keystoreFile.writeBytes(decodedBytes)
+      println("Dynamic keystore extraction successful: ${keystoreFile.length()} bytes")
     }
   } catch (e: Exception) {
     println("Dynamic keystore extraction failed: ${e.message}")

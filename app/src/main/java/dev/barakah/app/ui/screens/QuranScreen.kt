@@ -385,6 +385,22 @@ fun QuranScreen(
             val isBookmarked = bookmarks.any { b -> b.surahId == surah.id }
             val readerListState = androidx.compose.runtime.key(surah.id) { androidx.compose.foundation.lazy.rememberLazyListState() }
 
+            LaunchedEffect(surah.id, surah.versesList.isNotEmpty()) {
+                if (surah.versesList.isNotEmpty()) {
+                    val lastRead = lastReadingState
+                    if (lastRead != null && lastRead.surahId == surah.id) {
+                        val targetIndex = if (surah.id != 9) {
+                            lastRead.ayahNumber
+                        } else {
+                            lastRead.ayahNumber - 1
+                        }
+                        if (targetIndex >= 0 && targetIndex < surah.versesList.size + (if (surah.id != 9) 1 else 0)) {
+                            readerListState.scrollToItem(targetIndex)
+                        }
+                    }
+                }
+            }
+
             Column(
                 modifier = modifier
                     .fillMaxSize()

@@ -99,7 +99,45 @@ object DuaData {
                         targetCount = 1
                     ))
                 }
-                duasEn = enList
+
+                // Match counts from Arabic dataset to keep rep counts aligned when using English
+                fun normalizeAr(text: String): String {
+                    return text.replace("[\\u064B-\\u065F\\u0670\\u0640]".toRegex(), "")
+                        .replace("[أإآ]".toRegex(), "ا")
+                        .replace("ى".toRegex(), "ي")
+                        .replace("ة".toRegex(), "ه")
+                        .replace("[^ا-ي]".toRegex(), "")
+                }
+
+                val arNormalizedList = duasAr.map { it to normalizeAr(it.arabic) }
+
+                val finalEnList = enList.map { enDua ->
+                    val enNorm = normalizeAr(enDua.arabic)
+                    if (enNorm.length < 5) return@map enDua
+
+                    // Try to find matching Arabic dua
+                    var match: Dua? = arNormalizedList.firstOrNull { it.second == enNorm }?.first
+                    if (match == null) {
+                        match = arNormalizedList.firstOrNull { 
+                            it.second.isNotEmpty() && (enNorm.contains(it.second) || it.second.contains(enNorm))
+                        }?.first
+                    }
+                    if (match == null) {
+                        match = arNormalizedList.firstOrNull {
+                            val arNorm = it.second
+                            val len = kotlin.math.min(enNorm.length, arNorm.length)
+                            len >= 12 && enNorm.substring(0, 12) == arNorm.substring(0, 12)
+                        }?.first
+                    }
+
+                    if (match != null && match.targetCount > 1) {
+                        enDua.copy(targetCount = match.targetCount)
+                    } else {
+                        enDua
+                    }
+                }
+
+                duasEn = finalEnList
             } catch (e: Exception) {
                 e.printStackTrace()
             }
