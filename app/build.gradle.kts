@@ -4,6 +4,9 @@ import java.net.URI
 import java.util.Date
 import java.util.Locale
 import java.text.SimpleDateFormat
+import java.util.Properties
+import java.io.FileInputStream
+import java.io.FileOutputStream
 
 plugins {
   alias(libs.plugins.android.application)
@@ -21,11 +24,55 @@ android {
     applicationId = "dev.barakah.app"
     minSdk = 24
     targetSdk = 36
-    val buildTime = (System.currentTimeMillis() / 60000).toInt()
-    versionCode = buildTime
-    versionName = "1.0." + buildTime
+
+    val versionFile = file("version.properties")
+    val versionProps = Properties()
+    var currentVersionCode = 1
+    if (versionFile.exists()) {
+      val fis = FileInputStream(versionFile)
+      try {
+        versionProps.load(fis)
+      } finally {
+        fis.close()
+      }
+      currentVersionCode = versionProps.getProperty("VERSION_CODE", "1").toInt()
+    }
+
+    val isBuilding = gradle.startParameter.taskNames.any { name ->
+      name.contains("assemble", ignoreCase = true) || 
+      name.contains("bundle", ignoreCase = true) || 
+      name.contains("install", ignoreCase = true) ||
+      name.contains("compile", ignoreCase = true)
+    }
+
+    val finalVersionCode = if (isBuilding) {
+      val next = currentVersionCode + 1
+      versionProps.setProperty("VERSION_CODE", next.toString())
+      versionProps.setProperty("VERSION_NAME", "1.0.$next")
+      val fos = FileOutputStream(versionFile)
+      try {
+        versionProps.store(fos, "Auto-incremented build version")
+      } finally {
+        fos.close()
+      }
+      next
+    } else {
+      currentVersionCode
+    }
+
+    versionCode = finalVersionCode
+    versionName = "1.0.$finalVersionCode"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+  }
+
+  signingConfigs {
+    create("sharedConfig") {
+      storeFile = file("keystore.jks")
+      storePassword = "android"
+      keyAlias = "androiddebugkey"
+      keyPassword = "android"
+    }
   }
 
   buildTypes {
@@ -33,8 +80,10 @@ android {
       isCrunchPngs = false
       isMinifyEnabled = false
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+      signingConfig = signingConfigs.getByName("sharedConfig")
     }
     debug {
+      signingConfig = signingConfigs.getByName("sharedConfig")
     }
   }
   compileOptions {

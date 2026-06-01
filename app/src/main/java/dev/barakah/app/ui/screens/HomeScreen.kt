@@ -1253,6 +1253,25 @@ fun HomeScreen(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         lineHeight = 18.sp
                                     )
+
+                                    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+                                    OutlinedButton(
+                                        onClick = { uriHandler.openUri("https://github.com/ismo-lab/barakah") },
+                                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Code,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = if (isAr) "رمز المصدر (GitHub)" else "Source Code (GitHub)",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
                                 }
                             }
                         }
