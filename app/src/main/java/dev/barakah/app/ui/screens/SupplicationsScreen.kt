@@ -71,6 +71,11 @@ fun SupplicationsScreen(
 
     val menuScrollState = rememberLazyListState()
 
+    val filteredCategories = remember(categoryList, searchPattern) {
+        if (searchPattern.isEmpty()) categoryList
+        else categoryList.filter { it.contains(searchPattern, ignoreCase = true) }
+    }
+
     BackHandler(enabled = activeCategory != "Menu" || searchPattern.isNotEmpty()) {
         if (searchPattern.isNotEmpty()) {
             viewModel.updateDuaSearch("")
@@ -194,7 +199,7 @@ fun SupplicationsScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         AnimatedContent(
-            targetState = (activeCategory == "Menu" && searchPattern.isEmpty()),
+            targetState = (activeCategory == "Menu"),
             transitionSpec = {
                 fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(300))
             },
@@ -208,87 +213,104 @@ fun SupplicationsScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    item {
-                        Text(
-                            text = if (isAr) "حدد تصنيفاً لعرض الأذكار:" else "Select a category:",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                    }
-                    
-                    items(categoryList) { category ->
-                        val color = getCategoryColor(category)
-                        val icon = getCategoryIcon(category)
-                        
-                        Card(
-                            onClick = { viewModel.selectDuaCategory(category) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(80.dp),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                            )
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(horizontal = 16.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                    if (filteredCategories.isEmpty()) {
+                        item {
+                            Box(
+                                modifier = Modifier.fillMaxWidth().padding(48.dp),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Surface(
-                                    shape = CircleShape,
-                                    color = color.copy(alpha = 0.15f),
-                                    modifier = Modifier.size(48.dp)
-                                ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Icon(
-                                            imageVector = icon,
-                                            contentDescription = null,
-                                            tint = color,
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                    }
-                                }
-                                
-                                Spacer(modifier = Modifier.width(16.dp))
-                                
                                 Text(
-                                    text = category,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.weight(1f),
-                                    textAlign = TextAlign.Start
+                                    text = if (isAr) "لا توجد تصنيفات مطابقة" else "No matching categories",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.outline
                                 )
-                                
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.outline
+                            }
+                        }
+                    } else {
+                        item {
+                            Text(
+                                text = if (isAr) "حدد تصنيفاً لعرض الأذكار:" else "Select a category:",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                        }
+                        
+                        items(filteredCategories) { category ->
+                            val color = getCategoryColor(category)
+                            val icon = getCategoryIcon(category)
+                            
+                            Card(
+                                onClick = { viewModel.selectDuaCategory(category) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(80.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                                 )
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(horizontal = 16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = color.copy(alpha = 0.15f),
+                                        modifier = Modifier.size(48.dp)
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Icon(
+                                                imageVector = icon,
+                                                contentDescription = null,
+                                                tint = color,
+                                                modifier = Modifier.size(24.dp)
+                                            )
+                                        }
+                                    }
+                                    
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    
+                                    Text(
+                                        text = category,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.weight(1f),
+                                        textAlign = TextAlign.Start
+                                    )
+                                    
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.outline
+                                    )
+                                }
                             }
                         }
                     }
                     
-                    item {
-                        Card(
-                            onClick = { viewModel.selectDuaCategory("All") },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 8.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                            )
-                        ) {
-                            Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                                Text(
-                                    text = if (isAr) "عرض جميع الأذكار" else "Show All Supplications",
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontWeight = FontWeight.Bold
+                    if (searchPattern.isEmpty()) {
+                        item {
+                            Card(
+                                onClick = { viewModel.selectDuaCategory("All") },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
                                 )
+                            ) {
+                                Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                                    Text(
+                                        text = if (isAr) "عرض جميع الأذكار" else "Show All Supplications",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
                         }
                     }

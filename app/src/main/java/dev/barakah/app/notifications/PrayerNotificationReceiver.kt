@@ -60,13 +60,6 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
             
         notificationManager.notify(prayerId, builder.build())
         
-        // Play the standard DEFAULT notification sound
-        try {
-            val notificationUri = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_NOTIFICATION)
-            val r = android.media.RingtoneManager.getRingtone(context, notificationUri)
-            r.play()
-        } catch (e: Exception) {}
-        
         // Reschedule for next days
         PrayerScheduler.scheduleNextPrayers(context)
     }

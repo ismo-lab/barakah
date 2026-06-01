@@ -170,7 +170,7 @@ fun MainNavigationContainer(
             popEnterTransition = { fadeIn(animationSpec = tween(250)) },
             popExitTransition = { fadeOut(animationSpec = tween(250)) }
         ) {
-            composable("home") { HomeScreen(viewModel = viewModel) }
+            composable("home") { HomeScreen(viewModel = viewModel, navController = navController) }
             composable("quran") { QuranScreen(viewModel = viewModel) }
             composable("qiblah") { QiblahScreen(viewModel = viewModel) }
             composable("tasbih") { TasbihScreen(viewModel = viewModel) }

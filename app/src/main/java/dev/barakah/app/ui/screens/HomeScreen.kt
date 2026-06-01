@@ -82,6 +82,7 @@ fun calculateOffsetTime(timeStr: String, offsetMinutes: Int): String {
 @Composable
 fun HomeScreen(
     viewModel: BarakahViewModel,
+    navController: androidx.navigation.NavHostController,
     modifier: Modifier = Modifier
 ) {
     val location by viewModel.currentLocation.collectAsState()
@@ -359,6 +360,146 @@ fun HomeScreen(
                             modifier = Modifier.padding(bottom = 4.dp)
                         )
                     }
+                }
+            }
+        }
+
+        // 2.5 DAILY ESSENTIALS SECTION
+        item {
+            Column(modifier = Modifier.padding(vertical = 12.dp, horizontal = 4.dp)) {
+                Text(
+                    text = if (isAr) "أذكار اليوم" else "Daily Essentials",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    val morningCat = if (isAr) "أَذْكَارُ الصَّبَاحِ" else "In the morning and evening"
+                    val eveningCat = if (isAr) "أَذْكَارُ المَسَاءِ" else "In the morning and evening"
+                    
+                    // Morning Card
+                    Card(
+                        onClick = {
+                            viewModel.selectDuaCategory(morningCat)
+                            navController.navigate("duas") {
+                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.35f)
+                        )
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Icon(Icons.Default.WbSunny, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(28.dp))
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text(
+                                text = if (isAr) "أذكار الصباح" else "Morning Adhkar",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                    
+                    // Evening Card
+                    Card(
+                        onClick = {
+                            viewModel.selectDuaCategory(eveningCat)
+                            navController.navigate("duas") {
+                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.35f)
+                        )
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Icon(Icons.Default.NightsStay, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(28.dp))
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text(
+                                text = if (isAr) "أذكار المساء" else "Evening Adhkar",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2.7 INSPIRATIONAL QUOTE CARD
+        item {
+            val inspirations = remember(isAr) {
+                if (isAr) listOf(
+                    "«لَئِن شَكَرْتُمْ لَأَزِيدَنَّكُمْ»" to "سورة إبراهيم، ٧",
+                    "«فَإِنِّي قَرِيبٌ أُجِيبُ دَعْوَةَ الدَّاعِ إِذَا دَعَانِ»" to "سورة البقرة، ١٨٦",
+                    "«وَبَشِّرِ الصَّابِرينَ»" to "سورة البقرة، ١٥٥",
+                    "«لَا تَدْرِي لَعَلَّ اللَّهَ يُحْدِثُ بَعْدَ ذَلِكَ أَمْرًا»" to "سورة الطلاق، ١",
+                    "«سَيَجْعَلُ اللَّهُ بَعْدَ عُسْرٍ يُسْرًا»" to "سورة الطلاق، ٧"
+                ) else listOf(
+                    "\"If you are grateful, I will surely increase you.\"" to "Surah Ibrahim, 7",
+                    "\"Indeed, I am near. I respond to the invocation of the supplicant.\"" to "Surah Al-Baqarah, 186",
+                    "\"And give good tidings to the patient.\"" to "Surah Al-Baqarah, 155",
+                    "\"You know not, perhaps Allah will bring about thereafter a [new] matter.\"" to "Surah At-Talaq, 1",
+                    "\"Allah will bring about, after hardship, ease.\"" to "Surah At-Talaq, 7"
+                )
+            }
+            val quote = remember { inspirations.random() }
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp, horizontal = 4.dp),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
+                ),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        Icons.Default.FormatQuote,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = quote.first,
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Serif,
+                            lineHeight = 28.sp
+                        ),
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = quote.second,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
