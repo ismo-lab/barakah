@@ -117,8 +117,8 @@ fun MainNavigationContainer(
         NavigationTabItem(
             route = "duas",
             label = if (isAr) "الأدعية" else "Duas",
-            selectedIcon = Icons.Default.MenuBook,
-            unselectedIcon = Icons.Outlined.MenuBook,
+            selectedIcon = Icons.Default.Star,
+            unselectedIcon = Icons.Outlined.Star,
             tag = "tab_duas"
         )
     )

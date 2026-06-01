@@ -102,11 +102,22 @@ object DuaData {
 
                 // Match counts from Arabic dataset to keep rep counts aligned when using English
                 fun normalizeAr(text: String): String {
-                    return text.replace("[\\u064B-\\u065F\\u0670\\u0640]".toRegex(), "")
-                        .replace("[أإآ]".toRegex(), "ا")
-                        .replace("ى".toRegex(), "ي")
-                        .replace("ة".toRegex(), "ه")
-                        .replace("[^ا-ي]".toRegex(), "")
+                    val sb = java.lang.StringBuilder()
+                    for (char in text) {
+                        if (char in '\u064B'..'\u065F' || char == '\u0670' || char == '\u0640') {
+                            continue
+                        }
+                        val normalizedChar = when (char) {
+                            'أ', 'إ', 'آ' -> 'ا'
+                            'ى' -> 'ي'
+                            'ة' -> 'ه'
+                            else -> char
+                        }
+                        if (normalizedChar in '\u0621'..'\u064A') {
+                            sb.append(normalizedChar)
+                        }
+                    }
+                    return sb.toString()
                 }
 
                 val arNormalizedList = duasAr.map { it to normalizeAr(it.arabic) }

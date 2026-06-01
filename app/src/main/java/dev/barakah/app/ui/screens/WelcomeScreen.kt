@@ -37,18 +37,6 @@ fun WelcomeScreen(viewModel: BarakahViewModel) {
     val currentLang by viewModel.appLanguage.collectAsState()
     val isAr = currentLang == "ar"
 
-    // Automated notification permission request on first launch
-    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-        val notificationPermissionState = rememberPermissionState(
-            android.Manifest.permission.POST_NOTIFICATIONS
-        )
-        LaunchedEffect(Unit) {
-            if (!notificationPermissionState.status.isGranted) {
-                notificationPermissionState.launchPermissionRequest()
-            }
-        }
-    }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -87,9 +75,13 @@ fun WelcomeScreen(viewModel: BarakahViewModel) {
     }
 }
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun LanguageStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
     val currentLang by viewModel.appLanguage.collectAsState()
+    val notificationPermissionState = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+        rememberPermissionState(android.Manifest.permission.POST_NOTIFICATIONS)
+    } else null
     
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Icon(
@@ -122,7 +114,12 @@ fun LanguageStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
         Spacer(modifier = Modifier.weight(1f))
 
         Button(
-            onClick = onNext,
+            onClick = {
+                if (notificationPermissionState?.status?.isGranted == false) {
+                    notificationPermissionState.launchPermissionRequest()
+                }
+                onNext()
+            },
             modifier = Modifier.fillMaxWidth().height(56.dp),
             shape = RoundedCornerShape(16.dp)
         ) {

@@ -333,6 +333,26 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     @SuppressLint("MissingPermission")
     fun requestGPSLocation() {
         try {
+            val context = getApplication<Application>()
+            val fineGranted = androidx.core.content.ContextCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.ACCESS_FINE_LOCATION
+            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+            val coarseGranted = androidx.core.content.ContextCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+
+            if (!fineGranted && !coarseGranted) {
+                val label = if (_appLanguage.value == "ar") "مكة المكرمة (تلقائي)" else "Mecca (GPS Fallback)"
+                updateLocation(21.4225, 39.8262, label)
+                viewModelScope.launch {
+                    val msg = if (_appLanguage.value == "ar") "لم يتم منح صلاحية تحديد الموقع، تم استخدام مكة المكرمة كافتراضي" else "Location permission not granted, falling back to Mecca"
+                    _eventFlow.emit(msg)
+                }
+                return
+            }
+
             val isGpsEnabled = isLocationEnabled()
             if (!isGpsEnabled) {
                 val now = System.currentTimeMillis()
@@ -363,21 +383,37 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
                         }
                     } else {
                         // try last known location as fallback
-                        locationClient.lastLocation.addOnSuccessListener { lastLoc: Location? ->
-                            if (lastLoc != null) {
-                                updateLocation(lastLoc.latitude, lastLoc.longitude, "GPS (Auto)")
-                                viewModelScope.launch {
-                                    val msg = if (_appLanguage.value == "ar") "تم تحديد موقعك تلقائياً بنجاح" else "GPS location detected successfully"
-                                    _eventFlow.emit(msg)
+                        try {
+                            locationClient.lastLocation.addOnSuccessListener { lastLoc: Location? ->
+                                if (lastLoc != null) {
+                                    updateLocation(lastLoc.latitude, lastLoc.longitude, "GPS (Auto)")
+                                    viewModelScope.launch {
+                                        val msg = if (_appLanguage.value == "ar") "تم تحديد موقعك تلقائياً بنجاح" else "GPS location detected successfully"
+                                        _eventFlow.emit(msg)
+                                    }
+                                } else {
+                                    // Fallback ONLY to Mecca as requested
+                                    val label = if (_appLanguage.value == "ar") "مكة المكرمة (تلقائي)" else "Mecca (GPS Fallback)"
+                                    updateLocation(21.4225, 39.8262, label)
+                                    viewModelScope.launch {
+                                        val msg = if (_appLanguage.value == "ar") "تعذر تحديد الموقع الجغرافي، تم استخدام مكة المكرمة كافتراضي" else "Could not determine GPS location, falling back to Mecca"
+                                        _eventFlow.emit(msg)
+                                    }
                                 }
-                            } else {
-                                // Fallback ONLY to Mecca as requested
+                            }.addOnFailureListener {
                                 val label = if (_appLanguage.value == "ar") "مكة المكرمة (تلقائي)" else "Mecca (GPS Fallback)"
                                 updateLocation(21.4225, 39.8262, label)
                                 viewModelScope.launch {
                                     val msg = if (_appLanguage.value == "ar") "تعذر تحديد الموقع الجغرافي، تم استخدام مكة المكرمة كافتراضي" else "Could not determine GPS location, falling back to Mecca"
                                     _eventFlow.emit(msg)
                                 }
+                            }
+                        } catch (e: Exception) {
+                            val label = if (_appLanguage.value == "ar") "مكة المكرمة (تلقائي)" else "Mecca (GPS Fallback)"
+                            updateLocation(21.4225, 39.8262, label)
+                            viewModelScope.launch {
+                                val msg = if (_appLanguage.value == "ar") "تعذر تحديد الموقع الجغرافي، تم استخدام مكة المكرمة كافتراضي" else "Could not determine GPS location, falling back to Mecca"
+                                _eventFlow.emit(msg)
                             }
                         }
                     }

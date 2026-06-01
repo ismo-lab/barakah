@@ -57,7 +57,7 @@ fun SupplicationsScreen(
         context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
     }
 
-    val categoryList = remember(isAr) {
+    val categoryList = remember(isAr, dev.barakah.app.data.DuaData.duasAr.isNotEmpty(), dev.barakah.app.data.DuaData.duasEn.isNotEmpty()) {
         val list = mutableListOf<String>()
         list.add(if (isAr) "الأذكار المحفوظة" else "Bookmarks")
         val currentList = if (isAr) dev.barakah.app.data.DuaData.duasAr else dev.barakah.app.data.DuaData.duasEn

@@ -135,11 +135,6 @@ fun HomeScreen(
     val alertSettings by viewModel.alertSettings.collectAsState()
     
     val prayers = listOf("Fajr", "Sunrise", "Dhuhr", "Asr", "Maghrib", "Isha")
-    LaunchedEffect(Unit) {
-        if (notifPermissionState?.status?.isGranted == false) {
-            notifPermissionState.launchPermissionRequest()
-        }
-    }
 
     val showSettingsDialog by viewModel.showSettingsDialog.collectAsState()
 
@@ -609,6 +604,9 @@ fun HomeScreen(
                         val isAlertEnabled = alertSettings.find { it.prayerName == name }?.isEnabled != false
                         IconButton(
                             onClick = {
+                                if (!isAlertEnabled && notifPermissionState?.status?.isGranted == false) {
+                                    notifPermissionState.launchPermissionRequest()
+                                }
                                 viewModel.togglePrayerAlert(name, !isAlertEnabled)
                             }
                         ) {
