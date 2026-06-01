@@ -39,129 +39,101 @@ object QuranData {
         if (surahs.isNotEmpty()) return
         
         CoroutineScope(Dispatchers.IO).launch {
-            android.util.Log.d("QuranData", "Starting multi-part async Quran data load...")
+            android.util.Log.d("QuranData", "Loading Quran metadata from assets...")
             
             try {
+                val metadataJson = context.assets.open("quran/metadata.json").bufferedReader().use { it.readText() }
+                val reader = android.util.JsonReader(metadataJson.reader())
                 val list = mutableListOf<Surah>()
-                val resIds = listOf(
-                    R.raw.quran_part_1,
-                    R.raw.quran_part_2,
-                    R.raw.quran_part_3,
-                    R.raw.quran_part_4,
-                    R.raw.quran_part_5,
-                    R.raw.quran_part_6
-                )
-
-                for (resId in resIds) {
-                    if (resId == 0) continue
+                
+                reader.beginArray()
+                while (reader.hasNext()) {
+                    var id = 0
+                    var name = ""
+                    var arabic = ""
+                    var translation = ""
+                    var type = ""
+                    var versesCount = 0
                     
-                    context.resources.openRawResource(resId).use { rawInputStream ->
-                        val gzipInputStream = java.util.zip.GZIPInputStream(rawInputStream)
-                        val reader = android.util.JsonReader(gzipInputStream.bufferedReader(Charsets.UTF_8))
-                        reader.beginArray()
-                        while (reader.hasNext()) {
-                            list.add(readSurah(reader))
+                    reader.beginObject()
+                    while (reader.hasNext()) {
+                        when (reader.nextName()) {
+                            "id" -> id = reader.nextInt()
+                            "name" -> name = reader.nextString()
+                            "arabic" -> arabic = reader.nextString()
+                            "translation" -> translation = reader.nextString()
+                            "type" -> type = reader.nextString()
+                            "versesCount" -> versesCount = reader.nextInt()
+                            else -> reader.skipValue()
                         }
-                        reader.endArray()
-                        reader.close()
                     }
+                    reader.endObject()
+                    
+                    list.add(Surah(
+                        id = id,
+                        name = name,
+                        arabic = arabic,
+                        translation = translation,
+                        type = if (type.isNotEmpty()) {
+                            type.replaceFirstChar { if (it.isLowerCase()) it.titlecase(java.util.Locale.US) else it.toString() }
+                        } else "",
+                        versesCount = versesCount,
+                        versesList = emptyList()
+                    ))
                 }
+                reader.endArray()
+                reader.close()
                 
                 withContext(Dispatchers.Main) {
                     surahs = list.sortedBy { it.id }
                     _surahsFlow.value = surahs
-                    android.util.Log.d("QuranData", "Successfully loaded ${surahs.size} surahs")
+                    android.util.Log.d("QuranData", "Successfully loaded metadata for ${surahs.size} surahs")
                 }
             } catch (e: Exception) {
-                android.util.Log.e("QuranData", "Critical error parsing multi-part quran: ${e.message}", e)
+                android.util.Log.e("QuranData", "Error loading Quran metadata: ${e.message}", e)
             }
         }
     }
 
-    private fun readSurah(reader: android.util.JsonReader): Surah {
-        var id = 0
-        var nameAr = ""
-        var nameTrans = ""
-        var nameEn = ""
-        var type = ""
-        var versesCount = 0
-        var versesList = mutableListOf<Verse>()
-
-        reader.beginObject()
-        while (reader.hasNext()) {
-            when (reader.nextName()) {
-                "number" -> id = reader.nextInt()
-                "name" -> {
-                    reader.beginObject()
-                    while (reader.hasNext()) {
-                        when (reader.nextName()) {
-                            "ar" -> nameAr = reader.nextString()
-                            "en" -> nameEn = reader.nextString()
-                            "transliteration" -> nameTrans = reader.nextString()
-                            else -> reader.skipValue()
-                        }
-                    }
-                    reader.endObject()
-                }
-                "revelation_place" -> {
-                    reader.beginObject()
-                    while (reader.hasNext()) {
-                        if (reader.nextName() == "en") type = reader.nextString()
-                        else reader.skipValue()
-                    }
-                    reader.endObject()
-                }
-                "verses_count" -> versesCount = reader.nextInt()
-                "verses" -> {
+    fun loadVersesForSurah(context: Context, surahId: Int): List<Verse> {
+        try {
+            val surahJson = context.assets.open("quran/surah_$surahId.json").bufferedReader().use { it.readText() }
+            val reader = android.util.JsonReader(surahJson.reader())
+            val verses = mutableListOf<Verse>()
+            
+            reader.beginObject()
+            while (reader.hasNext()) {
+                val name = reader.nextName()
+                if (name == "verses") {
                     reader.beginArray()
                     while (reader.hasNext()) {
-                        versesList.add(readVerse(reader))
+                        var index = 0
+                        var arabic = ""
+                        var english = ""
+                        
+                        reader.beginObject()
+                        while (reader.hasNext()) {
+                            when (reader.nextName()) {
+                                "index" -> index = reader.nextInt()
+                                "arabic" -> arabic = reader.nextString()
+                                "english" -> english = reader.nextString()
+                                else -> reader.skipValue()
+                            }
+                        }
+                        reader.endObject()
+                        verses.add(Verse(index, arabic, english))
                     }
                     reader.endArray()
+                } else {
+                    reader.skipValue()
                 }
-                else -> reader.skipValue()
             }
+            reader.endObject()
+            reader.close()
+            return verses.sortedBy { it.index }
+        } catch (e: Exception) {
+            android.util.Log.e("QuranData", "Error loading verses for Surah $surahId: ${e.message}")
+            return emptyList()
         }
-        reader.endObject()
-
-        return Surah(
-            id = id,
-            name = nameTrans,
-            arabic = nameAr,
-            translation = nameEn,
-            type = if (type.isNotEmpty()) {
-                type.replaceFirstChar { if (it.isLowerCase()) it.titlecase(java.util.Locale.US) else it.toString() }
-            } else "",
-            versesCount = versesCount,
-            versesList = versesList.sortedBy { it.index }
-        )
-    }
-
-    private fun readVerse(reader: android.util.JsonReader): Verse {
-        var number = 0
-        var ar = ""
-        var en = ""
-
-        reader.beginObject()
-        while (reader.hasNext()) {
-            when (reader.nextName()) {
-                "number" -> number = reader.nextInt()
-                "text" -> {
-                    reader.beginObject()
-                    while (reader.hasNext()) {
-                        when (reader.nextName()) {
-                            "ar" -> ar = reader.nextString()
-                            "en" -> en = reader.nextString()
-                            else -> reader.skipValue()
-                        }
-                    }
-                    reader.endObject()
-                }
-                else -> reader.skipValue()
-            }
-        }
-        reader.endObject()
-
-        return Verse(number, ar, en)
     }
 }

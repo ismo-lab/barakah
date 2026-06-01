@@ -132,22 +132,6 @@ fun SupplicationsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (activeCategory != "Menu" && searchPattern.isEmpty()) {
-                        IconButton(
-                            onClick = { viewModel.selectDuaCategory("Menu") },
-                            colors = IconButtonDefaults.iconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f)
-                            ),
-                            modifier = Modifier.padding(end = 12.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back to categories",
-                                tint = MaterialTheme.colorScheme.onPrimary
-                            )
-                        }
-                    }
-
                     Text(
                         text = if (isAr) "حصن المسلم" else "Hisnul Muslim",
                         style = MaterialTheme.typography.headlineLarge,
@@ -155,6 +139,21 @@ fun SupplicationsScreen(
                         color = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.weight(1f)
                     )
+
+                    if (activeCategory != "Menu" && searchPattern.isEmpty()) {
+                        IconButton(
+                            onClick = { viewModel.selectDuaCategory("Menu") },
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f)
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = "Back to categories",
+                                tint = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                    }
                 }
                 
                 Text(

@@ -371,7 +371,17 @@ fun QuranScreen(
             }
         } else {
             // DETAIL ACTIVE READING VIEW
-            val surah = currentSurah
+            val context = androidx.compose.ui.platform.LocalContext.current
+            var surahWithVerses by remember(currentSurah.id) { mutableStateOf(currentSurah) }
+            
+            LaunchedEffect(currentSurah.id) {
+                val verses = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    QuranData.loadVersesForSurah(context, currentSurah.id)
+                }
+                surahWithVerses = currentSurah.copy(versesList = verses)
+            }
+            
+            val surah = surahWithVerses
             val isBookmarked = bookmarks.any { b -> b.surahId == surah.id }
             val readerListState = androidx.compose.runtime.key(surah.id) { androidx.compose.foundation.lazy.rememberLazyListState() }
 
