@@ -79,9 +79,16 @@ fun WelcomeScreen(viewModel: BarakahViewModel) {
 @Composable
 fun LanguageStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
     val currentLang by viewModel.appLanguage.collectAsState()
+    var permissionRequested by remember { mutableStateOf(false) }
     val notificationPermissionState = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
         rememberPermissionState(android.Manifest.permission.POST_NOTIFICATIONS)
     } else null
+    
+    LaunchedEffect(notificationPermissionState?.status?.isGranted) {
+        if (notificationPermissionState?.status?.isGranted == true && permissionRequested) {
+            onNext()
+        }
+    }
     
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Icon(
@@ -115,10 +122,12 @@ fun LanguageStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
 
         Button(
             onClick = {
-                if (notificationPermissionState?.status?.isGranted == false) {
+                if (notificationPermissionState != null && !notificationPermissionState.status.isGranted && !permissionRequested) {
                     notificationPermissionState.launchPermissionRequest()
+                    permissionRequested = true
+                } else {
+                    onNext()
                 }
-                onNext()
             },
             modifier = Modifier.fillMaxWidth().height(56.dp),
             shape = RoundedCornerShape(16.dp)
@@ -167,10 +176,18 @@ fun LanguageCard(label: String, isSelected: Boolean, onClick: () -> Unit) {
      val currentLang by viewModel.appLanguage.collectAsState()
      val isAr = currentLang == "ar"
      var query by remember { mutableStateOf("") }
+     var gpsPermissionRequested by remember { mutableStateOf(false) }
      
      val locationPermissionState = rememberPermissionState(
          android.Manifest.permission.ACCESS_FINE_LOCATION
      )
+
+     LaunchedEffect(locationPermissionState.status.isGranted) {
+         if (locationPermissionState.status.isGranted && gpsPermissionRequested) {
+             viewModel.setLocationMethod("auto")
+             onFinish()
+         }
+     }
 
      val filteredCities = if (query.isEmpty()) emptyList() else CityData.cities.filter {
          it.name.contains(query, ignoreCase = true) || it.nameAr.contains(query)
@@ -200,11 +217,13 @@ fun LanguageCard(label: String, isSelected: Boolean, onClick: () -> Unit) {
          // GPS Button
          Button(
              onClick = {
-                 if (!locationPermissionState.status.isGranted) {
+                 if (!locationPermissionState.status.isGranted && !gpsPermissionRequested) {
                      locationPermissionState.launchPermissionRequest()
+                     gpsPermissionRequested = true
+                 } else {
+                     viewModel.setLocationMethod("auto")
+                     onFinish()
                  }
-                 viewModel.setLocationMethod("auto")
-                 onFinish()
              },
             modifier = Modifier.fillMaxWidth().height(56.dp),
             shape = RoundedCornerShape(16.dp),

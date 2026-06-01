@@ -97,7 +97,7 @@ fun SupplicationsScreen(
 
     fun getCategoryIcon(category: String): androidx.compose.ui.graphics.vector.ImageVector {
         val clean = category.lowercase()
-        return if (clean.contains("bookmark") || clean.contains("favorite") || clean.contains("المفضلة") || clean.contains("مرجعية")) {
+        return if (clean.contains("bookmark") || clean.contains("favorite") || clean.contains("المفضلة") || clean.contains("مرجعية") || clean.contains("محفوظ")) {
             Icons.Default.Bookmark
         } else {
             Icons.Default.MenuBook
