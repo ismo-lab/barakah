@@ -7,6 +7,23 @@ import java.text.SimpleDateFormat
 import java.util.Properties
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.util.Base64
+import java.io.File
+
+// Automatically extract keystore from base64 string on build to prevent signing corruption across devices and GitHub actions
+val keystoreFile = file("keystore.jks")
+val base64File = rootProject.file("debug.keystore.base64")
+if (base64File.exists()) {
+  try {
+    val base64Content = base64File.readText().trim()
+    if (base64Content.isNotEmpty()) {
+      val decodedBytes = Base64.getDecoder().decode(base64Content)
+      keystoreFile.writeBytes(decodedBytes)
+    }
+  } catch (e: Exception) {
+    println("Dynamic keystore extraction failed: ${e.message}")
+  }
+}
 
 plugins {
   alias(libs.plugins.android.application)
@@ -133,7 +150,6 @@ dependencies {
   implementation(libs.androidx.room.runtime)
   // implementation(libs.coil.compose)
   implementation(libs.converter.moshi)
-  // implementation(libs.firebase.ai)
   implementation(libs.kotlinx.coroutines.android)
   implementation(libs.kotlinx.coroutines.core)
   implementation(libs.logging.interceptor)
