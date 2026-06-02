@@ -65,6 +65,16 @@ object PrayerScheduler {
                 scheduleAlarm(context, "Tahajjud (Nafilah)", tahajjudTime, 8, isEnabled("Tahajjud (Nafilah)"))
                 scheduleAlarm(context, "Qiyam-ul-Layl (Nafilah)", qiyamTime, 9, isEnabled("Qiyam-ul-Layl (Nafilah)"))
             }
+
+            // Morning and Evening Adhkar Notifications
+            val notifyMorning = prefs.getBoolean("notify_morning_adhkar", true)
+            val notifyEvening = prefs.getBoolean("notify_evening_adhkar", true)
+
+            val morningAdhkarTime = calculateOffsetTime(times.fajr, 30)
+            val eveningAdhkarTime = calculateOffsetTime(times.asr, 30)
+
+            scheduleAlarm(context, "Morning Adhkar", morningAdhkarTime, 10, notifyMorning)
+            scheduleAlarm(context, "Evening Adhkar", eveningAdhkarTime, 11, notifyEvening)
         }
     }
 

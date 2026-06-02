@@ -88,11 +88,11 @@ fun HomeScreen(
     val location by viewModel.currentLocation.collectAsState()
     val locationLabel by viewModel.locationLabel.collectAsState()
     val times by viewModel.prayerTimes.collectAsState()
-    val activePrayer by viewModel.activePrayerName.collectAsState()
-    val nextPrayerName by viewModel.nextPrayerName.collectAsState()
-    val countdown by viewModel.nextPrayerCountdown.collectAsState()
+    val activeHighlight by viewModel.activeHighlightName.collectAsState()
 
     // Persistent Settings states retrieved from viewmodel
+    val notifyMorningAdhkar by viewModel.notifyMorningAdhkar.collectAsState()
+    val notifyEveningAdhkar by viewModel.notifyEveningAdhkar.collectAsState()
     val currentLang by viewModel.appLanguage.collectAsState()
     val appTheme by viewModel.appTheme.collectAsState()
     val useDynamicColor by viewModel.useDynamicColor.collectAsState()
@@ -307,56 +307,11 @@ fun HomeScreen(
 
         // 2. DYNAMIC EXPRESSIVE COUNTDOWN CARD (Bold Asymmetrical "rounded-[48px_16px_48px_16px]")
         item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp)
-                    .testTag("countdown_card"),
-                shape = AbsoluteRoundedCornerShape(topLeft = 48.dp, bottomRight = 48.dp, topRight = 16.dp, bottomLeft = 16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primary,
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
-                                )
-                            )
-                        )
-                        .padding(horizontal = 24.dp, vertical = 28.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.Start
-                    ) {
-                        Text(
-                            text = if (isAr) "الصلاة القادمة: ${translatePrayer(nextPrayerName)}" else "NEXT: $nextPrayerName".uppercase(),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f),
-                            fontWeight = FontWeight.ExtraBold,
-                            letterSpacing = 2.sp,
-                            modifier = Modifier.padding(bottom = 4.dp)
-                        )
-
-                        Text(
-                            text = countdown,
-                            style = MaterialTheme.typography.displayLarge.copy(
-                                fontSize = 56.sp,
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = (-2.5).sp,
-                                lineHeight = 56.sp
-                            ),
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.padding(bottom = 4.dp)
-                        )
-                    }
-                }
-            }
+            CountdownCardView(
+                viewModel = viewModel,
+                isAr = isAr,
+                translatePrayer = { translatePrayer(it) }
+            )
         }
 
         // 2.5 DAILY ESSENTIALS SECTION
@@ -518,13 +473,16 @@ fun HomeScreen(
         }
 
         // 4. VERTICAL TIMELINE OF THE PRAYERS (including Nawafil if enabled)
-        items(schedule.size) { index ->
+        items(
+            count = schedule.size,
+            key = { index -> schedule[index].first }
+        ) { index ->
             val item = schedule[index]
             val name = item.first
             val time = item.second
             val subtitle = item.third
             val isNawafil = name.endsWith("(Nafilah)")
-            val isCurrent = !isNawafil && (name == activePrayer || (name == "Sunrise" && activePrayer == "Sunrise / Duha"))
+            val isCurrent = name == activeHighlight
 
             // Elegant high contrast timeline cards as requested
             Card(
@@ -839,6 +797,60 @@ fun HomeScreen(
                                         Switch(
                                             checked = showNawafil,
                                             onCheckedChange = { viewModel.setShowNawafil(it) }
+                                        )
+                                    }
+
+                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = if (isAr) "تنبيهات أذكار الصباح" else "Morning Adhkar Notifications",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = if (isAr) "تنبيه يومي لقراءة أذكار الصباح (بعد صلاة الفجر بـ ٣٠ دقيقة)" else "Daily reminder to recite Morning Adhkar (30 mins after Fajr)",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Switch(
+                                            checked = notifyMorningAdhkar,
+                                            onCheckedChange = { viewModel.setNotifyMorningAdhkar(it) }
+                                        )
+                                    }
+
+                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = if (isAr) "تنبيهات أذكار المساء" else "Evening Adhkar Notifications",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = if (isAr) "تنبيه يومي لقراءة أذكار المساء (بعد صلاة العصر بـ ٣٠ دقيقة)" else "Daily reminder to recite Evening Adhkar (30 mins after Asr)",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Switch(
+                                            checked = notifyEveningAdhkar,
+                                            onCheckedChange = { viewModel.setNotifyEveningAdhkar(it) }
                                         )
                                     }
                                 }
@@ -1323,3 +1335,64 @@ data class Quadruple<A, B, C, D>(
     val third: C,
     val fourth: D
 )
+
+@Composable
+fun CountdownCardView(
+    viewModel: dev.barakah.app.ui.BarakahViewModel,
+    isAr: Boolean,
+    translatePrayer: (String) -> String
+) {
+    val countdown by viewModel.nextPrayerCountdown.collectAsState()
+    val nextPrayerName by viewModel.nextPrayerName.collectAsState()
+
+    androidx.compose.material3.Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 16.dp)
+            .testTag("countdown_card"),
+        shape = androidx.compose.foundation.shape.AbsoluteRoundedCornerShape(topLeft = 48.dp, bottomRight = 48.dp, topRight = 16.dp, bottomLeft = 16.dp),
+        colors = androidx.compose.material3.CardDefaults.cardColors(
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.primary
+        )
+    ) {
+        androidx.compose.foundation.layout.Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    androidx.compose.ui.graphics.Brush.verticalGradient(
+                        colors = listOf(
+                            androidx.compose.material3.MaterialTheme.colorScheme.primary,
+                            androidx.compose.material3.MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
+                        )
+                    )
+                )
+                .padding(horizontal = 24.dp, vertical = 28.dp)
+        ) {
+            androidx.compose.foundation.layout.Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = androidx.compose.ui.Alignment.Start
+            ) {
+                androidx.compose.material3.Text(
+                    text = if (isAr) "الصلاة القادمة: ${translatePrayer(nextPrayerName)}" else "NEXT: $nextPrayerName".uppercase(),
+                    style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f),
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
+                    letterSpacing = 2.sp,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+
+                androidx.compose.material3.Text(
+                    text = countdown,
+                    style = androidx.compose.material3.MaterialTheme.typography.displayLarge.copy(
+                        fontSize = 56.sp,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Black,
+                        letterSpacing = (-2.5).sp,
+                        lineHeight = 56.sp
+                    ),
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+            }
+        }
+    }
+}

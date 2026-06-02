@@ -82,6 +82,13 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     private val _showNawafil = MutableStateFlow(prefs.getBoolean("show_nawafil", false))
     val showNawafil: StateFlow<Boolean> = _showNawafil
 
+    // Morning and Evening Adhkar Notifications state flow
+    private val _notifyMorningAdhkar = MutableStateFlow(prefs.getBoolean("notify_morning_adhkar", true))
+    val notifyMorningAdhkar: StateFlow<Boolean> = _notifyMorningAdhkar
+
+    private val _notifyEveningAdhkar = MutableStateFlow(prefs.getBoolean("notify_evening_adhkar", true))
+    val notifyEveningAdhkar: StateFlow<Boolean> = _notifyEveningAdhkar
+
     // Settings dialog visibility
     private val _showSettingsDialog = MutableStateFlow(false)
     val showSettingsDialog: StateFlow<Boolean> = _showSettingsDialog
@@ -203,6 +210,9 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
     private val _activePrayerName = MutableStateFlow("Dhuhr")
     val activePrayerName: StateFlow<String> = _activePrayerName
+
+    private val _activeHighlightName = MutableStateFlow("Dhuhr")
+    val activeHighlightName: StateFlow<String> = _activeHighlightName
 
     // 3. PERSISTENT TASBIH COUNTER STATE
     val commonDhikrList = listOf(
@@ -587,6 +597,18 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         recalculatePrayerTimes()
     }
 
+    fun setNotifyMorningAdhkar(value: Boolean) {
+        _notifyMorningAdhkar.value = value
+        prefs.edit().putBoolean("notify_morning_adhkar", value).apply()
+        try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
+    }
+
+    fun setNotifyEveningAdhkar(value: Boolean) {
+        _notifyEveningAdhkar.value = value
+        prefs.edit().putBoolean("notify_evening_adhkar", value).apply()
+        try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
+    }
+
     fun setAsrMethod(value: String) {
         _asrMethod.value = value
         prefs.edit().putString("asr_method", value).apply()
@@ -867,6 +889,61 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
         _activePrayerName.value = active
         _nextPrayerName.value = nextName
+
+        // Compute exact timeline active item (including Nawafil)
+        val highlight: String
+        if (showNawafil.value) {
+            val duhaSec = CachedSunriseSec + 20 * 60
+            val witrSec = CachedIshaSec + 45 * 60
+            val qiyamSec = CachedFajrSec - 150 * 60
+            val tahajjudSec = CachedFajrSec - 90 * 60
+
+            when {
+                currentTimeInSec >= witrSec -> {
+                    highlight = "Witr (Nafilah)"
+                }
+                currentTimeInSec < fajrSec -> {
+                    when {
+                        currentTimeInSec >= tahajjudSec -> highlight = "Tahajjud (Nafilah)"
+                        currentTimeInSec >= qiyamSec -> highlight = "Qiyam-ul-Layl (Nafilah)"
+                        else -> highlight = "Witr (Nafilah)"
+                    }
+                }
+                currentTimeInSec < sunriseSec -> {
+                    highlight = "Fajr"
+                }
+                currentTimeInSec < dhuhrSec -> {
+                    if (currentTimeInSec >= duhaSec) {
+                        highlight = "Duha (Nafilah)"
+                    } else {
+                        highlight = "Sunrise"
+                    }
+                }
+                currentTimeInSec < asrSec -> {
+                    highlight = "Dhuhr"
+                }
+                currentTimeInSec < maghribSec -> {
+                    highlight = "Asr"
+                }
+                currentTimeInSec < ishaSec -> {
+                    highlight = "Maghrib"
+                }
+                else -> {
+                    highlight = "Isha"
+                }
+            }
+        } else {
+            when {
+                currentTimeInSec < fajrSec -> highlight = "Isha"
+                currentTimeInSec < sunriseSec -> highlight = "Fajr"
+                currentTimeInSec < dhuhrSec -> highlight = "Sunrise"
+                currentTimeInSec < asrSec -> highlight = "Dhuhr"
+                currentTimeInSec < maghribSec -> highlight = "Asr"
+                currentTimeInSec < ishaSec -> highlight = "Maghrib"
+                else -> highlight = "Isha"
+            }
+        }
+        _activeHighlightName.value = highlight
 
         var diff = if (isNextDay) {
             (24 * 3600 - currentTimeInSec) + nextSec

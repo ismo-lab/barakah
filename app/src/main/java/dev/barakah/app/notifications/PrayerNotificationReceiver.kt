@@ -50,10 +50,43 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
             context, 0, activityIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         
+        val appPrefs = context.getSharedPreferences("barakah_prefs", Context.MODE_PRIVATE)
+        val isAr = appPrefs.getString("app_lang", "en") == "ar"
+
+        val title: String
+        val text: String
+        if (prayerName == "Morning Adhkar") {
+            title = if (isAr) "أذكار الصباح" else "Morning Adhkar"
+            text = if (isAr) "حان وقت قراءة أذكار الصباح لجلب البركة والتوفيق ليومك." else "It's time to recite your Morning Adhkar for barakah in your day."
+        } else if (prayerName == "Evening Adhkar") {
+            title = if (isAr) "أذكار المساء" else "Evening Adhkar"
+            text = if (isAr) "حان وقت قراءة أذكار المساء لحفظك وسلامتك الليلة." else "It's time to recite your Evening Adhkar for protection and peace tonight."
+        } else {
+            title = if (isAr) "مواقيت الصلاة" else "Prayer Time"
+            val dispName = if (isAr) {
+                when (prayerName) {
+                    "Fajr" -> "الفجر"
+                    "Dhuhr" -> "الظهر"
+                    "Asr" -> "العصر"
+                    "Maghrib" -> "المغرب"
+                    "Isha" -> "العشاء"
+                    "Sunrise" -> "الشروق"
+                    "Duha (Nafilah)" -> "الضحى"
+                    "Witr (Nafilah)" -> "الوتر"
+                    "Tahajjud (Nafilah)" -> "التهجد"
+                    "Qiyam-ul-Layl (Nafilah)" -> "قيام الليل"
+                    else -> prayerName
+                }
+            } else {
+                prayerName
+            }
+            text = if (isAr) "حان وقت صلاة $dispName." else "It's time for $dispName prayer."
+        }
+
         val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("Prayer Time")
-            .setContentText("It's time for $prayerName prayer.")
+            .setContentTitle(title)
+            .setContentText(text)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
