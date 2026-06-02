@@ -63,26 +63,19 @@ jobs:
         tag_name: "v${{ env.VERSION_NAME }}"
         name: "Barakah v${{ env.VERSION_NAME }}"
         body: |
-          ## ✨ Barakah v${{ env.VERSION_NAME }} - Release ✨
+          ## 📝 Changelog - v${{ env.VERSION_NAME }}
 
-          **Barakah (بَرَكَة)** is a privacy-respecting, fully Free and Open Source (FOSS) Islamic companion application for Android.
+          ### ✨ Core Improvements
+          - **🔒 Privacy Reinforcement**: Removed all update checking mechanisms to operate completely offline, guaranteeing 100% telemetry-free local execution.
+          - **🌸 Brand Refinement**: Adjusted the sacred typography naming representation to **`بَرَكَة`** (Barakah) across the interface and documentation.
+          - **🛠️ ASCII cleanup**: Removed the visual diagram under state and simplified workspace documentation for improved readability.
 
-          ### 🕋 Key Highlights
-          - **Real-time Qibla Companion**: Interactive sensor-calibrated Kaaba locator with smooth, high-precision vector compass.
-          - **Precision Prayer Coordinates**: Dynamic offline latitude/longitude calculations utilizing the official robust **Adhan** algorithm.
-          - **Elegant Reader (Quran & Hadith)**: Optically balanced high-contrast layouts with fully customizable font sizes.
-          - **Tactile Tasbih**: Interactive, persistent digital misbaha with vibrational ripple-feedback at threshold completions.
-          - **Cosmic Dark Theme**: High-contrast eye-safe theme configured for premium battery savings on AMOLED displays.
-
-          ### 🔒 Privacy & Local Integrity
-          - **100% Offline Reliable**: Your precise physical location and logs never leave your device.
-          - **Authentic and Pure**: Fully ad-free, telemetry-free, and trackers-free.
-
+          ### 📦 Application Features
+          - **🧭 Vector Qibla Companion**: Accurate, hardware-sensor calibrated Kaaba compass.
+          - **🕌 Dynamic Offline Prayer Calculations**: Latitude/Longitude mathematics with local global city index search.
+          - **📖 Offline Text Reader**: Optimized Hisnul Muslim and noble Quran datasets with long-form contrast settings.
+          - **📿 Click-to-Count Misbaha**: Haptic-supported Tasbih mechanism recording persistent counts locally.
+          
           ---
-
-          ### 📦 Quick Start Guide
-          1. Download the **`Barakah-v${{ env.VERSION_NAME }}.apk`** asset attached below.
-          2. Open the downloaded file on your Android device.
-          3. If prompted, enable *"Install unknown apps"* or allow installs from your file manager/browser.
-          4. Open **Barakah** and may it bring tranquility to your spiritual routines. 🤲
+          *Made is a humble contribution to the Muslim Ummah. May Allah grant Barakah in your spiritual journeys. 🤲*
         files: app/build/outputs/apk/debug/Barakah-v${{ env.VERSION_NAME }}.apk
