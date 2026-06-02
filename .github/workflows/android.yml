@@ -63,19 +63,5 @@ jobs:
         tag_name: "v${{ env.VERSION_NAME }}"
         name: "Barakah v${{ env.VERSION_NAME }}"
         body: |
-          ## 📝 Changelog - v${{ env.VERSION_NAME }}
-
-          ### ✨ Core Improvements
-          - **🔒 Privacy Reinforcement**: Removed all update checking mechanisms to operate completely offline, guaranteeing 100% telemetry-free local execution.
-          - **🌸 Brand Refinement**: Adjusted the sacred typography naming representation to **`بَرَكَة`** (Barakah) across the interface and documentation.
-          - **🛠️ ASCII cleanup**: Removed the visual diagram under state and simplified workspace documentation for improved readability.
-
-          ### 📦 Application Features
-          - **🧭 Vector Qibla Companion**: Accurate, hardware-sensor calibrated Kaaba compass.
-          - **🕌 Dynamic Offline Prayer Calculations**: Latitude/Longitude mathematics with local global city index search.
-          - **📖 Offline Text Reader**: Optimized Hisnul Muslim and noble Quran datasets with long-form contrast settings.
-          - **📿 Click-to-Count Misbaha**: Haptic-supported Tasbih mechanism recording persistent counts locally.
-          
-          ---
-          *Made is a humble contribution to the Muslim Ummah. May Allah grant Barakah in your spiritual journeys. 🤲*
+          ${{ github.event.head_commit.message }}
         files: app/build/outputs/apk/debug/Barakah-v${{ env.VERSION_NAME }}.apk
