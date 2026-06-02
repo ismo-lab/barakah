@@ -35,6 +35,18 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew assembleDebug --stacktrace
 
+    - name: Get Version Name
+      id: get_version
+      run: |
+        VERSION_NAME=$(grep VERSION_NAME app/version.properties | cut -d'=' -f2 | tr -d '\r')
+        echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+        echo "Extracted App Version: $VERSION_NAME"
+
+    - name: Rename compiled APK
+      run: |
+        cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Barakah-v${{ env.VERSION_NAME }}.apk
+        echo "Renamed app-debug.apk to Barakah-v${{ env.VERSION_NAME }}.apk"
+
     - name: Delete old releases
       if: github.event_name == 'push'
       env:
@@ -48,6 +60,6 @@ jobs:
       uses: softprops/action-gh-release@v2
       if: github.event_name == 'push'
       with:
-        tag_name: "build-${{ github.run_number }}"
-        name: "Build ${{ github.run_number }}"
-        files: app/build/outputs/apk/debug/app-debug.apk
+        tag_name: "v${{ env.VERSION_NAME }}"
+        name: "Barakah v${{ env.VERSION_NAME }}"
+        files: app/build/outputs/apk/debug/Barakah-v${{ env.VERSION_NAME }}.apk
