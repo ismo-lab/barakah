@@ -95,20 +95,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
     fun setShowSettingsDialog(show: Boolean) {
         _showSettingsDialog.value = show
-        if (!show) {
-            resetUpdateCheck()
-        }
     }
-
-    // App Update State Flow
-    private val _updateState = MutableStateFlow<String>("idle")
-    val updateState: StateFlow<String> = _updateState
-
-    private val _latestVersionName = MutableStateFlow<String>("")
-    val latestVersionName: StateFlow<String> = _latestVersionName
-
-    private val _latestVersionUrl = MutableStateFlow<String>("")
-    val latestVersionUrl: StateFlow<String> = _latestVersionUrl
 
     // Juristic / School states
     private val _asrMethod = MutableStateFlow(prefs.getString("asr_method", "standard") ?: "standard")
@@ -634,86 +621,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         recalculatePrayerTimes()
     }
 
-    fun resetUpdateCheck() {
-        _updateState.value = "idle"
-        _latestVersionName.value = ""
-        _latestVersionUrl.value = ""
-    }
 
-    fun checkForUpdates() {
-        _updateState.value = "checking"
-        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-            try {
-                val url = java.net.URL("https://api.github.com/repos/ismo-lab/barakah/releases/latest")
-                val conn = url.openConnection() as java.net.HttpURLConnection
-                conn.requestMethod = "GET"
-                conn.connectTimeout = 8000
-                conn.readTimeout = 8000
-                conn.setRequestProperty("User-Agent", "Mozilla/5.0")
-                if (conn.responseCode == 200) {
-                    val stream = conn.inputStream
-                    val response = stream.bufferedReader().use { it.readText() }
-                    
-                    // Secure, clean substring parsing avoiding external parser dependencies
-                    val tagKey = "\"tag_name\":"
-                    val tagIdx = response.indexOf(tagKey)
-                    var tag = ""
-                    if (tagIdx != -1) {
-                        val start = response.indexOf("\"", tagIdx + tagKey.length) + 1
-                        val end = response.indexOf("\"", start)
-                        if (start in 1 until end) {
-                            tag = response.substring(start, end).replace("v", "").trim()
-                        }
-                    }
-
-                    val urlKey = "\"html_url\":"
-                    val urlIdx = response.indexOf(urlKey)
-                    var releaseUrl = "https://github.com/ismo-lab/barakah/releases"
-                    if (urlIdx != -1) {
-                        val start = response.indexOf("\"", urlIdx + urlKey.length) + 1
-                        val end = response.indexOf("\"", start)
-                        if (start in 1 until end) {
-                            releaseUrl = response.substring(start, end)
-                        }
-                    }
-
-                    if (tag.isNotEmpty()) {
-                        _latestVersionName.value = tag
-                        _latestVersionUrl.value = releaseUrl
-                        
-                        val current = dev.barakah.app.BuildConfig.VERSION_NAME
-                        if (isNewerVersion(current, tag)) {
-                            _updateState.value = "success_update_available"
-                        } else {
-                            _updateState.value = "success_latest"
-                        }
-                    } else {
-                        _updateState.value = "error"
-                    }
-                } else {
-                    _updateState.value = "error"
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                _updateState.value = "error"
-            }
-        }
-    }
-
-    private fun isNewerVersion(current: String, latest: String): Boolean {
-        try {
-            val currParts = current.replace("v", "").split(".").mapNotNull { it.toIntOrNull() }
-            val lateParts = latest.replace("v", "").split(".").mapNotNull { it.toIntOrNull() }
-            val minSize = kotlin.math.min(currParts.size, lateParts.size)
-            for (i in 0 until minSize) {
-                if (lateParts[i] > currParts[i]) return true
-                if (lateParts[i] < currParts[i]) return false
-            }
-            return lateParts.size > currParts.size
-        } catch (e: Exception) {
-            return latest != current
-        }
-    }
 
     fun setAdjFajr(value: Int) {
         adjFajr.value = value

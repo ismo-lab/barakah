@@ -1,4 +1,4 @@
-# ✨ Barakah (الْبَرَكَة) ✨
+# ✨ Barakah (بَرَكَة) ✨
 
 [![Android Build Status](https://img.shields.io/badge/Android-Build--Passing-success?style=for-the-badge&logo=android&logoColor=white&color=3DDC84)](https://github.com/ismo-lab/barakah)
 [![FOSS](https://img.shields.io/badge/Open--Source-FOSS-blue?style=for-the-badge&logo=open-source&logoColor=white&color=007ACC)](https://github.com/ismo-lab/barakah)
@@ -40,20 +40,6 @@ Built from the ground up for Material Design 3 (M3):
 ---
 
 ## 🛠️ Stack & Modern Underpinnings
-
-```text
-       ┌────────────────────────────────────────────────────────┐
-       │                 Jetpack Compose UI (M3)                │
-       └───────────────────────────┬────────────────────────────┘
-                                   ▼
-       ┌────────────────────────────────────────────────────────┐
-       │                BarakahViewModel (State)                │
-       └───────────────────────────┬────────────────────────────┘
-                                   ▼
-       ┌───────────────────────────┴────────────────────────────┐
-       │    Local Room SQL DB    │   Sensory & Location APIs   │
-       └─────────────────────────┘   └─────────────────────────┘
-```
 
 - **Kotlin & Coroutines**: Reactive state streams driven via `StateFlow` and structured concurrency.
 - **Room Database**: Optimized local relational persistence for bookmark indexing.
