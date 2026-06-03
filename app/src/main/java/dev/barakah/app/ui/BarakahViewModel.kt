@@ -10,6 +10,7 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.glance.appwidget.updateAll
 import dev.barakah.app.data.*
 import dev.barakah.app.util.PrayerCalculator
 import dev.barakah.app.util.QiblaManager
@@ -88,6 +89,29 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
     private val _notifyEveningAdhkar = MutableStateFlow(prefs.getBoolean("notify_evening_adhkar", true))
     val notifyEveningAdhkar: StateFlow<Boolean> = _notifyEveningAdhkar
+
+    // Pre-Adhan notifications (15-min before), Occasions, and Fasting notifications state flows
+    private val _notifyBeforeAdhan = MutableStateFlow(prefs.getBoolean("notify_before_adhan", true))
+    val notifyBeforeAdhan: StateFlow<Boolean> = _notifyBeforeAdhan
+
+    private val _notifyOccasions = MutableStateFlow(prefs.getBoolean("notify_occasions", true))
+    val notifyOccasions: StateFlow<Boolean> = _notifyOccasions
+
+    private val _notifyFasting = MutableStateFlow(prefs.getBoolean("notify_fasting", true))
+    val notifyFasting: StateFlow<Boolean> = _notifyFasting
+
+    private val _notifyJumuah = MutableStateFlow(prefs.getBoolean("notify_jumuah", true))
+    val notifyJumuah: StateFlow<Boolean> = _notifyJumuah
+
+    private val _notifySuhur = MutableStateFlow(prefs.getBoolean("notify_suhur", true))
+    val notifySuhur: StateFlow<Boolean> = _notifySuhur
+
+    private val _notifyIftar = MutableStateFlow(prefs.getBoolean("notify_iftar", true))
+    val notifyIftar: StateFlow<Boolean> = _notifyIftar
+
+    // Tasbih haptic feedback state: boolean (default true)
+    private val _enableTasbihHaptics = MutableStateFlow(prefs.getBoolean("enable_tasbih_haptics", true))
+    val enableTasbihHaptics: StateFlow<Boolean> = _enableTasbihHaptics
 
     // Settings dialog visibility
     private val _showSettingsDialog = MutableStateFlow(false)
@@ -269,6 +293,11 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     private var countdownJob: Job? = null
 
     init {
+        // Guarantee app default language is arabic when first open
+        if (!prefs.contains("app_lang")) {
+            prefs.edit().putString("app_lang", "ar").apply()
+        }
+
         // Initialize parsed seconds
         updateParsedSeconds(_prayerTimes.value)
 
@@ -290,8 +319,6 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             }
         }
 
-        // Start Qibla orientation tracking
-        sensorManager.start()
         _qiblaBearing.value = QiblaManager.calculateQiblaBearing(
             _currentLocation.value.first,
             _currentLocation.value.second
@@ -476,6 +503,18 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     fun setAppLanguage(lang: String) {
         _appLanguage.value = lang
         prefs.edit().putString("app_lang", lang).apply()
+        _filteredDuas.value = if (lang == "ar") DuaData.duasAr else DuaData.duasEn
+        updateWidgetsGlobally()
+    }
+
+    private fun updateWidgetsGlobally() {
+        viewModelScope.launch {
+            try {
+                dev.barakah.app.widget.PrayerWidget().updateAll(getApplication())
+                dev.barakah.app.widget.PrayerRemainingWidget().updateAll(getApplication())
+            } catch (e: Exception) {
+            }
+        }
     }
 
     fun setAppTheme(theme: String) {
@@ -520,6 +559,11 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     fun setAdhanSoundType(type: String) {
         _adhanSoundType.value = type
         prefs.edit().putString("adhan_sound_type", type).apply()
+    }
+
+    fun setEnableTasbihHaptics(enable: Boolean) {
+        _enableTasbihHaptics.value = enable
+        prefs.edit().putBoolean("enable_tasbih_haptics", enable).apply()
     }
 
     fun setFirstRunComplete() {
@@ -609,6 +653,42 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
     }
 
+    fun setNotifyBeforeAdhan(value: Boolean) {
+        _notifyBeforeAdhan.value = value
+        prefs.edit().putBoolean("notify_before_adhan", value).apply()
+        try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
+    }
+
+    fun setNotifyOccasions(value: Boolean) {
+        _notifyOccasions.value = value
+        prefs.edit().putBoolean("notify_occasions", value).apply()
+        try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
+    }
+
+    fun setNotifyFasting(value: Boolean) {
+        _notifyFasting.value = value
+        prefs.edit().putBoolean("notify_fasting", value).apply()
+        try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
+    }
+
+    fun setNotifyJumuah(value: Boolean) {
+        _notifyJumuah.value = value
+        prefs.edit().putBoolean("notify_jumuah", value).apply()
+        try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
+    }
+
+    fun setNotifySuhur(value: Boolean) {
+        _notifySuhur.value = value
+        prefs.edit().putBoolean("notify_suhur", value).apply()
+        try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
+    }
+
+    fun setNotifyIftar(value: Boolean) {
+        _notifyIftar.value = value
+        prefs.edit().putBoolean("notify_iftar", value).apply()
+        try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
+    }
+
     fun setAsrMethod(value: String) {
         _asrMethod.value = value
         prefs.edit().putString("asr_method", value).apply()
@@ -672,6 +752,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         setShowNawafil(false)
         setEnableAdhanSound(false)
         setAdhanSoundType("short")
+        setEnableTasbihHaptics(true)
         setAdjFajr(0)
         setAdjSunrise(0)
         setAdjDhuhr(0)
@@ -733,12 +814,16 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
         // Trigger vibration
         if (target in 1..newVal) {
-            // Long vibration on target hit
             _tasbihCount.value = 0 // Auto reset on target hit
-            triggerVibration(250)
+            if (_enableTasbihHaptics.value) {
+                // Long vibration on target hit
+                triggerVibration(250)
+            }
         } else {
-            // Soft ripple vibration
-            triggerVibration(30)
+            if (_enableTasbihHaptics.value) {
+                // Soft ripple vibration
+                triggerVibration(30)
+            }
         }
 
         // Persist
@@ -749,7 +834,9 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
     fun resetTasbih() {
         _tasbihCount.value = 0
-        triggerVibration(80)
+        if (_enableTasbihHaptics.value) {
+            triggerVibration(80)
+        }
         viewModelScope.launch {
             repository.saveTasbihState(TasbihState(_selectedDhikr.value.first, 0, _tasbihTarget.value))
         }
@@ -791,7 +878,21 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     }
 
     // QIBLA LOCK FEEDBACK
+    private var isQiblaScreenActive = false
+
+    fun startQiblaTracking() {
+        isQiblaScreenActive = true
+        sensorManager.start()
+    }
+
+    fun stopQiblaTracking() {
+        isQiblaScreenActive = false
+        sensorManager.stop()
+    }
+
     private fun checkQiblaAlignment(compassAzimuth: Float) {
+        if (!isQiblaScreenActive) return
+        if (!_enableTasbihHaptics.value) return
         val target = _qiblaBearing.value.toFloat()
         val diff = abs(compassAzimuth - target)
         // Normalize range
@@ -806,7 +907,8 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    private fun triggerVibration(duration: Long) {
+    fun triggerVibration(duration: Long) {
+        if (!_enableTasbihHaptics.value) return
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 vibrator?.vibrate(VibrationEffect.createOneShot(duration, VibrationEffect.DEFAULT_AMPLITUDE))

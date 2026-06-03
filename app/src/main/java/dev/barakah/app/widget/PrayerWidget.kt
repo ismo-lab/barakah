@@ -24,21 +24,58 @@ class PrayerWidget : GlanceAppWidget() {
         val lat = prefs.getFloat("loc_lat", 21.4225f).toDouble()
         val lng = prefs.getFloat("loc_lng", 39.8262f).toDouble()
         val label = prefs.getString("loc_label", "Mecca, KSA") ?: "Mecca, KSA"
+        val isAr = prefs.getString("app_lang", "ar") == "ar"
         
         val calendar = Calendar.getInstance()
         val tz = TimeZone.getDefault()
         val offsetHours = tz.getOffset(calendar.timeInMillis) / 3600000.0
         
-        val times = PrayerCalculator.calculate(lat, lng, offsetHours, calendar)
+        val asrMethod = prefs.getString("asr_method", "standard") ?: "standard"
+        val ishaMethod = prefs.getString("isha_method", "standard") ?: "standard"
+        val m = try {
+            PrayerCalculator.CalculationMethod.valueOf(prefs.getString("calc_method", "MWL") ?: "MWL")
+        } catch(e: Exception) {
+            PrayerCalculator.CalculationMethod.MWL
+        }
+        
+        val times = PrayerCalculator.calculate(
+            lat, lng, offsetHours, calendar, 
+            method = m,
+            asrMethod = asrMethod,
+            ishaMethod = ishaMethod
+        )
+
+        fun formatTimeStr(timeStr: String): String {
+            return try {
+                val is24Hour = android.text.format.DateFormat.is24HourFormat(context)
+                val parts = timeStr.trim().split(":")
+                val h = parts[0].toInt()
+                val min = parts[1].split(" ")[0].trim().toInt()
+                
+                if (is24Hour) {
+                    String.format(Locale.getDefault(), "%02d:%02d", h, min)
+                } else {
+                    val hour12 = if (h % 12 == 0) 12 else h % 12
+                    val amPm = if (h < 12) {
+                        if (isAr) "ص" else "AM"
+                    } else {
+                        if (isAr) "م" else "PM"
+                    }
+                    String.format(Locale.getDefault(), "%02d:%02d %s", hour12, min, amPm)
+                }
+            } catch (e: Exception) {
+                timeStr
+            }
+        }
         
         provideContent {
-            PrayerWidgetContent(times, label)
+            PrayerWidgetContent(times, label, isAr, ::formatTimeStr)
         }
     }
 
     @Composable
-    private fun PrayerWidgetContent(times: PrayerCalculator.PrayerTimes, label: String) {
-        val bgColor = androidx.glance.color.ColorProvider(day = Color(0xEBFAFAFA), night = Color(0xCC1A1C1E))
+    private fun PrayerWidgetContent(times: PrayerCalculator.PrayerTimes, label: String, isAr: Boolean, formatTimeStr: (String) -> String) {
+        val bgColor = androidx.glance.color.ColorProvider(day = Color(0xCCFFFFFF), night = Color(0xB3000000))
         val titleColor = androidx.glance.color.ColorProvider(day = Color(0xFF44474E), night = Color(0xFFC4C6D0))
         val labelColor = androidx.glance.color.ColorProvider(day = Color(0xFF74777F), night = Color(0xFF8E9099))
         val timeColor = androidx.glance.color.ColorProvider(day = Color(0xFF1A1C1E), night = Color(0xFFE2E2E6))
@@ -47,48 +84,51 @@ class PrayerWidget : GlanceAppWidget() {
             modifier = GlanceModifier
                 .fillMaxSize()
                 .background(bgColor)
-                .padding(12.dp),
+                .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = label,
-                style = TextStyle(
-                    color = titleColor,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-            
-            Spacer(modifier = GlanceModifier.height(8.dp))
-            
             Row(
-                modifier = GlanceModifier.fillMaxWidth(),
+                modifier = GlanceModifier.fillMaxWidth().padding(bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                PrayerItem("Fajr", times.fajr, labelColor, timeColor)
-                PrayerItem("Dhuhr", times.dhuhr, labelColor, timeColor)
-                PrayerItem("Asr", times.asr, labelColor, timeColor)
-                PrayerItem("Maghrib", times.maghrib, labelColor, timeColor)
-                PrayerItem("Isha", times.isha, labelColor, timeColor)
+                Text(
+                    text = label,
+                    style = TextStyle(
+                        color = titleColor,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            }
+            
+            Row(
+                modifier = GlanceModifier.fillMaxWidth().padding(vertical = 12.dp)
+            ) {
+                PrayerItem(GlanceModifier.defaultWeight(), if (isAr) "الفجر" else "Fajr", formatTimeStr(times.fajr), labelColor, timeColor)
+                PrayerItem(GlanceModifier.defaultWeight(), if (isAr) "الظهر" else "Dhuhr", formatTimeStr(times.dhuhr), labelColor, timeColor)
+                PrayerItem(GlanceModifier.defaultWeight(), if (isAr) "العصر" else "Asr", formatTimeStr(times.asr), labelColor, timeColor)
+                PrayerItem(GlanceModifier.defaultWeight(), if (isAr) "المغرب" else "Maghrib", formatTimeStr(times.maghrib), labelColor, timeColor)
+                PrayerItem(GlanceModifier.defaultWeight(), if (isAr) "العشاء" else "Isha", formatTimeStr(times.isha), labelColor, timeColor)
             }
         }
     }
 
     @Composable
-    private fun PrayerItem(name: String, time: String, labelColor: ColorProvider, timeColor: ColorProvider) {
+    private fun PrayerItem(modifier: GlanceModifier, name: String, time: String, labelColor: ColorProvider, timeColor: ColorProvider) {
         Column(
-            modifier = GlanceModifier.padding(horizontal = 4.dp),
+            modifier = modifier.padding(horizontal = 2.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = name.take(3),
-                style = TextStyle(color = labelColor, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                text = name,
+                style = TextStyle(color = labelColor, fontSize = 11.sp, fontWeight = FontWeight.Medium)
             )
-            Spacer(modifier = GlanceModifier.height(2.dp))
+            Spacer(modifier = GlanceModifier.height(4.dp))
             Text(
                 text = time,
-                style = TextStyle(color = timeColor, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                style = TextStyle(color = timeColor, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             )
         }
     }

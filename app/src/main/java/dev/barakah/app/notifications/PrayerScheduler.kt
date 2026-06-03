@@ -53,6 +53,14 @@ object PrayerScheduler {
             scheduleAlarm(context, "Maghrib", times.maghrib, 4, isEnabled("Maghrib"))
             scheduleAlarm(context, "Isha", times.isha, 5, isEnabled("Isha"))
 
+            // Pre-Adhan alerts (15 minutes before)
+            val notifyBeforeAdhan = prefs.getBoolean("notify_before_adhan", true)
+            scheduleAlarm(context, "Pre-Fajr", calculateOffsetTime(times.fajr, -15), 1011, notifyBeforeAdhan && isEnabled("Fajr"))
+            scheduleAlarm(context, "Pre-Dhuhr", calculateOffsetTime(times.dhuhr, -15), 1012, notifyBeforeAdhan && isEnabled("Dhuhr"))
+            scheduleAlarm(context, "Pre-Asr", calculateOffsetTime(times.asr, -15), 1013, notifyBeforeAdhan && isEnabled("Asr"))
+            scheduleAlarm(context, "Pre-Maghrib", calculateOffsetTime(times.maghrib, -15), 1014, notifyBeforeAdhan && isEnabled("Maghrib"))
+            scheduleAlarm(context, "Pre-Isha", calculateOffsetTime(times.isha, -15), 1015, notifyBeforeAdhan && isEnabled("Isha"))
+
             if (showNawafil) {
                 // Secondary / Nawafil
                 val duhaTime = calculateOffsetTime(times.sunrise, 20)
@@ -75,6 +83,21 @@ object PrayerScheduler {
 
             scheduleAlarm(context, "Morning Adhkar", morningAdhkarTime, 10, notifyMorning)
             scheduleAlarm(context, "Evening Adhkar", eveningAdhkarTime, 11, notifyEvening)
+
+            // Daily Check at 20:00 for tomorrow's fasting / occasions (a day before)
+            val notifyOccasions = prefs.getBoolean("notify_occasions", true)
+            val notifyFasting = prefs.getBoolean("notify_fasting", true)
+            val dailyEnabled = notifyOccasions || notifyFasting
+            scheduleAlarm(context, "Daily Support Reminder", "20:00", 12, dailyEnabled)
+
+            val notifyJumuah = prefs.getBoolean("notify_jumuah", true)
+            scheduleAlarm(context, "Friday Jumuah", calculateOffsetTime(times.dhuhr, -45), 13, notifyJumuah)
+
+            val notifySuhur = prefs.getBoolean("notify_suhur", true)
+            scheduleAlarm(context, "Suhur Reminder", calculateOffsetTime(times.fajr, -45), 14, notifySuhur)
+
+            val notifyIftar = prefs.getBoolean("notify_iftar", true)
+            scheduleAlarm(context, "Iftar Reminder", times.maghrib, 15, notifyIftar)
         }
     }
 

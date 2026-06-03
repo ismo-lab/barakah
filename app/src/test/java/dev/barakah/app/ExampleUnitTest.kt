@@ -5,13 +5,22 @@ import java.net.URL
 
 class ExampleUnitTest {
   @Test
-  fun testDownloadQuranSchema() {
+  fun testLocalTafseerParsing() {
     try {
-      val url = URL("https://raw.githubusercontent.com/rn0x/Quran-Data/refs/heads/version-2.0/data/mainDataQuran.json")
-      val text = url.readText()
-      println("DOWNLOAD_SUCCESS: Length is ${text.length}")
-      println("FIRST_1000_CHARS:")
-      println(text.take(1500))
+      val file = java.io.File("src/main/assets/quran/tafseer.json")
+      assert(file.exists()) { "tafseer.json should exist in assets!" }
+      val text = file.readText()
+      
+      // Let's inspect the first 20 lines to see if there are other keys
+      val lines = text.lineSequence().take(40).toList()
+      println("FIRST 40 LINES IN TAFSEER.JSON:")
+      lines.forEach { println(it) }
+      
+      // Let's check if there are keys like "description" or "intro" in the file!
+      val hasIntro = text.contains("intro", ignoreCase = true)
+      val hasDesc = text.contains("description", ignoreCase = true)
+      val hasSummary = text.contains("summary", ignoreCase = true)
+      println("CONTAINS_KEYS_CHECK: hasIntro=$hasIntro, hasDesc=$hasDesc, hasSummary=$hasSummary")
     } catch (e: Exception) {
       e.printStackTrace()
     }

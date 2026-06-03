@@ -28,6 +28,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalView
+import android.view.HapticFeedbackConstants
 import dev.barakah.app.ui.BarakahViewModel
 import kotlinx.coroutines.launch
 
@@ -41,6 +43,10 @@ fun TasbihScreen(
     val activeDhikr by viewModel.selectedDhikr.collectAsState()
     val appLanguage by viewModel.appLanguage.collectAsState()
     val isAr = appLanguage == "ar"
+    
+    val haptic = LocalView.current
+    val view = LocalView.current
+    val enableTasbihHaptics by viewModel.enableTasbihHaptics.collectAsState()
 
     var showDhikrDropdown by remember { mutableStateOf(false) }
 

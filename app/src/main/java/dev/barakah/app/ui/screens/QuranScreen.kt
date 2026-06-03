@@ -3,8 +3,10 @@ package dev.barakah.app.ui.screens
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -37,7 +39,7 @@ import dev.barakah.app.util.PrayerCalculator
 import dev.barakah.app.data.Surah
 import dev.barakah.app.ui.BarakahViewModel
 
-@OptIn(ExperimentalAnimationApi::class)
+@OptIn(ExperimentalAnimationApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun QuranScreen(
     viewModel: BarakahViewModel,
@@ -52,6 +54,9 @@ fun QuranScreen(
     // In Detail Reading view target
     var selectedSurahForReading by remember { mutableStateOf<Surah?>(null) }
     
+    // Dialog for individual verse Tafseer
+    var showVerseTafseerDialog by remember { mutableStateOf<Pair<dev.barakah.app.data.Verse, String>?>(null) }
+    
     BackHandler(enabled = selectedSurahForReading != null) {
         selectedSurahForReading = null
     }
@@ -64,6 +69,7 @@ fun QuranScreen(
     val englishFontSize by viewModel.englishFontSize.collectAsState()
     val appLanguage by viewModel.appLanguage.collectAsState()
     val isAr = appLanguage == "ar"
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     
@@ -429,17 +435,13 @@ fun QuranScreen(
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
                         Spacer(modifier = Modifier.width(12.dp))
-                        Column(modifier = Modifier.weight(1f)) {
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
                             Text(
                                 text = if (isAr) surah.arabic else surah.name,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
-                            )
-                            val typeTxt = if (surah.type == "Meccan") (if (isAr) "مكية" else "Meccan") else (if (isAr) "مدنية" else "Medinan")
-                            Text(
-                                text = "$typeTxt • ${surah.versesCount} ${if (isAr) "آية" else "verses"}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                         IconButton(onClick = { viewModel.toggleBookmark(surah) }) {
@@ -485,9 +487,20 @@ fun QuranScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 12.dp)
-                                .clickable {
-                                    viewModel.saveLastReading(surah.id, verse.index, surah.arabic)
-                                }
+                                .combinedClickable(
+                                    onClick = {
+                                        viewModel.saveLastReading(surah.id, verse.index, surah.arabic)
+                                    },
+                                    onLongClick = {
+                                        viewModel.triggerVibration(40)
+                                        val taf = if (isAr) {
+                                            QuranData.loadTafseer(context, surah.id, verse.index)
+                                        } else {
+                                            QuranData.loadEnglishTafseer(context, surah.id, verse.index)
+                                        }
+                                        showVerseTafseerDialog = Pair(verse, taf)
+                                    }
+                                )
                                 .testTag("verse_block_${verse.index}")
                         ) {
                             Row(
@@ -552,6 +565,98 @@ fun QuranScreen(
                 }
             }
         }
+    }
+
+    if (showVerseTafseerDialog != null) {
+        val (verse, tafseer) = showVerseTafseerDialog!!
+        val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
+        
+        AlertDialog(
+            onDismissRequest = { showVerseTafseerDialog = null },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            title = {
+                Text(
+                    text = if (isAr) "تفسير الآية ${verse.index}" else "Tafseer of Ayah ${verse.index}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = verse.arabic,
+                        style = androidx.compose.ui.text.TextStyle(
+                            fontSize = (arabicFontSize - 2).sp,
+                            fontFamily = FontFamily.Serif,
+                            textDirection = TextDirection.Rtl,
+                            textAlign = TextAlign.Right,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.primary
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f), shape = RoundedCornerShape(12.dp))
+                            .padding(12.dp)
+                    )
+                    
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Text(
+                                text = tafseer,
+                                style = androidx.compose.ui.text.TextStyle(
+                                    fontSize = (englishFontSize + 1).sp,
+                                    fontFamily = FontFamily.SansSerif,
+                                    textDirection = if (isAr) TextDirection.Rtl else TextDirection.Ltr,
+                                    textAlign = if (isAr) TextAlign.Right else TextAlign.Left,
+                                    lineHeight = (englishFontSize + 7).sp
+                                )
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = if (isAr) "المصدر: التفسير الميسر" else "Source: Tafsir al-Jalalayn",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                                textAlign = if (isAr) TextAlign.Right else TextAlign.Left,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(tafseer))
+                        showVerseTafseerDialog = null
+                    }
+                ) {
+                    Text(if (isAr) "نسخ التفسير" else "Copy Tafseer")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showVerseTafseerDialog = null }) {
+                    Text(if (isAr) "إغلاق" else "Close")
+                }
+            },
+            shape = RoundedCornerShape(28.dp),
+            containerColor = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
+        )
     }
 }
 

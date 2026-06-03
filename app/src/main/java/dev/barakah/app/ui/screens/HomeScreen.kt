@@ -30,6 +30,8 @@ import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.barakah.app.ui.BarakahViewModel
+import dev.barakah.app.notifications.AdhanSoundManager
+import kotlinx.coroutines.launch
 import dev.barakah.app.util.PrayerCalculator
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -38,6 +40,14 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 fun formatDisplayTime(context: android.content.Context, timeStr: String, isAr: Boolean = false): String {
+    if (timeStr.contains("-")) {
+        val parts = timeStr.split("-")
+        if (parts.size == 2) {
+            val start = formatDisplayTime(context, parts[0].trim(), isAr)
+            val end = formatDisplayTime(context, parts[1].trim(), isAr)
+            return "$start - $end"
+        }
+    }
     return try {
         val is24Hour = android.text.format.DateFormat.is24HourFormat(context)
         val parts = timeStr.trim().split(":")
@@ -93,12 +103,19 @@ fun HomeScreen(
     // Persistent Settings states retrieved from viewmodel
     val notifyMorningAdhkar by viewModel.notifyMorningAdhkar.collectAsState()
     val notifyEveningAdhkar by viewModel.notifyEveningAdhkar.collectAsState()
+    val notifyBeforeAdhan by viewModel.notifyBeforeAdhan.collectAsState()
+    val notifyOccasions by viewModel.notifyOccasions.collectAsState()
+    val notifyFasting by viewModel.notifyFasting.collectAsState()
+    val notifyJumuah by viewModel.notifyJumuah.collectAsState()
+    val notifySuhur by viewModel.notifySuhur.collectAsState()
+    val notifyIftar by viewModel.notifyIftar.collectAsState()
     val currentLang by viewModel.appLanguage.collectAsState()
     val appTheme by viewModel.appTheme.collectAsState()
     val useDynamicColor by viewModel.useDynamicColor.collectAsState()
     val amoledDark by viewModel.amoledDark.collectAsState()
     val enableAdhanSound by viewModel.enableAdhanSound.collectAsState()
     val adhanSoundType by viewModel.adhanSoundType.collectAsState()
+    val enableTasbihHaptics by viewModel.enableTasbihHaptics.collectAsState()
     val fontAr by viewModel.arabicFontSize.collectAsState()
     val fontEn by viewModel.englishFontSize.collectAsState()
     val locationMethod by viewModel.locationMethod.collectAsState()
@@ -153,9 +170,12 @@ fun HomeScreen(
         "Sunrise / Duha" to "الشروق / الضحى",
         "Isha (Last Night)" to "عشاء الليلة الماضية",
         "Tahajjud (Nafilah)" to "التهجد",
-        "Duha (Nafilah)" to "صلاة الضحى",
-        "Witr (Nafilah)" to "الوتر",
-        "Qiyam-ul-Layl (Nafilah)" to "قيام الليل"
+        "Duha (Nafilah)" to "الضحى",
+        "Witr (Nafilah)" to "صلاة الوتر",
+        "Qiyam-ul-Layl (Nafilah)" to "قيام الليل",
+        "First Third (Nafilah)" to "الثلث الأول - من الليل",
+        "Midnight (Nafilah)" to "منتصف الليل",
+        "Qiyam Last Third (Nafilah)" to "القيام - الثلث الأخير"
     )
 
     fun translatePrayer(name: String): String {
@@ -198,15 +218,35 @@ fun HomeScreen(
         list.add(Triple("Asr", times.asr, "Afternoon Prayer"))
         list.add(Triple("Maghrib", times.maghrib, "Sunset Prayer"))
         list.add(Triple("Isha", times.isha, "Night Prayer"))
+        
         if (showNawafil) {
-            val witrTime = calculateOffsetTime(times.isha, 45)
-            list.add(Triple("Witr (Nafilah)", witrTime, "Witr Voluntary Prayer"))
-
-            val tahajjudTime = calculateOffsetTime(times.fajr, -90)
-            list.add(0, Triple("Tahajjud (Nafilah)", tahajjudTime, "Tahajjud Night Prayer"))
-
-            val qiyamTime = calculateOffsetTime(times.fajr, -150)
-            list.add(0, Triple("Qiyam-ul-Layl (Nafilah)", qiyamTime, "Late Night Prayer"))
+            try {
+                val mParts = times.maghrib.split(":")
+                val mMin = mParts[0].toInt() * 60 + mParts[1].toInt()
+                val fParts = times.fajr.split(":")
+                var fMin = fParts[0].toInt() * 60 + fParts[1].toInt()
+                if (fMin < mMin) fMin += 24 * 60
+                val diff = fMin - mMin
+                
+                val firstThirdMin = mMin + diff / 3
+                val midMin = mMin + diff / 2
+                val lastThirdMin = mMin + (diff * 2) / 3
+                
+                fun formatMins(min: Int): String {
+                    val h = (min / 60) % 24
+                    val m = min % 60
+                    return String.format(Locale.US, "%02d:%02d", h, m)
+                }
+                
+                list.add(Triple("First Third (Nafilah)", formatMins(firstThirdMin), "First Third of the Night"))
+                list.add(Triple("Midnight (Nafilah)", formatMins(midMin), "Islamic Midnight"))
+                list.add(Triple("Qiyam Last Third (Nafilah)", formatMins(lastThirdMin), "Late Night Prayer"))
+                list.add(Triple("Witr (Nafilah)", "${times.isha} - ${times.fajr}", "Witr Voluntary Prayer"))
+            } catch (e: Exception) {
+                // Fallback if parsing fails
+                val witrTime = calculateOffsetTime(times.isha, 45)
+                list.add(Triple("Witr (Nafilah)", witrTime, "Witr Voluntary Prayer"))
+            }
         }
         list
     }
@@ -391,6 +431,80 @@ fun HomeScreen(
             }
         }
 
+        // 2.6 MORE FEATURES / OTHERS SECTION
+        item {
+            Column(modifier = Modifier.padding(vertical = 12.dp, horizontal = 4.dp)) {
+                Text(
+                    text = if (isAr) "استكشف المزيد" else "Explore More",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+
+                Card(
+                    onClick = {
+                        navController.navigate("others") {
+                            popUpTo(navController.graph.startDestinationId) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().testTag("explore_others_card"),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Widgets,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                Text(
+                                    text = if (isAr) "أخرى" else "Others",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = if (isAr) "أسماء الله الحسنى والمناسبات الإسلامية" else "Allah's Names & Islamic Occasions",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+        }
+
         // 2.7 INSPIRATIONAL QUOTE CARD
         item {
             val inspirations = remember(isAr) {
@@ -449,6 +563,81 @@ fun HomeScreen(
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+
+        // 2.8 RANDOM HADITH CARD
+        item {
+            val hadiths = remember(isAr) {
+                if (isAr) listOf(
+                    "«إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ، وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى»" to "صحيح البخاري ومسلم • عن عمر بن الخطاب",
+                    "«يَسِّرُوا وَلاَ تُعَسِّرُوا، وَبَشِّرُوا وَلاَ تُنَفِّرُوا»" to "صحيح البخاري • عن أنس بن مالك",
+                    "«مَنْ كَانَ يُؤْمِنُ بِاللَّهِ وَالْيَوْمِ الآخِرِ فَلْيَقُلْ خَيْرًا أَوْ لِيَصْمُتْ»" to "صحيح البخاري • عن أبي هريرة",
+                    "«الْمُؤْمِنُ لِلْمُؤْمِنِ كَالْبُنْيَانِ يَشُدُّ بَعْضُهُ بَعْضًا»" to "صحيح البخاري ومسلم • عن أبي موسى الأشعري",
+                    "«خيرُكم من تعلَّمَ القرآنَ وعلَّمَهُ»" to "صحيح البخاري • عن عثمان بن عفان",
+                    "«اتَّقِ اللَّهَ حَيْثُمَا كُنْتَ، وَأَتْبِعِ السَّيِّئَةَ الْحَسَنَةَ تَمْحُهَا»" to "سنن الترمذي • عن أبي ذر الغفاري",
+                    "«مَنْ سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الْجَنَّةِ»" to "صحيح مسلم • عن أبي هريرة"
+                ) else listOf(
+                    "\"Actions are but by intentions, and every person shall have only that which he intended.\"" to "Sahih al-Bukhari & Muslim • Narrated by Umar bin Al-Khattab",
+                    "\"Make things easy and do not make them difficult, and cheer people up and do not make them voice aversion.\"" to "Sahih al-Bukhari • Narrated by Anas bin Malik",
+                    "\"He who believes in Allah and the Last Day must either speak good or remain silent.\"" to "Sahih al-Bukhari • Narrated by Abu Hurayrah",
+                    "\"A believer to another believer is like a building whose different parts enforce and support each other.\"" to "Sahih al-Bukhari & Muslim • Narrated by Abu Musa Al-Ash'ari",
+                    "\"The best among you are those who learn the Quran and teach it.\"" to "Sahih al-Bukhari • Narrated by Uthman bin Affan",
+                    "\"Be mindful of Allah wherever you are, and follow up an evil deed with a good deed which will wipe it out.\"" to "Sunan al-Tirmidhi • Narrated by Abu Dharr Al-Ghifari",
+                    "\"Whoever treads a path in search of knowledge, Allah will make easy for him the path to Paradise.\"" to "Sahih Muslim • Narrated by Abu Hurayrah"
+                )
+            }
+            val randomHadith = remember { hadiths.random() }
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp, horizontal = 4.dp),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.15f)
+                ),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.MenuBook,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = if (isAr) "حديث شريف" else "Hadith of the Day",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.secondary,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 6.dp)
+                    )
+                    Text(
+                        text = randomHadith.first,
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Serif,
+                            lineHeight = 28.sp
+                        ),
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = randomHadith.second,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Normal,
+                        textAlign = TextAlign.Center
                     )
                 }
             }
@@ -591,6 +780,48 @@ fun HomeScreen(
             var locationQuery by remember { mutableStateOf("") }
             val keyboardController = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
             val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+
+            // Debug sound and notification test state
+            val debugScope = rememberCoroutineScope()
+            val playingSoundResId by AdhanSoundManager.playingResId.collectAsState()
+
+            DisposableEffect(Unit) {
+                onDispose {
+                    AdhanSoundManager.stop()
+                }
+            }
+
+            fun triggerTestNotification(type: String) {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU && notifPermissionState?.status?.isGranted != true) {
+                    notifPermissionState?.launchPermissionRequest()
+                    return
+                }
+                
+                try {
+                    val testIntent = android.content.Intent(context, dev.barakah.app.notifications.PrayerNotificationReceiver::class.java).apply {
+                        putExtra("PRAYER_NAME", type)
+                        putExtra("PRAYER_ID", 1000 + type.hashCode())
+                        putExtra("SCHEDULED_TIME", 0L)
+                    }
+                    context.sendBroadcast(testIntent)
+                    
+                    val dispMsg = if (isAr) "تم إرسال إشعار تجريبي لـ: $type!" else "Sent test notification for $type!"
+                    android.widget.Toast.makeText(context, dispMsg, android.widget.Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    val dispMsg = if (isAr) "فشل إرسال الإشعار." else "Failed to send notification."
+                    android.widget.Toast.makeText(context, dispMsg, android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            fun playSound(resId: Int) {
+                if (playingSoundResId == resId) {
+                    AdhanSoundManager.stop()
+                } else {
+                    val isShort = adhanSoundType == "short"
+                    AdhanSoundManager.play(context, resId, isShort)
+                }
+            }
 
             Box(
                 modifier = modifier
@@ -851,6 +1082,274 @@ fun HomeScreen(
                                         Switch(
                                             checked = notifyEveningAdhkar,
                                             onCheckedChange = { viewModel.setNotifyEveningAdhkar(it) }
+                                        )
+                                    }
+
+                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = if (isAr) "تنبيه قبل الأذان بـ ١٥ دقيقة" else "Pre-Adhan Reminders",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = if (isAr) "تنبيه تمهيدي قبل أذان كل صلاة مفروضة بـ ١٥ دقيقة للاستعداد" else "Notify 15 minutes before every fard prayer time to prepare",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Switch(
+                                            checked = notifyBeforeAdhan,
+                                            onCheckedChange = { viewModel.setNotifyBeforeAdhan(it) }
+                                        )
+                                    }
+
+                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = if (isAr) "تنبيهات الأعياد والمناسبات" else "Eid & Occasion Alerts",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = if (isAr) "تذكير بالمناسبات والأعياد الإسلامية قبل حلولها بليلة" else "Receive notifications of key Islamic calendar events a day before",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Switch(
+                                            checked = notifyOccasions,
+                                            onCheckedChange = { viewModel.setNotifyOccasions(it) }
+                                         )
+                                    }
+
+                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = if (isAr) "تنبيه صيام الإثنين والخميس" else "Fast Reminders (Mon/Thu)",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = if (isAr) "تنبيه لصيام يومي الإثنين والخميس قبل حلولها بليلة" else "Receive reminders to fast on Sunnah Mondays and Thursdays a day before",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Switch(
+                                            checked = notifyFasting,
+                                            onCheckedChange = { viewModel.setNotifyFasting(it) }
+                                        )
+                                    }
+
+                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = if (isAr) "تنبيه يوم الجمعة المبارك" else "Friday Jumu'ah Reminder",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = if (isAr) "تنبيه خاص لصلاة الجمعة وقراءة سورة الكهف والصلاة على النبي" else "Special notification for Friday prayer, reciting Surah Al-Kahf & Salawat",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Switch(
+                                            checked = notifyJumuah,
+                                            onCheckedChange = { viewModel.setNotifyJumuah(it) }
+                                        )
+                                    }
+
+                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = if (isAr) "تنبيه السحور" else "Suhur Reminder",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = if (isAr) "تنبيه بوقت السحور قبل أذان الفجر" else "Special notification for Suhur before Fajr",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Switch(
+                                            checked = notifySuhur,
+                                            onCheckedChange = { viewModel.setNotifySuhur(it) }
+                                        )
+                                    }
+                                    
+                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = if (isAr) "تنبيه الإفطار" else "Iftar Reminder",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = if (isAr) "تنبيه بوقت الإفطار عند أذان المغرب" else "Special notification for Iftar at Maghrib",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Switch(
+                                            checked = notifyIftar,
+                                            onCheckedChange = { viewModel.setNotifyIftar(it) }
+                                        )
+                                    }
+
+                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = if (isAr) "صوت الأذان عند دخول الصلاة" else "Adhan Call to Prayer",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = if (isAr) "تشغيل صوت أذان الحرم المكي عند دخول وقت الفريضة بالخلفية" else "Play Mecca Al-Haram Adhan sound offline when a fard prayer starts",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Switch(
+                                            checked = enableAdhanSound,
+                                            onCheckedChange = { viewModel.setEnableAdhanSound(it) }
+                                        )
+                                    }
+
+                                    if (enableAdhanSound) {
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = if (isAr) "طول صوت الأذان" else "Adhan Sound Duration",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            OutlinedButton(
+                                                onClick = { viewModel.setAdhanSoundType("short") },
+                                                modifier = Modifier.weight(1f),
+                                                colors = ButtonDefaults.outlinedButtonColors(
+                                                    containerColor = if (adhanSoundType == "short") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                                                ),
+                                                border = androidx.compose.foundation.BorderStroke(
+                                                    width = if (adhanSoundType == "short") 2.dp else 1.dp,
+                                                    color = if (adhanSoundType == "short") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                                )
+                                            ) {
+                                                Text(
+                                                    text = if (isAr) "قصير (٢٠ ثانية)" else "Short (20s)", 
+                                                    fontWeight = FontWeight.Bold, 
+                                                    style = MaterialTheme.typography.labelMedium,
+                                                    color = if (adhanSoundType == "short") MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                                )
+                                            }
+                                            
+                                            OutlinedButton(
+                                                onClick = { viewModel.setAdhanSoundType("full") },
+                                                modifier = Modifier.weight(1f),
+                                                colors = ButtonDefaults.outlinedButtonColors(
+                                                    containerColor = if (adhanSoundType == "full") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                                                ),
+                                                border = androidx.compose.foundation.BorderStroke(
+                                                    width = if (adhanSoundType == "full") 2.dp else 1.dp,
+                                                    color = if (adhanSoundType == "full") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                                )
+                                            ) {
+                                                Text(
+                                                    text = if (isAr) "كامل" else "Full", 
+                                                    fontWeight = FontWeight.Bold, 
+                                                    style = MaterialTheme.typography.labelMedium,
+                                                    color = if (adhanSoundType == "full") MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = if (isAr) "الاهتزاز واللمس" else "Global Haptic Feedback",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = if (isAr) "تشغيل الاهتزاز والتفاعل اللمسي في السبحة والأدعية والقبلة" else "Enable vibrations in Tasbih subhah, Dua counters, and Qiblah alignment",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Switch(
+                                            checked = enableTasbihHaptics,
+                                            onCheckedChange = { viewModel.setEnableTasbihHaptics(it) }
                                         )
                                     }
                                 }

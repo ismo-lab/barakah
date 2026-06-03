@@ -136,4 +136,87 @@ object QuranData {
             return emptyList()
         }
     }
+
+    private var tafseerCache: Map<String, String>? = null
+    private var tafseerEnCache: Map<String, String>? = null
+
+    fun loadTafseer(context: Context, surahId: Int, ayahId: Int): String {
+        if (tafseerCache == null) {
+            loadAllTafseer(context)
+        }
+        val key = "${surahId}_$ayahId"
+        return tafseerCache?.get(key) ?: "التفسير غير متوفر حالياً لهذه الآية."
+    }
+
+    fun loadEnglishTafseer(context: Context, surahId: Int, ayahId: Int): String {
+        if (tafseerEnCache == null) {
+            loadAllEnglishTafseer(context)
+        }
+        val key = "${surahId}_$ayahId"
+        return tafseerEnCache?.get(key) ?: "Tafsir is not available for this verse currently."
+    }
+
+    @Synchronized
+    private fun loadAllEnglishTafseer(context: Context) {
+        if (tafseerEnCache != null) return
+        val cacheMap = mutableMapOf<String, String>()
+        try {
+            android.util.Log.d("QuranData", "Loading English Tafseer into memory...")
+            for (surahId in 1..114) {
+                try {
+                    val jsonText = context.assets.open("quran/en_tafseer/$surahId.json").bufferedReader().use { it.readText() }
+                    val obj = org.json.JSONObject(jsonText)
+                    if (obj.has("ayahs")) {
+                        val ayahs = obj.getJSONArray("ayahs")
+                        for (i in 0 until ayahs.length()) {
+                            val a = ayahs.getJSONObject(i)
+                            val ayah = a.getInt("ayah")
+                            val text = a.getString("text")
+                            cacheMap["${surahId}_$ayah"] = text
+                        }
+                    }
+                } catch (e: Exception) {
+                }
+            }
+            tafseerEnCache = cacheMap
+        } catch (e: Exception) {
+            android.util.Log.e("QuranData", "Error loading English tafseer: ${e.message}", e)
+        }
+    }
+
+    @Synchronized
+    private fun loadAllTafseer(context: Context) {
+        if (tafseerCache != null) return
+        val cacheMap = mutableMapOf<String, String>()
+        try {
+            android.util.Log.d("QuranData", "Loading Tafseer into memory from assets...")
+            val jsonText = context.assets.open("quran/tafseer.json").bufferedReader().use { it.readText() }
+            val reader = android.util.JsonReader(jsonText.reader())
+            reader.beginArray()
+            while (reader.hasNext()) {
+                var numberStr = ""
+                var ayaStr = ""
+                var tafseerText = ""
+                reader.beginObject()
+                while (reader.hasNext()) {
+                    when (reader.nextName()) {
+                        "number" -> numberStr = reader.nextString()
+                        "aya" -> ayaStr = reader.nextString()
+                        "text" -> tafseerText = reader.nextString()
+                        else -> reader.skipValue()
+                    }
+                }
+                reader.endObject()
+                if (numberStr.isNotEmpty() && ayaStr.isNotEmpty()) {
+                    cacheMap["${numberStr}_$ayaStr"] = tafseerText
+                }
+            }
+            reader.endArray()
+            reader.close()
+            tafseerCache = cacheMap
+            android.util.Log.d("QuranData", "Loaded ${cacheMap.size} Tafseer entries into memory cache successfully")
+        } catch (e: Exception) {
+            android.util.Log.e("QuranData", "Error loading tafseer.json: ${e.message}", e)
+        }
+    }
 }

@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -36,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.barakah.app.ui.BarakahViewModel
 import dev.barakah.app.util.QiblaManager
+import android.view.HapticFeedbackConstants
 import kotlin.math.abs
 
 @Composable
@@ -43,6 +45,16 @@ fun QiblahScreen(
     viewModel: BarakahViewModel,
     modifier: Modifier = Modifier
 ) {
+    val view = LocalView.current
+    val hapticEnabled by viewModel.enableTasbihHaptics.collectAsState()
+
+    DisposableEffect(viewModel) {
+        viewModel.startQiblaTracking()
+        onDispose {
+            viewModel.stopQiblaTracking()
+        }
+    }
+
     val compassAzimuth by viewModel.compassAzimuth.collectAsState()
     val qiblaBearing by viewModel.qiblaBearing.collectAsState()
     val locationLabel by viewModel.locationLabel.collectAsState()
@@ -65,6 +77,14 @@ fun QiblahScreen(
     // Check if phone is perfectly pointed to Kaaba (within 4 degrees threshold)
     val diff = abs(compassAzimuth - qiblaBearing.toFloat())
     val isAligned = (if (diff > 180f) 360f - diff else diff) < 4.0f
+
+    LaunchedEffect(isAligned) {
+        if (isAligned && hapticEnabled) {
+            try {
+                view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+            } catch (e: Exception) {}
+        }
+    }
 
     val alignmentColor = if (isAligned) {
         MaterialTheme.colorScheme.primary

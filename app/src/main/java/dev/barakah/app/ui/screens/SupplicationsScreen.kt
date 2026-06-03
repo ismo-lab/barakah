@@ -68,6 +68,7 @@ fun SupplicationsScreen(
     val duaBookmarks by viewModel.duaBookmarks.collectAsState()
     val favoriteDuaIds = remember(duaBookmarks) { duaBookmarks.map { it.duaId }.toSet() }
     val duaTapCounts = remember { mutableStateMapOf<String, Int>() }
+    val enableTasbihHaptics by viewModel.enableTasbihHaptics.collectAsState()
 
     val menuScrollState = rememberLazyListState()
 
@@ -85,6 +86,7 @@ fun SupplicationsScreen(
     }
 
     fun triggerVibration() {
+        if (!enableTasbihHaptics) return
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 vibrator?.vibrate(VibrationEffect.createOneShot(45, VibrationEffect.DEFAULT_AMPLITUDE))

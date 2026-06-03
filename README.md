@@ -53,8 +53,9 @@ Built from the ground up for Material Design 3 (M3):
 This app aggregates verified, authenticated Islamic scholarly datasets:
 - **Hadith Compilation**: [hadith.json](https://github.com/4thel00z/hadith.json)
 - **Hisnul Muslim Supplications**: [HisnElMuslim](https://github.com/asellam/HisnElMuslim)
-- **Holy Quran Database**: [Quran-Data](https://github.com/rn0x/Quran-Data)
+- **Holy Quran Database & Tafseer**: [Quran-Data](https://github.com/rn0x/Quran-Data), [QuranTafseer-ar-json](https://github.com/00AhmedMokhtar00/QuranTafseer-ar-json), and [tafsir_api](https://github.com/spa5k/tafsir_api) by spa5k
 - **Astronomical Mathematics**: [Adhan SDK](https://github.com/batoulapps/adhan-java)
+- **Adhan Audio Assets**: [adhan-mp3](https://github.com/Kiwifu/adhan-mp3) by Kiwifu
 
 ---
 

@@ -181,6 +181,7 @@ dependencies {
 }
 
 tasks.register("downloadHisn") {
+  notCompatibleWithConfigurationCache("Uses network connection and local file references")
   doLast {
     val dest = file("src/main/res/raw/hisn_en.json")
     dest.parentFile.mkdirs()
@@ -204,6 +205,159 @@ tasks.register("downloadHisn") {
       throw GradleException("Failed to download Hisn data. HTTP Response Code: ${conn.responseCode}")
     }
   }
+}
+
+tasks.register("downloadAdhan") {
+  notCompatibleWithConfigurationCache("Uses network connection and local file references")
+  doLast {
+    val rawDir = file("src/main/res/raw")
+    rawDir.mkdirs()
+    val adhanFajrOptions = listOf(
+      "https://github.com/Kiwifu/adhan-mp3/raw/refs/heads/main/Adhan_Fajr_Al_Haram_Al_Maki_(%D8%A3%D8%B0%D8%A7%D9%86_%D8%A7%D9%84%D9%81%D8%AC%D8%B1_%D8%A7%D9%84%D8%AD%D8%B1%D9%85_%D8%A7%D9%84%D9%85%D9%83%D9%8I).mp3",
+      "https://github.com/Kiwifu/adhan-mp3/raw/refs/heads/main/Adhan_Fajr_Al_Haram_Al_Maki_(%D8%A3%D8%B0%D8%A7%D9%86_%D8%A7%D9%84%D9%81%D8%AC%D8%B1_%D8%A7%D9%84%D8%AD%D8%B1%D9%85_%D8%A7%D9%84%D9%85%D9%83%D9%8I).mp3".replace("%D9%8I", "%D9%8E"),
+      "https://github.com/Kiwifu/adhan-mp3/raw/refs/heads/main/Adhan_Fajr_Al_Haram_Al_Maki_(%D8%A3%D8%B0%D8%A7%D9%86_%D8%A7%D9%84%D9%81%D8%AC%D8%B1_%D8%A7%D9%84%D8%AD%D8%B1%D9%85_%D8%A7%D9%84%D9%85%D9%83%D9%8I).mp3".replace("%D9%8I", "%D9%8Y"),
+      "https://github.com/Kiwifu/adhan-mp3/raw/refs/heads/main/Adhan_Fajr_Al_Haram_Al_Maki_(%D8%A3%D8%B0%D8%A7%D9%86_%D8%A7%D9%84%D9%81%D8%AC%D8%B1_%D8%A7%D9%84%D8%AD%D8%B1%D9%85_%D8%A7%D9%84%D9%85%D9%83%D9%8I).mp3".replace("%D9%8I", "%D9%8A"),
+      "https://github.com/Kiwifu/adhan-mp3/raw/refs/heads/main/Adhan_Fajr_Al_Haram_Al_Maki_(%D8%A3%D8%B0%D8%A7%D9%86_%D8%A7%D9%84%D9%81%D8%AC%D8%B1_%D8%A7%D9%84%D8%AD%D8%B1%D9%85_%D8%A7%D9%84%D9%85%D9%83%D9%8A).mp3"
+    )
+    val adhanRegularOptions = listOf(
+      "https://github.com/Kiwifu/adhan-mp3/raw/refs/heads/main/Nayf_Fedah_-_Al_Haram_Al_Maki_(%D9%86%D8%A7%D9%8A%D9%81_%D9%81%D8%AF%D8%A7%D8%AD_-_%D8%A7%D9%84%D8%AD%D8%B1%D9%85_%D8%A7%D9%84%D9%85%D9%83%D9%8A).mp3",
+      "https://github.com/Kiwifu/adhan-mp3/raw/refs/heads/main/Nayf_Fedah_-_Al_Haram_Al_Maki_(%D9%86%D8%A7%D9%8A%D9%81_%D9%81%D8%AF%D8%A7%D8%AD_-_%D8%A7%D9%84%D8%AD%D8%B1%D9%85_%D8%A7%D9%84%D9%85%D9%83%D9%8I).mp3",
+      "https://github.com/Kiwifu/adhan-mp3/raw/refs/heads/main/Nayf_Fedah_-_Al_Haram_Al_Maki_(%D9%86%D8%A7%D9%8A%D9%81_%D9%81%D8%AF%D8%A7%D8%AD_-_%D8%A7%D9%84%D8%AD%D8%B1%D9%85_%D8%A7%D9%84%D9%85%D9%83%D9%8I).mp3".replace("%D9%8I", "%D9%8E"),
+      "https://github.com/Kiwifu/adhan-mp3/raw/refs/heads/main/Nayf_Fedah_-_Al_Haram_Al_Maki_(%D9%86%D8%A7%D9%8A%D9%81_%D9%81%D8%AF%D8%A7%D8%AD_-_%D8%A7%D9%84%D8%AD%D8%B1%D9%85_%D8%A7%D9%84%D9%85%D9%83%D9%8I).mp3".replace("%D9%8I", "%D9%8A")
+    )
+    
+    val downloads = mapOf(
+      "adhan_fajr.mp3" to adhanFajrOptions,
+      "adhan_regular.mp3" to adhanRegularOptions
+    )
+    
+    for ((filename, urlOptions) in downloads) {
+      val targetFile = File(rawDir, filename)
+      if (!targetFile.exists() || targetFile.length() < 100000) {
+        var success = false
+        for (urlStr in urlOptions) {
+          println("Trying to download $filename from $urlStr...")
+          try {
+            var currentUrlStr = urlStr
+            var conn: HttpURLConnection
+            var attempts = 0
+            while (attempts < 5) {
+              val url = URI(currentUrlStr).toURL()
+              conn = url.openConnection() as HttpURLConnection
+              conn.instanceFollowRedirects = true
+              conn.requestMethod = "GET"
+              conn.connectTimeout = 30000
+              conn.readTimeout = 30000
+              val status = conn.responseCode
+              if (status == HttpURLConnection.HTTP_MOVED_TEMP || status == HttpURLConnection.HTTP_MOVED_PERM || status == HttpURLConnection.HTTP_SEE_OTHER || status == 307 || status == 308) {
+                val newUrl = conn.getHeaderField("Location")
+                currentUrlStr = newUrl
+                attempts++
+                continue
+              }
+              if (status == 200) {
+                conn.inputStream.use { input ->
+                  targetFile.outputStream().use { output ->
+                    input.copyTo(output)
+                  }
+                }
+                println("Downloaded $filename successfully! Size: ${targetFile.length()} bytes")
+                success = true
+              } else {
+                println("HTTP status $status for $filename attempt")
+              }
+              break
+            }
+          } catch (e: Exception) {
+            println("Exception while downloading $filename from $urlStr: ${e.message}")
+          }
+          if (success) break
+        }
+        if (!success) {
+          println("Warning: Could not download $filename from any of the URLs.")
+        }
+      } else {
+        println("$filename already exists with valid size (${targetFile.length()} bytes).")
+      }
+    }
+  }
+}
+
+tasks.register("downloadTafseer") {
+  notCompatibleWithConfigurationCache("Uses network connection and local file references")
+  doLast {
+    val quranDir = file("src/main/assets/quran")
+    quranDir.mkdirs()
+    val targetFile = File(quranDir, "tafseer.json")
+    if (!targetFile.exists() || targetFile.length() < 1000000) {
+      val urlStr = "https://github.com/00AhmedMokhtar00/QuranTafseer-ar-json/raw/refs/heads/master/tafseer.json"
+      println("Downloading Tafseer JSON data to ${targetFile.absolutePath}...")
+      try {
+        var currentUrlStr = urlStr
+        var conn: HttpURLConnection
+        var success = false
+        var attempts = 0
+        while (attempts < 5) {
+          val url = URI(currentUrlStr).toURL()
+          conn = url.openConnection() as HttpURLConnection
+          conn.instanceFollowRedirects = true
+          conn.requestMethod = "GET"
+          conn.connectTimeout = 30000
+          conn.readTimeout = 30000
+          val status = conn.responseCode
+          if (status == HttpURLConnection.HTTP_MOVED_TEMP || status == HttpURLConnection.HTTP_MOVED_PERM || status == HttpURLConnection.HTTP_SEE_OTHER || status == 307 || status == 308) {
+            val newUrl = conn.getHeaderField("Location")
+            currentUrlStr = newUrl
+            attempts++
+            continue
+          }
+          if (status == 200) {
+            conn.inputStream.use { input ->
+              targetFile.outputStream().use { output ->
+                input.copyTo(output)
+              }
+            }
+            println("Downloaded Tafseer successfully! Size: ${targetFile.length()} bytes")
+            success = true
+          } else {
+            println("HTTP status $status for Tafseer download attempt.")
+          }
+          break
+        }
+      } catch (e: Exception) {
+        println("Exception while downloading Tafseer: ${e.message}")
+      }
+    } else {
+      println("tafseer.json already exists with valid size (${targetFile.length()} bytes).")
+    }
+  }
+}
+
+tasks.register("downloadEnglishTafseer") {
+  notCompatibleWithConfigurationCache("Uses network")
+  doLast {
+    val dir = file("src/main/assets/quran/en_tafseer")
+    dir.mkdirs()
+    for (surah in 1..114) {
+      val target = File(dir, "$surah.json")
+      if (!target.exists() || target.length() < 10) {
+        try {
+          println("Downloading EN Tafseer $surah.json")
+          val conn = URL("https://cdn.jsdelivr.net/gh/spa5k/tafsir_api@main/tafsir/en-al-jalalayn/$surah.json").openConnection() as HttpURLConnection
+          conn.connect()
+          if (conn.responseCode in 200..299) {
+            target.writeBytes(conn.inputStream.readBytes())
+          }
+        } catch(e: Exception) {
+          println("Failed on $surah")
+        }
+      }
+    }
+  }
+}
+
+tasks.named("preBuild") {
+  dependsOn("downloadAdhan", "downloadTafseer", "downloadEnglishTafseer")
 }
 
 

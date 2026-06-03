@@ -37,12 +37,25 @@ class QiblaManager(context: Context) : SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent) {
+        val alpha = 0.12f
         if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
-            System.arraycopy(event.values, 0, gravityValues, 0, minOf(event.values.size, gravityValues.size))
-            hasGravity = true
+            if (!hasGravity) {
+                System.arraycopy(event.values, 0, gravityValues, 0, minOf(event.values.size, gravityValues.size))
+                hasGravity = true
+            } else {
+                for (j in 0 until 3) {
+                    gravityValues[j] = gravityValues[j] + alpha * (event.values[j] - gravityValues[j])
+                }
+            }
         } else if (event.sensor.type == Sensor.TYPE_MAGNETIC_FIELD) {
-            System.arraycopy(event.values, 0, geomagneticValues, 0, minOf(event.values.size, geomagneticValues.size))
-            hasGeomagnetic = true
+            if (!hasGeomagnetic) {
+                System.arraycopy(event.values, 0, geomagneticValues, 0, minOf(event.values.size, geomagneticValues.size))
+                hasGeomagnetic = true
+            } else {
+                for (j in 0 until 3) {
+                    geomagneticValues[j] = geomagneticValues[j] + alpha * (event.values[j] - geomagneticValues[j])
+                }
+            }
         }
 
         if (hasGravity && hasGeomagnetic) {
@@ -54,6 +67,8 @@ class QiblaManager(context: Context) : SensorEventListener {
                 // azimuth is orientation[0] in radians. Convert to degrees.
                 var azimuthDegrees = Math.toDegrees(orientation[0].toDouble()).toFloat()
                 azimuthDegrees = (azimuthDegrees + 360) % 360
+                
+                // Let's also do a subtle low-pass or immediate value with a small deadband / check to avoid noise
                 _compassHeading.value = azimuthDegrees
             }
         }
