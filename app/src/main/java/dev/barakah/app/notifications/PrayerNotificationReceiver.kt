@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
+import androidx.core.text.BidiFormatter
 import dev.barakah.app.MainActivity
 import dev.barakah.app.R
 import dev.barakah.app.notifications.PrayerScheduler
@@ -53,14 +54,14 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
         val appPrefs = context.getSharedPreferences("barakah_prefs", Context.MODE_PRIVATE)
         val isAr = appPrefs.getString("app_lang", "en") == "ar"
 
-        val title: String
-        val text: String
+        var title: String
+        var text: String
         if (prayerName == "Morning Adhkar") {
             title = if (isAr) "أذكار الصباح" else "Morning Adhkar"
-            text = if (isAr) "حان وقت قراءة أذكار الصباح لجلب البركة والتوفيق ليومك." else "It's time to recite your Morning Adhkar for barakah in your day."
+            text = if (isAr) "حان وقت قراءة أذكار الصباح لجلب البركة والتوفيق ليومك" else "It's time to recite your Morning Adhkar for barakah in your day."
         } else if (prayerName == "Evening Adhkar") {
             title = if (isAr) "أذكار المساء" else "Evening Adhkar"
-            text = if (isAr) "حان وقت قراءة أذكار المساء لحفظك وسلامتك الليلة." else "It's time to recite your Evening Adhkar for protection and peace tonight."
+            text = if (isAr) "حان وقت قراءة أذكار المساء لحفظك وسلامتك الليلة" else "It's time to recite your Evening Adhkar for protection and peace tonight."
         } else {
             title = if (isAr) "مواقيت الصلاة" else "Prayer Time"
             val dispName = if (isAr) {
@@ -80,14 +81,19 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
             } else {
                 prayerName
             }
-            text = if (isAr) "حان وقت صلاة $dispName." else "It's time for $dispName prayer."
+            text = if (isAr) "حان وقت صلاة $dispName" else "It's time for $dispName prayer."
         }
+
+        // Wrap with BidiFormatter for correct RTL text ordering, alignment, and line performance metrics on LTR devices
+        val bidi = BidiFormatter.getInstance()
+        val displayTitle = if (isAr) bidi.unicodeWrap(title) else title
+        val displayText = if (isAr) bidi.unicodeWrap(text) else text
 
         val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(title)
-            .setContentText(text)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setContentTitle(displayTitle)
+            .setContentText(displayText)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(displayText))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
