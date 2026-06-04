@@ -41,6 +41,11 @@ android {
   namespace = "dev.barakah.app"
   compileSdk { version = release(36) { minorApiLevel = 1 } }
 
+  androidResources {
+    noCompress += "json"
+    noCompress += "gz"
+  }
+
   defaultConfig {
     applicationId = "dev.barakah.app"
     minSdk = 24

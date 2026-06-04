@@ -378,16 +378,22 @@ fun QiblahScreen(
         Column(
             modifier = modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(
-                    start = 24.dp,
-                    end = 24.dp,
-                    top = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding() + 24.dp,
-                    bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding() + 24.dp
-                ),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
+                .background(MaterialTheme.colorScheme.background),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .widthIn(max = 680.dp)
+                    .padding(
+                        start = 24.dp,
+                        end = 24.dp,
+                        top = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding() + 24.dp,
+                        bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding() + 24.dp
+                    ),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
             // 1. TOP HEADER BANNER
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -642,6 +648,7 @@ fun QiblahScreen(
                     }
                 }
             }
+        }
         }
     }
 }
