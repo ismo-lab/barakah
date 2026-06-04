@@ -239,6 +239,12 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
             text = if (isAr) "حان وقت صلاة $dispName." else "It's time for $dispName prayer."
         }
 
+        // Add RTL Mark for Arabic notifications to help with alignment and punctuation
+        if (isAr) {
+            title = "\u200F$title"
+            text = "\u200F$text"
+        }
+
         val enableAdhanSound = appPrefs.getBoolean("enable_adhan_sound", false)
         val adhanSoundType = appPrefs.getString("adhan_sound_type", "short") ?: "short"
         val playablePrayers = listOf("Fajr", "Dhuhr", "Asr", "Maghrib", "Isha")

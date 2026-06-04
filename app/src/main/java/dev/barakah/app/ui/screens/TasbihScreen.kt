@@ -82,19 +82,246 @@ fun TasbihScreen(
             .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            modifier = modifier
-                .fillMaxHeight()
-                .widthIn(max = 680.dp)
-                .padding(
-                    start = 16.dp, 
-                    end = 16.dp, 
-                    top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 16.dp,
-                    bottom = 16.dp
-                ),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
+        val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+        val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+
+        if (isLandscape) {
+            Row(
+                modifier = modifier
+                    .fillMaxSize()
+                    .windowInsetsPadding(WindowInsets.safeDrawing)
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Left column: Selectors and Controls
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp, alignment = Alignment.CenterVertically),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Header & Dhikr selector
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = if (isAr) "مسبحة الذكر" else "Tasbih Counter",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        // Dhikr dropdown trigger
+                        Card(
+                            onClick = { showDhikrDropdown = true },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("dhikr_dropdown_trigger"),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            ),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.15f))
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    if (isAr) {
+                                        Text(
+                                            text = activeDhikr.second,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontFamily = FontFamily.Serif,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            textAlign = TextAlign.Start
+                                        )
+                                    } else {
+                                        Text(
+                                            text = getTranslatedDhikrTitle(activeDhikr.first),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            textAlign = TextAlign.Start
+                                        )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = activeDhikr.second,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontFamily = FontFamily.Serif,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            textAlign = TextAlign.Start
+                                        )
+                                    }
+                                }
+                                Icon(
+                                    imageVector = Icons.Default.KeyboardArrowDown,
+                                    contentDescription = if (isAr) "اختر الذكر" else "Select Dhikr",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+
+                    // Target Select & Reset Controls
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        // Options Bar
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+                                .padding(2.dp),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            val targets = listOf(33, 99, 100, 0)
+                            targets.forEach { t ->
+                                val isSelected = target == t
+                                val label = if (t == 0) (if (isAr) "مفتوح" else "∞ Loop") else t.toString()
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(CircleShape)
+                                        .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
+                                        .clickable { viewModel.setTasbihTarget(t) }
+                                        .padding(vertical = 6.dp)
+                                        .testTag("target_option_$t"),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = label,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // RESET BUTTON
+                        Button(
+                            onClick = { viewModel.resetTasbih() },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(44.dp)
+                                .testTag("reset_button"),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer,
+                                contentColor = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = if (isAr) "إعادة ضبط العداد" else "Reset Counter",
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = if (isAr) "إعادة ضبط العداد" else "Reset Progress",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Right column: Large clicking blob
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Card(
+                        onClick = {
+                            isTapped = true
+                            viewModel.incrementTasbih()
+                        },
+                        modifier = Modifier
+                            .fillMaxHeight(0.9f)
+                            .aspectRatio(1f)
+                            .scale(blobScale)
+                            .testTag("tap_zone_blob"),
+                        shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp, bottomStart = 80.dp, bottomEnd = 80.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.radialGradient(
+                                        colors = listOf(
+                                            MaterialTheme.colorScheme.secondaryContainer,
+                                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.85f)
+                                        )
+                                    )
+                                )
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = if (target > 0) 
+                                        java.lang.String.format(java.util.Locale.US, "%d/%d", count, target.toLong())
+                                    else 
+                                        java.lang.String.format(java.util.Locale.US, "%d", count),
+                                    style = MaterialTheme.typography.displayMedium.copy(
+                                        fontSize = 44.sp,
+                                        fontWeight = FontWeight.Black,
+                                        fontFamily = FontFamily.Monospace,
+                                        letterSpacing = (-1.5).sp,
+                                        lineHeight = 44.sp
+                                    ),
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = if (isAr) "اضغط للتسبيح" else "TAP TO COUNT",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f),
+                                    letterSpacing = 1.sp
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            Column(
+                modifier = modifier
+                    .fillMaxHeight()
+                    .widthIn(max = 680.dp)
+                    .padding(
+                        start = 24.dp,
+                        end = 24.dp,
+                        top = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding() + 24.dp,
+                        bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding() + 24.dp
+                    ),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceEvenly
+            ) {
         // 1. TOP HEADER & DHIKR SELECTOR
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -104,12 +331,16 @@ fun TasbihScreen(
                 text = if (isAr) "مسبحة الذكر" else "Tasbih Counter",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.onBackground
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
             Text(
                 text = if (isAr) "حافظ على أورادك اليومية وأذكارك بسهولة" else "Keep track of your acts of remembrance",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -132,23 +363,28 @@ fun TasbihScreen(
                         .fillMaxWidth()
                         .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.Center
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         if (isAr) {
                             Text(
                                 text = activeDhikr.second,
                                 style = MaterialTheme.typography.titleLarge,
                                 fontFamily = FontFamily.Serif,
                                 color = MaterialTheme.colorScheme.primary,
-                                textAlign = TextAlign.Start
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
                             )
                         } else {
                             Text(
                                 text = getTranslatedDhikrTitle(activeDhikr.first),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Start
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
@@ -156,10 +392,12 @@ fun TasbihScreen(
                                 style = MaterialTheme.typography.titleLarge,
                                 fontFamily = FontFamily.Serif,
                                 color = MaterialTheme.colorScheme.primary,
-                                textAlign = TextAlign.Start
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
                     }
+                    Spacer(modifier = Modifier.width(8.dp))
                     Icon(
                         imageVector = Icons.Default.KeyboardArrowDown,
                         contentDescription = if (isAr) "اختر الذكر" else "Select Dhikr",
@@ -298,6 +536,7 @@ fun TasbihScreen(
             }
         }
     }
+    }
 
     // LIST DIALOG FOR DHIKR PHRASES
     if (showDhikrDropdown) {
@@ -313,10 +552,11 @@ fun TasbihScreen(
                 )
             },
             text = {
+                val dialogMaxHeight = if (isLandscape) 140.dp else 350.dp
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(max = 350.dp)
+                        .heightIn(max = dialogMaxHeight)
                 ) {
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(8.dp)

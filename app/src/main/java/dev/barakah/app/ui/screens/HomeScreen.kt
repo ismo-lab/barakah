@@ -95,7 +95,8 @@ fun HomeScreen(
     navController: androidx.navigation.NavHostController,
     modifier: Modifier = Modifier
 ) {
-    val location by viewModel.currentLocation.collectAsState()
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
     val locationLabel by viewModel.locationLabel.collectAsState()
     val times by viewModel.prayerTimes.collectAsState()
     val activeHighlight by viewModel.activeHighlightName.collectAsState()
@@ -179,9 +180,12 @@ fun HomeScreen(
     )
 
     fun translatePrayer(name: String): String {
-        if (!isAr) return name
         val clean = name.trim()
-        return prayerTranslations[clean] ?: clean
+        if (isAr) {
+            return prayerTranslations[clean] ?: clean
+        }
+        // In English, remove (Nafilah) suffix as the UI badge handles it
+        return clean.replace("(Nafilah)", "").trim()
     }
 
     val subtitleTranslations = mapOf(
@@ -261,12 +265,12 @@ fun HomeScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .widthIn(max = 680.dp),
+                .widthIn(max = if (isLandscape) 1200.dp else 680.dp),
             contentPadding = PaddingValues(
                 start = 16.dp, 
                 end = 16.dp, 
-                top = 12.dp,
-                bottom = 12.dp
+                top = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding() + 16.dp,
+                bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding() + 24.dp
             )
         ) {
         // 1. LOCATION SELECTION HEADER (Bold Typography style)
@@ -274,10 +278,10 @@ fun HomeScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 4.dp, vertical = 12.dp)
+                    .padding(horizontal = 4.dp, vertical = if (isLandscape) 4.dp else 12.dp)
                     .testTag("location_card"),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Bottom
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Row(
@@ -291,8 +295,9 @@ fun HomeScreen(
                             tint = MaterialTheme.colorScheme.secondary,
                             modifier = Modifier.size(16.dp)
                         )
+                        val locLabel = viewModel.locationLabel.collectAsState().value
                         Text(
-                            text = if (isAr) locationLabel else locationLabel.uppercase(),
+                            text = if (isAr) locLabel else locLabel.uppercase(),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.secondary,
@@ -303,7 +308,7 @@ fun HomeScreen(
                     val hijriDateStr = getHijriDateString()
                     Text(
                         text = translateHijri(hijriDateStr),
-                        style = MaterialTheme.typography.headlineLarge,
+                        style = if (isLandscape) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.Black,
                         color = MaterialTheme.colorScheme.onBackground,
                         letterSpacing = (-0.5).sp
@@ -322,7 +327,7 @@ fun HomeScreen(
                     )
                 }
 
-                // Unified Settings Button replaces individual GPS & manual selectors
+                // Unified Settings Button
                 Surface(
                     shape = RoundedCornerShape(24.dp),
                     color = MaterialTheme.colorScheme.secondaryContainer,
@@ -345,163 +350,38 @@ fun HomeScreen(
             }
         }
 
-        // 2. DYNAMIC EXPRESSIVE COUNTDOWN CARD (Bold Asymmetrical "rounded-[48px_16px_48px_16px]")
+        // 2. DYNAMIC EXPRESSIVE COUNTDOWN CARD
         item {
-            CountdownCardView(
-                viewModel = viewModel,
-                isAr = isAr,
-                translatePrayer = { translatePrayer(it) }
-            )
-        }
-
-        // 2.5 DAILY ESSENTIALS SECTION
-        item {
-            Column(modifier = Modifier.padding(vertical = 12.dp, horizontal = 4.dp)) {
-                Text(
-                    text = if (isAr) "أذكار اليوم" else "Daily Essentials",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(bottom = 12.dp)
+            Box(modifier = Modifier.padding(vertical = if (isLandscape) 4.dp else 12.dp)) {
+                CountdownCardView(
+                    viewModel = viewModel,
+                    isAr = isAr,
+                    translatePrayer = { translatePrayer(it) }
                 )
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    val morningCat = if (isAr) "أَذْكَارُ الصَّبَاحِ" else "In the morning and evening"
-                    val eveningCat = if (isAr) "أَذْكَارُ المَسَاءِ" else "In the morning and evening"
-                    
-                    // Morning Card
-                    Card(
-                        onClick = {
-                            viewModel.selectDuaCategory(morningCat)
-                            navController.navigate("duas") {
-                                popUpTo(navController.graph.startDestinationId) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.35f)
-                        )
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Icon(Icons.Default.WbSunny, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(28.dp))
-                            Spacer(modifier = Modifier.height(10.dp))
-                            Text(
-                                text = if (isAr) "أذكار الصباح" else "Morning Adhkar",
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    }
-                    
-                    // Evening Card
-                    Card(
-                        onClick = {
-                            viewModel.selectDuaCategory(eveningCat)
-                            navController.navigate("duas") {
-                                popUpTo(navController.graph.startDestinationId) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.35f)
-                        )
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Icon(Icons.Default.NightsStay, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(28.dp))
-                            Spacer(modifier = Modifier.height(10.dp))
-                            Text(
-                                text = if (isAr) "أذكار المساء" else "Evening Adhkar",
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    }
-                }
             }
         }
 
-        // 2.6 MORE FEATURES / OTHERS SECTION
-        item {
-            Column(modifier = Modifier.padding(vertical = 12.dp, horizontal = 4.dp)) {
-                Text(
-                    text = if (isAr) "استكشف المزيد" else "Explore More",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(bottom = 12.dp)
-                )
-
-                Card(
-                    onClick = {
-                        navController.navigate("others") {
-                            popUpTo(navController.graph.startDestinationId) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth().testTag("explore_others_card"),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
-                    ),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+        // Feature Sections - Grid layout if landscape
+        if (isLandscape) {
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Widgets,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(16.dp))
-                            Column {
-                                Text(
-                                    text = if (isAr) "أخرى" else "Others",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = if (isAr) "أسماء الله الحسنى والمناسبات الإسلامية" else "Allah's Names & Islamic Occasions",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                    Column(modifier = Modifier.weight(1f)) {
+                        DailyEssentialsSection(navController, viewModel, isAr)
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        ExploreMoreSection(navController, isAr)
                     }
                 }
+            }
+        } else {
+            item {
+                DailyEssentialsSection(navController, viewModel, isAr)
+            }
+            item {
+                ExploreMoreSection(navController, isAr)
             }
         }
 
@@ -537,7 +417,7 @@ fun HomeScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp),
+                        .padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Icon(
@@ -604,7 +484,7 @@ fun HomeScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp),
+                        .padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Icon(
@@ -643,12 +523,12 @@ fun HomeScreen(
             }
         }
 
-        // 3. SEPARATOR / ACTIVE WINDOW TITLE - Only says Prayer Schedule and removes "Active" indicator text
+        // Prayer Schedule Title
         item {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 12.dp, horizontal = 4.dp),
+                    .padding(vertical = if (isLandscape) 4.dp else 12.dp, horizontal = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -777,42 +657,12 @@ fun HomeScreen(
             if (currentLang == "ar") androidx.compose.ui.unit.LayoutDirection.Rtl else androidx.compose.ui.unit.LayoutDirection.Ltr
         }
         androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides layoutDirection) {
+            // Location states
             var locationQuery by remember { mutableStateOf("") }
             val keyboardController = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
             val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
 
-            // Debug sound and notification test state
-            val debugScope = rememberCoroutineScope()
             val playingSoundResId by AdhanSoundManager.playingResId.collectAsState()
-
-            DisposableEffect(Unit) {
-                onDispose {
-                    AdhanSoundManager.stop()
-                }
-            }
-
-            fun triggerTestNotification(type: String) {
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU && notifPermissionState?.status?.isGranted != true) {
-                    notifPermissionState?.launchPermissionRequest()
-                    return
-                }
-                
-                try {
-                    val testIntent = android.content.Intent(context, dev.barakah.app.notifications.PrayerNotificationReceiver::class.java).apply {
-                        putExtra("PRAYER_NAME", type)
-                        putExtra("PRAYER_ID", 1000 + type.hashCode())
-                        putExtra("SCHEDULED_TIME", 0L)
-                    }
-                    context.sendBroadcast(testIntent)
-                    
-                    val dispMsg = if (isAr) "تم إرسال إشعار تجريبي لـ: $type!" else "Sent test notification for $type!"
-                    android.widget.Toast.makeText(context, dispMsg, android.widget.Toast.LENGTH_SHORT).show()
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    val dispMsg = if (isAr) "فشل إرسال الإشعار." else "Failed to send notification."
-                    android.widget.Toast.makeText(context, dispMsg, android.widget.Toast.LENGTH_SHORT).show()
-                }
-            }
 
             fun playSound(resId: Int) {
                 if (playingSoundResId == resId) {
@@ -1435,8 +1285,11 @@ fun HomeScreen(
                                             value = locationQuery,
                                             onValueChange = { locationQuery = it },
                                             placeholder = { Text(if (isAr) "ابحث عن مدينة..." else "Search city name...") },
-                                            modifier = Modifier.fillMaxWidth(),
-                                            singleLine = true,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(56.dp),
+                                            maxLines = 1,
+                                            textStyle = MaterialTheme.typography.bodyMedium,
                                             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                                             shape = RoundedCornerShape(12.dp)
                                         )
@@ -1834,6 +1687,157 @@ data class Quadruple<A, B, C, D>(
     val third: C,
     val fourth: D
 )
+
+@Composable
+fun DailyEssentialsSection(navController: androidx.navigation.NavController, viewModel: BarakahViewModel, isAr: Boolean) {
+    Column(modifier = Modifier.padding(vertical = 4.dp, horizontal = 4.dp)) {
+        Text(
+            text = if (isAr) "أذكار اليوم" else "Daily Essentials",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+        
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            val morningCat = if (isAr) "أَذْكَارُ الصَّبَاحِ" else "In the morning and evening"
+            val eveningCat = if (isAr) "أَذْكَارُ المَسَاءِ" else "In the morning and evening"
+            
+            // Morning Card
+            Card(
+                onClick = {
+                    viewModel.selectDuaCategory(morningCat)
+                    navController.navigate("duas") {
+                        popUpTo(navController.graph.startDestinationId) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.35f)
+                )
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Icon(Icons.Default.WbSunny, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(28.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = if (isAr) "أذكار الصباح" else "Morning Adhkar",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+            
+            // Evening Card
+            Card(
+                onClick = {
+                    viewModel.selectDuaCategory(eveningCat)
+                    navController.navigate("duas") {
+                        popUpTo(navController.graph.startDestinationId) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.35f)
+                )
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Icon(Icons.Default.NightsStay, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(28.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = if (isAr) "أذكار المساء" else "Evening Adhkar",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ExploreMoreSection(navController: androidx.navigation.NavController, isAr: Boolean) {
+    Column(modifier = Modifier.padding(vertical = 4.dp, horizontal = 4.dp)) {
+        Text(
+            text = if (isAr) "استكشف المزيد" else "Explore More",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+
+        Card(
+            onClick = {
+                navController.navigate("others") {
+                    popUpTo(navController.graph.startDestinationId) { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            },
+            modifier = Modifier.fillMaxWidth().testTag("explore_others_card"),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
+            ),
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Widgets,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text(
+                            text = if (isAr) "أخرى" else "Others",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = if (isAr) "أسماء الله الحسنى والمناسبات الإسلامية" else "Allah's Names & Islamic Occasions",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    }
+}
 
 @Composable
 fun CountdownCardView(

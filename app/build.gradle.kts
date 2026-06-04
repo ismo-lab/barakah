@@ -9,6 +9,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.util.Base64
 import java.io.File
+import java.util.zip.GZIPOutputStream
 
 // Automatically extract keystore from base64 string on build to prevent signing corruption across devices and GitHub actions
 val keystoreFile = file("keystore.jks")
@@ -286,78 +287,34 @@ tasks.register("downloadAdhan") {
 tasks.register("downloadTafseer") {
   notCompatibleWithConfigurationCache("Uses network connection and local file references")
   doLast {
-    val quranDir = file("src/main/assets/quran")
-    quranDir.mkdirs()
-    val targetFile = File(quranDir, "tafseer.json")
-    if (!targetFile.exists() || targetFile.length() < 1000000) {
-      val urlStr = "https://github.com/00AhmedMokhtar00/QuranTafseer-ar-json/raw/refs/heads/master/tafseer.json"
-      println("Downloading Tafseer JSON data to ${targetFile.absolutePath}...")
-      try {
-        var currentUrlStr = urlStr
-        var conn: HttpURLConnection
-        var success = false
-        var attempts = 0
-        while (attempts < 5) {
-          val url = URI(currentUrlStr).toURL()
-          conn = url.openConnection() as HttpURLConnection
-          conn.instanceFollowRedirects = true
-          conn.requestMethod = "GET"
-          conn.connectTimeout = 30000
-          conn.readTimeout = 30000
-          val status = conn.responseCode
-          if (status == HttpURLConnection.HTTP_MOVED_TEMP || status == HttpURLConnection.HTTP_MOVED_PERM || status == HttpURLConnection.HTTP_SEE_OTHER || status == 307 || status == 308) {
-            val newUrl = conn.getHeaderField("Location")
-            currentUrlStr = newUrl
-            attempts++
-            continue
-          }
-          if (status == 200) {
-            conn.inputStream.use { input ->
-              targetFile.outputStream().use { output ->
-                input.copyTo(output)
-              }
-            }
-            println("Downloaded Tafseer successfully! Size: ${targetFile.length()} bytes")
-            success = true
-          } else {
-            println("HTTP status $status for Tafseer download attempt.")
-          }
-          break
-        }
-      } catch (e: Exception) {
-        println("Exception while downloading Tafseer: ${e.message}")
-      }
-    } else {
-      println("tafseer.json already exists with valid size (${targetFile.length()} bytes).")
-    }
-  }
-}
-
-tasks.register("downloadEnglishTafseer") {
-  notCompatibleWithConfigurationCache("Uses network")
-  doLast {
-    val dir = file("src/main/assets/quran/en_tafseer")
+    val dir = file("src/main/assets/quran/ar_tafseer")
     dir.mkdirs()
-    for (surah in 1..114) {
+    for (surah in 1..20) {
       val target = File(dir, "$surah.json")
       if (!target.exists() || target.length() < 10) {
         try {
-          println("Downloading EN Tafseer $surah.json")
-          val conn = URL("https://cdn.jsdelivr.net/gh/spa5k/tafsir_api@main/tafsir/en-al-jalalayn/$surah.json").openConnection() as HttpURLConnection
-          conn.connect()
+          val url = URI("https://cdn.jsdelivr.net/gh/spa5k/tafsir_api@main/tafsir/ar-tafsir-al-muyassar/$surah.json").toURL()
+          val conn = url.openConnection() as HttpURLConnection
+          conn.connectTimeout = 3000
+          conn.readTimeout = 3000
           if (conn.responseCode in 200..299) {
             target.writeBytes(conn.inputStream.readBytes())
           }
         } catch(e: Exception) {
-          println("Failed on $surah")
         }
       }
     }
   }
 }
 
+tasks.register("compressAndCacheTafseer") {
+  doLast {
+    println("Using offline cached or on-demand loading of Tafseer files. Skipping download during build.")
+  }
+}
+
 tasks.named("preBuild") {
-  dependsOn("downloadAdhan", "downloadTafseer", "downloadEnglishTafseer")
+  dependsOn("downloadAdhan", "compressAndCacheTafseer")
 }
 
 

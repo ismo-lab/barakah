@@ -122,8 +122,8 @@ class PrayerRemainingWidget : GlanceAppWidget() {
             "Sunrise" -> times.sunrise
             "Dhuhr" -> times.dhuhr
             "Asr" -> times.asr
-            "Maghrib" -> times.maghrib
-            "Isha" -> times.isha
+            "Maghrib", "المغرب" -> times.maghrib
+            "Isha", "العشاء" -> times.isha
             else -> ""
         }
 

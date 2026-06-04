@@ -32,6 +32,7 @@ import dev.barakah.app.ui.screens.*
 import dev.barakah.app.ui.theme.BarakahTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import dev.barakah.app.notifications.AdhanSoundManager
@@ -89,6 +90,8 @@ fun MainNavigationContainer(
 ) {
     val currentLang by viewModel.appLanguage.collectAsState()
     val isAr = currentLang == "ar"
+    
+    var screenKeys by remember { mutableStateOf(mapOf<String, Int>()) }
 
     val navItems = listOf(
         NavigationTabItem(
@@ -128,124 +131,199 @@ fun MainNavigationContainer(
         )
     )
 
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
+    val showSettingsDialog by viewModel.showSettingsDialog.collectAsState()
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
-            val navBackStackEntry by navController.currentBackStackEntryAsState()
-            val currentDestination = navBackStackEntry?.destination
-
-            val showSettingsDialog by viewModel.showSettingsDialog.collectAsState()
-
-            NavigationBar(
-                modifier = Modifier
-                    .windowInsetsPadding(WindowInsets.navigationBars)
-                    .testTag("bottom_nav_bar")
-            ) {
-                navItems.forEachIndexed { index, item ->
-                    val isSelected = currentDestination?.route == item.route && !(item.route == "home" && showSettingsDialog)
-                    NavigationBarItem(
-                        selected = isSelected,
-                        onClick = {
-                            viewModel.setShowSettingsDialog(false)
-                            if (!isSelected) {
-                                navController.navigate(item.route) {
-                                    popUpTo(navController.graph.startDestinationId) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
+            if (!isLandscape) {
+                NavigationBar(
+                    modifier = Modifier
+                        .windowInsetsPadding(WindowInsets.navigationBars)
+                        .testTag("bottom_nav_bar")
+                ) {
+                    navItems.forEach { item ->
+                        val isSelected = currentDestination?.route == item.route && !(item.route == "home" && showSettingsDialog)
+                        NavigationBarItem(
+                            selected = isSelected,
+                            onClick = {
+                                viewModel.setShowSettingsDialog(false)
+                                if (!isSelected) {
+                                    screenKeys = screenKeys.toMutableMap().apply { this[item.route] = (this[item.route] ?: 0) + 1 }
+                                    viewModel.resetScreenState(item.route)
+                                    navController.navigate(item.route) {
+                                        popUpTo(navController.graph.startDestinationId) { saveState = false }
+                                        launchSingleTop = true
+                                        restoreState = false
+                                    }
                                 }
-                            }
-                        },
-                        label = { Text(text = item.label, style = MaterialTheme.typography.labelSmall) },
-                        icon = {
-                            Icon(
-                                imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
-                                contentDescription = item.label
-                            )
-                        },
-                        modifier = Modifier.testTag(item.tag)
-                    )
+                            },
+                            label = { Text(text = item.label, style = MaterialTheme.typography.labelSmall) },
+                            icon = {
+                                Icon(
+                                    imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
+                                    contentDescription = item.label
+                                )
+                            },
+                            modifier = Modifier.testTag(item.tag)
+                        )
+                    }
                 }
             }
         }
     ) { innerPadding ->
         val isAdhanSoundPlaying by AdhanSoundManager.isPlayingState.collectAsState()
 
-        Box(modifier = Modifier.fillMaxSize()) {
-            NavHost(
-                navController = navController,
-                startDestination = "home",
-                modifier = Modifier.padding(innerPadding),
-                enterTransition = { fadeIn(animationSpec = tween(250)) },
-                exitTransition = { fadeOut(animationSpec = tween(250)) },
-                popEnterTransition = { fadeIn(animationSpec = tween(250)) },
-                popExitTransition = { fadeOut(animationSpec = tween(250)) }
-            ) {
-                composable("home") { HomeScreen(viewModel = viewModel, navController = navController) }
-                composable("quran") { QuranScreen(viewModel = viewModel) }
-                composable("qiblah") { QiblahScreen(viewModel = viewModel) }
-                composable("tasbih") { TasbihScreen(viewModel = viewModel) }
-                composable("duas") { SupplicationsScreen(viewModel = viewModel) }
-                composable("others") { OthersScreen(viewModel = viewModel, navController = navController) }
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            if (isLandscape) {
+                NavigationRail(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .testTag("side_navigation_rail")
+                ) {
+                    Spacer(modifier = Modifier.weight(1f))
+                    navItems.forEachIndexed { index, item ->
+                        val isSelected = currentDestination?.route == item.route && !(item.route == "home" && showSettingsDialog)
+                        NavigationRailItem(
+                            selected = isSelected,
+                            onClick = {
+                                viewModel.setShowSettingsDialog(false)
+                                if (!isSelected) {
+                                    screenKeys = screenKeys.toMutableMap().apply { this[item.route] = (this[item.route] ?: 0) + 1 }
+                                    viewModel.resetScreenState(item.route)
+                                    navController.navigate(item.route) {
+                                        popUpTo(navController.graph.startDestinationId) { saveState = false }
+                                        launchSingleTop = true
+                                        restoreState = false
+                                    }
+                                }
+                            },
+                            label = { Text(text = item.label, style = MaterialTheme.typography.labelSmall) },
+                            icon = {
+                                Icon(
+                                    imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
+                                    contentDescription = item.label
+                                )
+                            },
+                            modifier = Modifier.testTag(item.tag)
+                        )
+                        if (index < navItems.size - 1) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                }
             }
 
-            AnimatedVisibility(
-                visible = isAdhanSoundPlaying,
-                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = innerPadding.calculateBottomPadding() + 8.dp, start = 16.dp, end = 16.dp)
-            ) {
-                Card(
-                    modifier = Modifier.fillMaxWidth().testTag("floating_adhan_player_bar"),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                    shape = RoundedCornerShape(16.dp)
+            Box(modifier = Modifier.weight(1f).fillMaxSize()) {
+                NavHost(
+                    navController = navController,
+                    startDestination = "home",
+                    modifier = Modifier.fillMaxSize(),
+                    enterTransition = { fadeIn(animationSpec = tween(250)) },
+                    exitTransition = { fadeOut(animationSpec = tween(250)) },
+                    popEnterTransition = { fadeIn(animationSpec = tween(250)) },
+                    popExitTransition = { fadeOut(animationSpec = tween(250)) }
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                    composable("home") { 
+                        androidx.compose.runtime.key(screenKeys["home"]) {
+                            HomeScreen(viewModel = viewModel, navController = navController)
+                        } 
+                    }
+                    composable("quran") { 
+                        androidx.compose.runtime.key(screenKeys["quran"]) {
+                            QuranScreen(viewModel = viewModel)
+                        } 
+                    }
+                    composable("qiblah") { 
+                        androidx.compose.runtime.key(screenKeys["qiblah"]) {
+                            QiblahScreen(viewModel = viewModel)
+                        } 
+                    }
+                    composable("tasbih") { 
+                        androidx.compose.runtime.key(screenKeys["tasbih"]) {
+                            TasbihScreen(viewModel = viewModel)
+                        } 
+                    }
+                    composable("duas") { 
+                        androidx.compose.runtime.key(screenKeys["duas"]) {
+                            SupplicationsScreen(viewModel = viewModel)
+                        } 
+                    }
+                    composable("others") { 
+                        androidx.compose.runtime.key(screenKeys["others"]) {
+                            OthersScreen(viewModel = viewModel, navController = navController)
+                        } 
+                    }
+                }
+
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = isAdhanSoundPlaying,
+                    enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                    exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 8.dp, start = 16.dp, end = 16.dp)
+                ) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth().testTag("floating_adhan_player_bar"),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                        shape = RoundedCornerShape(16.dp)
                     ) {
                         Row(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.VolumeUp,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    text = if (isAr) "صوت الأذان يشتغل الآن" else "Adhan is Playing",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.VolumeUp,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.size(24.dp)
                                 )
-                                Text(
-                                    text = if (isAr) "انقر لإيقاف الصوت" else "Tap to stop the playback",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Text(
+                                        text = if (isAr) "صوت الأذان يشتغل الآن" else "Adhan is Playing",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                    Text(
+                                        text = if (isAr) "انقر لإيقاف الصوت" else "Tap to stop the playback",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                    )
+                                }
+                            }
+                            
+                            IconButton(
+                                onClick = { AdhanSoundManager.stop() },
+                                colors = IconButtonDefaults.iconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                ),
+                                modifier = Modifier.size(36.dp).testTag("stop_adhan_floating_button")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Stop,
+                                    contentDescription = if (isAr) "إيقاف" else "Stop",
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
-                        }
-                        
-                        IconButton(
-                            onClick = { AdhanSoundManager.stop() },
-                            colors = IconButtonDefaults.iconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer,
-                                contentColor = MaterialTheme.colorScheme.onErrorContainer
-                            ),
-                            modifier = Modifier.size(36.dp).testTag("stop_adhan_floating_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Stop,
-                                contentDescription = if (isAr) "إيقاف" else "Stop",
-                                modifier = Modifier.size(20.dp)
-                            )
                         }
                     }
                 }

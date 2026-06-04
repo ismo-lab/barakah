@@ -6,6 +6,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -108,6 +110,68 @@ fun QuranScreen(
         },
         label = "QuranReadingTransition"
     ) { currentSurah ->
+        val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+        val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+
+        val lastReadBanner: @Composable () -> Unit = {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        lastReadingState?.let {
+                            selectedSurahForReading = QuranData.getSurahById(it.surahId)
+                        } ?: run {
+                            selectedSurahForReading = QuranData.getSurahById(1)
+                        }
+                    }
+                    .testTag("last_read_banner"),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                        Icon(
+                            imageVector = Icons.Outlined.Book,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.size(28.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = if (isAr) "آخر ما قرأت / متابعة" else "LAST READ / RESUME",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                            Text(
+                                text = lastReadingState?.let { 
+                                    val s = QuranData.getSurahById(it.surahId)
+                                    if (isAr) "${s?.arabic} - آية ${it.ayahNumber}" else "${s?.name} - Ayah ${it.ayahNumber}"
+                                } ?: (if (isAr) "سورة الفاتحة" else "Surah Al-Fatihah"),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = "Resume reading",
+                        tint = MaterialTheme.colorScheme.secondary
+                    )
+                }
+            }
+        }
+
         if (currentSurah == null) {
             // MAIN QURAN CATALOG LIST
             Column(
@@ -128,150 +192,197 @@ fun QuranScreen(
                             )
                         )
                         .padding(
-                            top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 16.dp, 
-                            start = 20.dp, 
-                            end = 20.dp, 
-                            bottom = 20.dp
+                            top = if (isLandscape) {
+                                WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding() + 8.dp
+                            } else {
+                                WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding() + 24.dp
+                            }, 
+                            start = if (isLandscape) 16.dp else 24.dp, 
+                            end = if (isLandscape) 16.dp else 24.dp, 
+                            bottom = if (isLandscape) 8.dp else 24.dp
                         )
                 ) {
-                    Column {
-                        Text(
-                            text = if (isAr) "القرآن الكريم" else "The Holy Quran",
-                            style = MaterialTheme.typography.headlineLarge,
-                            fontFamily = FontFamily.SansSerif,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                        Text(
-                            text = if (isAr) "اقرأ وتدبر واجمع عظيم الأجور والبركات" else "Read, reflect, and gather countless blessings",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
-                        )
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // HERO last read / resume banner
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 8.dp)
-                                .clickable {
-                                    lastReadingState?.let {
-                                        selectedSurahForReading = QuranData.getSurahById(it.surahId)
-                                    } ?: run {
-                                        selectedSurahForReading = QuranData.getSurahById(1)
-                                    }
-                                }
-                                .testTag("last_read_banner"),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
+                    if (isLandscape) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Outlined.Book,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.secondary,
-                                        modifier = Modifier.size(28.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Column {
-                                        Text(
-                                            text = if (isAr) "آخر ما قرأت / متابعة" else "LAST READ / RESUME",
-                                            style = MaterialTheme.typography.labelMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.secondary
-                                        )
-                                        Text(
-                                            text = lastReadingState?.let { 
-                                                val s = QuranData.getSurahById(it.surahId)
-                                                if (isAr) "${s?.arabic} - آية ${it.ayahNumber}" else "${s?.name} - Ayah ${it.ayahNumber}"
-                                            } ?: (if (isAr) "سورة الفاتحة" else "Surah Al-Fatihah"),
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                }
-                                Icon(
-                                    imageVector = Icons.Default.PlayArrow,
-                                    contentDescription = "Resume reading",
-                                    tint = MaterialTheme.colorScheme.secondary
-                                )
-                            }
+                            Text(
+                                text = if (isAr) "القرآن الكريم" else "The Holy Quran",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                    } else {
+                        Column {
+                            Text(
+                                text = if (isAr) "القرآن الكريم" else "The Holy Quran",
+                                style = MaterialTheme.typography.headlineLarge,
+                                fontFamily = FontFamily.SansSerif,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                            Text(
+                                text = if (isAr) "اقرأ وتدبر واجمع عظيم الأجور والبركات" else "Read, reflect, and gather countless blessings",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            lastReadBanner()
                         }
                     }
                 }
 
                 // 2. SEARCH BAR & TAB TOGGLE FLAGS
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
-                ) {
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        placeholder = { Text(if (isAr) "ابحث عن اسم السورة..." else "Search Surah name, number, meaning...") },
-                        leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
-                        trailingIcon = {
-                            if (searchQuery.isNotEmpty()) {
-                                IconButton(onClick = { searchQuery = "" }) {
-                                    Icon(Icons.Default.Clear, contentDescription = "Clear search")
-                                }
-                            }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("quran_search_bar"),
-                        shape = RoundedCornerShape(16.dp),
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                        )
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Custom Tab Toggle (All Surahs vs Bookmarked Surahs)
+                if (isLandscape) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                            .padding(4.dp)
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        val items = listOf(
-                            if (isAr) "كل السور" else "All Surahs",
-                            if (isAr) "المحفوظات (${bookmarks.size})" else "Bookmarks (${bookmarks.size})"
-                        )
-                        items.forEachIndexed { index, title ->
-                            val selected = activeFilterTab == index
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(if (selected) MaterialTheme.colorScheme.primary else Color.Transparent)
-                                    .clickable { activeFilterTab = index }
-                                    .padding(vertical = 10.dp)
-                                    .testTag("quran_filter_tab_$index"),
-                                contentAlignment = Alignment.Center
-                            ) {
+                        OutlinedTextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            placeholder = { 
                                 Text(
-                                    text = title,
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontWeight = FontWeight.Bold
-                                )
+                                    text = if (isAr) "ابحث عن السور..." else "Search Surah...",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                ) 
+                            },
+                            leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
+                            trailingIcon = {
+                                if (searchQuery.isNotEmpty()) {
+                                    IconButton(onClick = { searchQuery = "" }) {
+                                        Icon(Icons.Default.Clear, contentDescription = "Clear search")
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .weight(0.5f)
+                                .heightIn(min = 52.dp)
+                                .testTag("quran_search_bar"),
+                            shape = RoundedCornerShape(12.dp),
+                            singleLine = true,
+                            textStyle = MaterialTheme.typography.bodyMedium,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                            )
+                        )
+
+                        // Custom Tab Toggle
+                        Row(
+                            modifier = Modifier
+                                .weight(0.5f)
+                                .height(40.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                .padding(2.dp)
+                        ) {
+                            val items = listOf(
+                                if (isAr) "كل السور" else "All Surahs",
+                                if (isAr) "المحفوظات (${bookmarks.size})" else "Bookmarks (${bookmarks.size})"
+                            )
+                            items.forEachIndexed { index, title ->
+                                val selected = activeFilterTab == index
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxHeight()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (selected) MaterialTheme.colorScheme.primary else Color.Transparent)
+                                        .clickable { activeFilterTab = index }
+                                        .padding(vertical = 4.dp)
+                                        .testTag("quran_filter_tab_$index"),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = title,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            placeholder = { 
+                                Text(
+                                    text = if (isAr) "ابحث عن اسم السورة..." else "Search Surah name, number, meaning...",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                ) 
+                            },
+                            leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
+                            trailingIcon = {
+                                if (searchQuery.isNotEmpty()) {
+                                    IconButton(onClick = { searchQuery = "" }) {
+                                        Icon(Icons.Default.Clear, contentDescription = "Clear search")
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 56.dp)
+                                .testTag("quran_search_bar"),
+                            shape = RoundedCornerShape(16.dp),
+                            singleLine = true,
+                            textStyle = MaterialTheme.typography.bodyLarge,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                            )
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Custom Tab Toggle (All Surahs vs Bookmarked Surahs)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                .padding(4.dp)
+                        ) {
+                            val items = listOf(
+                                if (isAr) "كل السور" else "All Surahs",
+                                if (isAr) "المحفوظات (${bookmarks.size})" else "Bookmarks (${bookmarks.size})"
+                            )
+                            items.forEachIndexed { index, title ->
+                                val selected = activeFilterTab == index
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(if (selected) MaterialTheme.colorScheme.primary else Color.Transparent)
+                                        .clickable { activeFilterTab = index }
+                                        .padding(vertical = 10.dp)
+                                        .testTag("quran_filter_tab_$index"),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = title,
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
                         }
                     }
@@ -282,6 +393,13 @@ fun QuranScreen(
                     contentPadding = PaddingValues(bottom = 16.dp),
                     state = listState
                 ) {
+                    if (isLandscape) {
+                        item {
+                            Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
+                                lastReadBanner()
+                            }
+                        }
+                    }
                     items(filteredSurahs) { surah ->
                         val isBookmarked = bookmarks.any { b -> b.surahId == surah.id }
                         
@@ -421,7 +539,7 @@ fun QuranScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(
-                                top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 4.dp,
+                                top = 8.dp,
                                 bottom = 4.dp,
                                 start = 8.dp,
                                 end = 8.dp
@@ -570,6 +688,8 @@ fun QuranScreen(
     if (showVerseTafseerDialog != null) {
         val (verse, tafseer) = showVerseTafseerDialog!!
         val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
+        val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+        val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
         
         AlertDialog(
             onDismissRequest = { showVerseTafseerDialog = null },
@@ -590,8 +710,12 @@ fun QuranScreen(
                 )
             },
             text = {
+                val dialogMaxHeight = if (isLandscape) 140.dp else 420.dp
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = dialogMaxHeight)
+                        .verticalScroll(androidx.compose.foundation.rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(

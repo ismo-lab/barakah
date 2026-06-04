@@ -116,6 +116,9 @@ fun SupplicationsScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
+        val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+        val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -128,23 +131,62 @@ fun SupplicationsScreen(
                     )
                 )
                 .padding(
-                    top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 16.dp, 
-                    start = 20.dp, 
-                    end = 20.dp, 
-                    bottom = 20.dp
+                    top = if (isLandscape) {
+                        WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding() + 8.dp
+                    } else {
+                        WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding() + 24.dp
+                    }, 
+                    start = if (isLandscape) 16.dp else 24.dp, 
+                    end = if (isLandscape) 16.dp else 24.dp, 
+                    bottom = if (isLandscape) 8.dp else 24.dp
                 )
         ) {
-            Column {
+            if (isLandscape) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
                         text = if (isAr) "حصن المسلم" else "Hisnul Muslim",
-                        style = MaterialTheme.typography.headlineLarge,
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(0.40f)
+                    )
+
+                    OutlinedTextField(
+                        value = searchPattern,
+                        onValueChange = { viewModel.updateDuaSearch(it) },
+                        placeholder = { 
+                            Text(
+                                text = if (isAr) "ابحث..." else "Search...",
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            ) 
+                        },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                        trailingIcon = {
+                            if (searchPattern.isNotEmpty()) {
+                                IconButton(onClick = { viewModel.updateDuaSearch("") }) {
+                                    Icon(Icons.Default.Clear, contentDescription = "Clear search", tint = MaterialTheme.colorScheme.outline)
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .weight(0.60f)
+                            .heightIn(min = 52.dp)
+                            .testTag("dua_search_bar"),
+                        shape = RoundedCornerShape(12.dp),
+                        singleLine = true,
+                        textStyle = MaterialTheme.typography.bodyMedium,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surface,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                            focusedBorderColor = MaterialTheme.colorScheme.secondary,
+                            unfocusedBorderColor = Color.Transparent
+                        )
                     )
 
                     if (activeCategory != "Menu" && searchPattern.isEmpty()) {
@@ -162,39 +204,78 @@ fun SupplicationsScreen(
                         }
                     }
                 }
-                
-                Text(
-                    text = if (isAr) "الأدعية والأذكار اليومية الصحيحة" else "Authentic daily supplications",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.82f)
-                )
+            } else {
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (isAr) "حصن المسلم" else "Hisnul Muslim",
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.weight(1f)
+                        )
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                OutlinedTextField(
-                    value = searchPattern,
-                    onValueChange = { viewModel.updateDuaSearch(it) },
-                    placeholder = { Text(if (isAr) "ابحث في عنوان الذكر أو النص..." else "Search title, keywords...") },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-                    trailingIcon = {
-                        if (searchPattern.isNotEmpty()) {
-                            IconButton(onClick = { viewModel.updateDuaSearch("") }) {
-                                Icon(Icons.Default.Clear, contentDescription = "Clear search", tint = MaterialTheme.colorScheme.outline)
+                        if (activeCategory != "Menu" && searchPattern.isEmpty()) {
+                            IconButton(
+                                onClick = { viewModel.selectDuaCategory("Menu") },
+                                colors = IconButtonDefaults.iconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f)
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                    contentDescription = "Back to categories",
+                                    tint = MaterialTheme.colorScheme.onPrimary
+                                )
                             }
                         }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("dua_search_bar"),
-                    shape = RoundedCornerShape(16.dp),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surface,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                        focusedBorderColor = MaterialTheme.colorScheme.secondary,
-                        unfocusedBorderColor = Color.Transparent
+                    }
+                    
+                    Text(
+                        text = if (isAr) "الأدعية والأذكار اليومية الصحيحة" else "Authentic daily supplications",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.82f)
                     )
-                )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    OutlinedTextField(
+                        value = searchPattern,
+                        onValueChange = { viewModel.updateDuaSearch(it) },
+                        placeholder = { 
+                            Text(
+                                text = if (isAr) "ابحث في عنوان الذكر أو النص..." else "Search title, keywords...",
+                                style = MaterialTheme.typography.bodyLarge,
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            ) 
+                        },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                        trailingIcon = {
+                            if (searchPattern.isNotEmpty()) {
+                                IconButton(onClick = { viewModel.updateDuaSearch("") }) {
+                                    Icon(Icons.Default.Clear, contentDescription = "Clear search", tint = MaterialTheme.colorScheme.outline)
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 56.dp)
+                            .testTag("dua_search_bar"),
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true,
+                        textStyle = MaterialTheme.typography.bodyLarge,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surface,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                            focusedBorderColor = MaterialTheme.colorScheme.secondary,
+                            unfocusedBorderColor = Color.Transparent
+                        )
+                    )
+                }
             }
         }
 

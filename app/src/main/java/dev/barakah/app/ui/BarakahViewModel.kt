@@ -869,6 +869,15 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     }
 
     // SUPPLICATIONS ACTIONS
+    fun resetScreenState(route: String) {
+        when (route) {
+            "duas" -> {
+                _duaSearchQuery.value = ""
+                _selectedDuaCategory.value = "Menu"
+            }
+        }
+    }
+
     fun updateDuaSearch(query: String) {
         _duaSearchQuery.value = query
     }

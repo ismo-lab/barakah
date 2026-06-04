@@ -8,6 +8,8 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -350,8 +352,13 @@ fun OthersScreen(
                 )
             },
             text = {
+                val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+                val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = if (isLandscape) 140.dp else 420.dp)
+                        .verticalScroll(androidx.compose.foundation.rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
@@ -386,7 +393,7 @@ fun OthersScreen(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = name.arabicMeaning,
+                                text = if (isAr) name.arabicMeaning else name.englishMeaningDetail,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface,
                                 textAlign = TextAlign.Center,
@@ -440,18 +447,28 @@ fun OthersScreen(
                 }
             },
             text = {
+                val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+                val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
                 Surface(
                     shape = RoundedCornerShape(12.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = if (isLandscape) 140.dp else 420.dp)
                 ) {
-                    Text(
-                        text = if (isAr) holiday.descAr else holiday.descEn,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(16.dp),
-                        lineHeight = 24.sp
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(androidx.compose.foundation.rememberScrollState())
+                    ) {
+                        Text(
+                            text = if (isAr) holiday.descAr else holiday.descEn,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(16.dp),
+                            lineHeight = 24.sp
+                        )
+                    }
                 }
             }
         )
