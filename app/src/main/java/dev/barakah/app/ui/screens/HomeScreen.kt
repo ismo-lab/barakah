@@ -1112,7 +1112,7 @@ fun HomeScreen(
                                                 color = MaterialTheme.colorScheme.onSurface
                                             )
                                             Text(
-                                                text = if (isAr) "تشغيل  الأذان عند دخول وقت الفريضة" else "Play Adhan when a fard prayer starts",
+                                                text = if (isAr) "تشغيل الأذان عند دخول وقت الفريضة" else "Play Adhan when a fard prayer starts",
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )

@@ -4,7 +4,7 @@
 [![FOSS](https://img.shields.io/badge/Open--Source-FOSS-blue?style=for-the-badge&logo=open-source&logoColor=white&color=007ACC)](https://github.com/ismo-lab/barakah)
 [![Privacy First](https://img.shields.io/badge/Privacy-100%25-green?style=for-the-badge&logo=shield&logoColor=white&color=4CAF50)](#privacy-first)
 
-**Barakah** is a privacy-respecting, fully Free and Open Source (FOSS) Islamic companion application crafted specifically for Android. By pairing state-of-the-art Material 3 aesthetics with local offline-first reliability, **Barakah** serves as an eye-safe, advertisement-free spiritual toolkit for daily routines.
+**Barakah** is a privacy-respecting, fully Free and Open Source (FOSS) Islamic companion application crafted specifically for Android. By pairing Material 3 aesthetics with local offline-first reliability, **Barakah** serves as an eye-safe, advertisement-free spiritual toolkit for daily routines.
 
 ## 🌍 Supported Languages
 
@@ -14,14 +14,11 @@ Only English and Arabic are supported.
 
 ## 🌟 Key Features
 
-* **Detailed Welcome Wizard**: A multi-step setup flow for configuring application language, comprehensive notifications, and offline or GPS-based location method.
-* **Precision Prayer Coordinates**: Advanced offline prayer time calculation utilizing Batoul Apps' mathematical model, with support for manual calendar adjustments.
-* **Custom Backstage Adhan Alerts**: In-app playout of high-fidelity Mecca Al-Haram Adhan audio at fard prayer start times with adjustable durations (Short 20s / Full adhan).
-* **Voluntary (Nawafil) Prayers**: Configurable support to display Duha, Qiyam-ul-Layl, Witr, and Tahajjud on the main scheduler screen with robust, persistent timeline highlight tracking.
-* **Flexible Reminders Dashboard**: Customizable daily notifications for 15-minute pre-adhan alerts, morning/evening adhkar reminders, Eid calendar events, Monday/Thursday fasting nights, Friday Jumu'ah times, as well as distinct suhur and iftar alarms.
-* **Real-Time Qiblah Compass**: Interactive, hardware-sensor calibrated direction tracker with smooth visual alignment and sensory vibration indicators.
-* **Quran & Supplications Compilation**: Read the complete Holy Quran with Arabic Tafseer or English translation, customized font sizing, and browse *Hisnul Muslim* (حصن المسلم) supplications.
-* **Haptic Tasbih Counter**: Persistent virtual misbaha with target configuration limits and sensory haptic pulses upon completion.
+* **Home Dashboard**: View real-time prayer schedule trackers, choose voluntary (Nawafil) prayers to track, configure high-fidelity Mecca Al-Haram Adhan background play, and set flexible reminder notifications.
+* **Quran Reader**: Access the complete Holy Quran text alongside Arabic Tafseer or English translations and adjustable font scaling.
+* **Qiblah Compass**: Locate the Kaaba directions instantly using interactive, hardware-sensor calibrated alignment with physical haptic vibrations.
+* **Haptic Tasbih**: Maintain focus during remembrance with a digital counter (misbaha) supporting custom targets and discrete haptic pulses.
+* **Duas (Supplications)**: Read through compiled *Hisnul Muslim* (حصن المسلم) supplications organized by daily activities and scenarios.
 
 ---
 

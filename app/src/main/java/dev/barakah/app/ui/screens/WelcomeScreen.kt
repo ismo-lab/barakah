@@ -378,7 +378,7 @@ fun NotificationsStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
             item {
                 NotificationToggleCard(
                     title = if (isAr) "صوت الأذان عند دخول الصلاة" else "Adhan Call to Prayer",
-                    desc = if (isAr) "تشغيل  الأذان عند دخول وقت الفريضة" else "Play Adhan when a fard prayer starts",
+                    desc = if (isAr) "تشغيل الأذان عند دخول وقت الفريضة" else "Play Adhan when a fard prayer starts",
                     checked = enableAdhanSound,
                     onCheckedChange = { viewModel.setEnableAdhanSound(it) }
                 ) {

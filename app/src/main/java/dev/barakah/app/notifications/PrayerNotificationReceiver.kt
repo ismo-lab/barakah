@@ -9,7 +9,6 @@ import android.content.Intent
 import androidx.core.app.NotificationCompat
 import dev.barakah.app.MainActivity
 import dev.barakah.app.R
-import dev.barakah.app.notifications.PrayerScheduler
 
 class PrayerNotificationReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -90,7 +89,6 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
                     val builder = NotificationCompat.Builder(context, channelId)
                         .setSmallIcon(R.drawable.ic_notification)
                         .setContentTitle(title)
-                        .setContentText(text)
                         .setStyle(NotificationCompat.BigTextStyle().bigText(text))
                         .setPriority(NotificationCompat.PRIORITY_HIGH)
                         .setAutoCancel(true)
@@ -164,7 +162,6 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
                     val builder = NotificationCompat.Builder(context, channelId)
                         .setSmallIcon(R.drawable.ic_notification)
                         .setContentTitle(title)
-                        .setContentText(text)
                         .setStyle(NotificationCompat.BigTextStyle().bigText(text))
                         .setPriority(NotificationCompat.PRIORITY_HIGH)
                         .setAutoCancel(true)
@@ -239,10 +236,11 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
             text = if (isAr) "حان وقت صلاة $dispName." else "It's time for $dispName prayer."
         }
 
-        // Add RTL Mark for Arabic notifications to help with alignment and punctuation
+        // Use BidiFormatter to correctly format RTL strings without layout clipping on Android 16/15
         if (isAr) {
-            title = "\u200F$title"
-            text = "\u200F$text"
+            val bidi = androidx.core.text.BidiFormatter.getInstance()
+            title = bidi.unicodeWrap(title)
+            text = bidi.unicodeWrap(text)
         }
 
         val enableAdhanSound = appPrefs.getBoolean("enable_adhan_sound", false)
@@ -252,7 +250,6 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
         val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
-            .setContentText(text)
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
