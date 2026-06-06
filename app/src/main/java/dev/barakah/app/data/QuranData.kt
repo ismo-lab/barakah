@@ -138,130 +138,60 @@ object QuranData {
     }
 
     private var cachedSurahId: Int = -1
-    private var arTafseerCache: Map<Int, String> = emptyMap()
-    private var enTafseerCache: Map<Int, String> = emptyMap()
+    private var cachedSurahTafseer: Map<Int, String> = emptyMap()
 
     fun loadTafseer(context: Context, surahId: Int, ayahId: Int): String {
-        if (cachedSurahId != surahId) {
-            loadSurahTafseers(context, surahId)
+        synchronized(this) {
+            if (cachedSurahId == surahId && cachedSurahTafseer.isNotEmpty()) {
+                val value = cachedSurahTafseer[ayahId]
+                if (value != null) return value
+            }
         }
-        return arTafseerCache[ayahId] ?: "التفسير غير متوفر حالياً لهذه الآية."
+        
+        val surahMap = mutableMapOf<Int, String>()
+        try {
+            context.assets.open("quran/tafseer_ar.json").use { inputStream ->
+                val reader = android.util.JsonReader(inputStream.reader())
+                reader.beginArray()
+                while (reader.hasNext()) {
+                    reader.beginObject()
+                    var sId = -1
+                    var aId = -1
+                    var text = ""
+                    while (reader.hasNext()) {
+                        when (reader.nextName()) {
+                            "number" -> sId = reader.nextString().toIntOrNull() ?: -1
+                            "aya" -> aId = reader.nextString().toIntOrNull() ?: -1
+                            "text" -> text = reader.nextString()
+                            else -> reader.skipValue()
+                        }
+                    }
+                    reader.endObject()
+                    
+                    if (sId == surahId && aId != -1) {
+                        surahMap[aId] = text
+                    } else if (sId > surahId) {
+                        break
+                    }
+                }
+                try { reader.close() } catch (ignored: Exception) {}
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("QuranData", "Error loading tafseer for surah $surahId: ${e.message}", e)
+        }
+        
+        synchronized(this) {
+            cachedSurahId = surahId
+            cachedSurahTafseer = surahMap
+            return cachedSurahTafseer[ayahId] ?: "التفسير غير متوفر حالياً لهذه الآية."
+        }
     }
 
     fun loadEnglishTafseer(context: Context, surahId: Int, ayahId: Int): String {
-        if (cachedSurahId != surahId) {
-            loadSurahTafseers(context, surahId)
+        val arTafseer = loadTafseer(context, surahId, ayahId)
+        if (arTafseer != "التفسير غير متوفر حالياً لهذه الآية.") {
+            return "English Tafseer is not available currently. Here is the Arabic Tafseer:\n\n$arTafseer"
         }
-        return enTafseerCache[ayahId] ?: "Tafsir is not available for this verse currently."
-    }
-
-    @Synchronized
-    private fun loadSurahTafseers(context: Context, surahId: Int) {
-        val arMap = mutableMapOf<Int, String>()
-        val enMap = mutableMapOf<Int, String>()
-        
-        // Load Arabic Tafseer (GZIP format preferred, fallback to JSON format)
-        try {
-            var jsonText: String? = null
-            
-            // Try loading from .json.gz
-            try {
-                context.assets.open("quran/ar_tafseer/$surahId.json.gz").use { inputStream ->
-                    java.util.zip.GZIPInputStream(inputStream).bufferedReader().use { reader ->
-                        jsonText = reader.readText()
-                    }
-                }
-            } catch (e: Exception) {
-                // Fallback to .json
-                try {
-                    context.assets.open("quran/ar_tafseer/$surahId.json").use { inputStream ->
-                        inputStream.bufferedReader().use { reader ->
-                            jsonText = reader.readText()
-                        }
-                    }
-                } catch (e2: Exception) {
-                    // Fallback to old tafseer.json
-                    try {
-                        context.assets.open("quran/tafseer.json").use { inputStream ->
-                            inputStream.bufferedReader().use { reader ->
-                                val fullText = reader.readText()
-                                val obj = org.json.JSONObject(fullText)
-                                if (obj.has("surahs")) {
-                                    val surahsArr = obj.getJSONArray("surahs")
-                                    for (i in 0 until surahsArr.length()) {
-                                        val s = surahsArr.getJSONObject(i)
-                                        if (s.getInt("id") == surahId) {
-                                            val ayahs = s.getJSONArray("ayahs")
-                                            for (j in 0 until ayahs.length()) {
-                                                val a = ayahs.getJSONObject(j)
-                                                arMap[a.getInt("ayah")] = a.getString("text")
-                                            }
-                                            break
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    } catch (e3: Exception) {
-                        // Left empty, fallback failed
-                    }
-                }
-            }
-
-            if (jsonText != null) {
-                val obj = org.json.JSONObject(jsonText!!)
-                if (obj.has("ayahs")) {
-                    val ayahs = obj.getJSONArray("ayahs")
-                    for (i in 0 until ayahs.length()) {
-                        val a = ayahs.getJSONObject(i)
-                        arMap[a.getInt("ayah")] = a.getString("text")
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            android.util.Log.e("QuranData", "Error loading AR tafseer for $surahId: ${e.message}")
-        }
-
-        // Load English Tafseer (GZIP format preferred, fallback to JSON format)
-        try {
-            var jsonText: String? = null
-            
-            // Try loading from .json.gz
-            try {
-                context.assets.open("quran/en_tafseer/$surahId.json.gz").use { inputStream ->
-                    java.util.zip.GZIPInputStream(inputStream).bufferedReader().use { reader ->
-                        jsonText = reader.readText()
-                    }
-                }
-            } catch (e: Exception) {
-                // Fallback to .json
-                try {
-                    context.assets.open("quran/en_tafseer/$surahId.json").use { inputStream ->
-                        inputStream.bufferedReader().use { reader ->
-                            jsonText = reader.readText()
-                        }
-                    }
-                } catch (e2: Exception) {
-                    // Left null
-                }
-            }
-
-            if (jsonText != null) {
-                val obj = org.json.JSONObject(jsonText!!)
-                if (obj.has("ayahs")) {
-                    val ayahs = obj.getJSONArray("ayahs")
-                    for (i in 0 until ayahs.length()) {
-                        val a = ayahs.getJSONObject(i)
-                        enMap[a.getInt("ayah")] = a.getString("text")
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            android.util.Log.e("QuranData", "Error loading EN tafseer for $surahId: ${e.message}")
-        }
-
-        arTafseerCache = arMap
-        enTafseerCache = enMap
-        cachedSurahId = surahId
+        return "Tafsir is not available for this verse currently."
     }
 }

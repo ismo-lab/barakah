@@ -43,7 +43,6 @@ android {
 
   androidResources {
     noCompress += "json"
-    noCompress += "gz"
   }
 
   defaultConfig {
@@ -289,37 +288,36 @@ tasks.register("downloadAdhan") {
   }
 }
 
-tasks.register("downloadTafseer") {
+tasks.register("downloadArabicTafseer") {
   notCompatibleWithConfigurationCache("Uses network connection and local file references")
   doLast {
-    val dir = file("src/main/assets/quran/ar_tafseer")
-    dir.mkdirs()
-    for (surah in 1..20) {
-      val target = File(dir, "$surah.json")
-      if (!target.exists() || target.length() < 10) {
-        try {
-          val url = URI("https://cdn.jsdelivr.net/gh/spa5k/tafsir_api@main/tafsir/ar-tafsir-al-muyassar/$surah.json").toURL()
-          val conn = url.openConnection() as HttpURLConnection
-          conn.connectTimeout = 3000
-          conn.readTimeout = 3000
-          if (conn.responseCode in 200..299) {
-            target.writeBytes(conn.inputStream.readBytes())
-          }
-        } catch(e: Exception) {
+    val dest = file("src/main/assets/quran/tafseer_ar.json")
+    if (dest.exists() && dest.length() > 100000) {
+      println("Arabic Tafseer data already exists, skipping download.")
+      return@doLast
+    }
+    dest.parentFile.mkdirs()
+    println("Downloading Arabic Tafseer data to ${dest.absolutePath}...")
+    val url = URI("https://github.com/00AhmedMokhtar00/QuranTafseer-ar-json/raw/refs/heads/master/tafseer.json").toURL()
+    val conn = url.openConnection() as HttpURLConnection
+    conn.requestMethod = "GET"
+    conn.connectTimeout = 30000
+    conn.readTimeout = 30000
+    if (conn.responseCode == 200) {
+      conn.inputStream.use { input ->
+        dest.outputStream().use { output ->
+          input.copyTo(output)
         }
       }
+      println("Arabic Tafseer data downloaded successfully! Size: ${dest.length()} bytes")
+    } else {
+      println("Failed to download Arabic Tafseer data. HTTP Response Code: ${conn.responseCode}")
     }
   }
 }
 
-tasks.register("compressAndCacheTafseer") {
-  doLast {
-    println("Using offline cached or on-demand loading of Tafseer files. Skipping download during build.")
-  }
-}
-
 tasks.named("preBuild") {
-  dependsOn("downloadAdhan", "compressAndCacheTafseer")
+  dependsOn("downloadAdhan", "downloadArabicTafseer")
 }
 
 
