@@ -490,7 +490,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         _currentLocation.value = Pair(lat, lng)
         _locationLabel.value = label
         _qiblaBearing.value = QiblaManager.calculateQiblaBearing(lat, lng)
-        prefs.edit().putFloat("loc_lat", lat.toFloat()).putFloat("loc_lng", lng.toFloat()).putString("loc_label", label).apply()
+        prefs.edit().putFloat("loc_lat", lat.toFloat()).putFloat("loc_lng", lng.toFloat()).putString("loc_label", label).commit()
         recalculatePrayerTimes()
         if (isSuccessFeedback) {
             viewModelScope.launch {
@@ -502,7 +502,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
     fun setAppLanguage(lang: String) {
         _appLanguage.value = lang
-        prefs.edit().putString("app_lang", lang).apply()
+        prefs.edit().putString("app_lang", lang).commit()
         _filteredDuas.value = if (lang == "ar") DuaData.duasAr else DuaData.duasEn
         updateWidgetsGlobally()
     }
@@ -512,6 +512,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             try {
                 dev.barakah.app.widget.PrayerWidget().updateAll(getApplication())
                 dev.barakah.app.widget.PrayerRemainingWidget().updateAll(getApplication())
+                dev.barakah.app.widget.NawafilWidget().updateAll(getApplication())
             } catch (e: Exception) {
             }
         }
@@ -607,6 +608,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
     fun selectMethod(method: PrayerCalculator.CalculationMethod) {
         _calculationMethod.value = method
+        prefs.edit().putString("calc_method", method.name).commit()
         recalculatePrayerTimes()
     }
 
@@ -633,6 +635,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         _prayerTimes.value = newTimes
         updateParsedSeconds(newTimes)
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
+        updateWidgetsGlobally()
     }
 
     fun setShowNawafil(value: Boolean) {

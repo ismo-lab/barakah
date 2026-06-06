@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Widget Preview Theme Support (Dark Mode) -->
+    <color name="widget_preview_bg">#B3000000</color>
+    <color name="widget_preview_stroke">#1AFFFFFF</color>
+    <color name="widget_preview_text_title">#FFC4C6D0</color>
+    <color name="widget_preview_text_primary">#FFE2E2E6</color>
+    <color name="widget_preview_text_secondary">#FF8E9099</color>
+</resources>

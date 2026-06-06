@@ -1,3 +1,26 @@
 <resources>
     <string name="app_name">Barakah</string>
+    
+    <!-- Widget Titles and Descriptions inside Widget Picker -->
+    <string name="widget_prayer_title">Prayer times</string>
+    <string name="widget_prayer_desc">Daily prayer times.</string>
+    <string name="widget_prayer_remaining_title">Next prayer</string>
+    <string name="widget_prayer_remaining_desc">Next prayer tracker.</string>
+    <string name="widget_nawafil_title">Nawafil times</string>
+    <string name="widget_nawafil_desc">Daily voluntary prayer times.</string>
+
+    <!-- Widget Preview Strings -->
+    <string name="widget_preview_fajr">Fajr</string>
+    <string name="widget_preview_dhuhr">Dhuhr</string>
+    <string name="widget_preview_asr">Asr</string>
+    <string name="widget_preview_maghrib">Maghrib</string>
+    <string name="widget_preview_isha">Isha</string>
+    <string name="widget_preview_duha">Duha</string>
+    <string name="widget_preview_qiyam">Qiyam</string>
+    <string name="widget_preview_tahajjud">Tahajjud</string>
+    <string name="widget_preview_witr">Witr</string>
+    <string name="widget_preview_location_sample">Mecca, KSA</string>
+    <string name="widget_next_prayer_label">Next Prayer</string>
+    <string name="widget_sample_next_name">Maghrib</string>
+    <string name="widget_sample_countdown">Starts in 1 hr 45 min</string>
 </resources>

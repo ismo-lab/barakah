@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@drawable/widget_preview_bg"
+    android:gravity="center">
+
+    <!-- Location Label -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/widget_preview_location_sample"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="@color/widget_preview_text_title"
+        android:layout_marginBottom="12dp" />
+
+    <!-- 5 Prayers Grid -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="5">
+
+        <!-- Fajr -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_preview_fajr"
+                android:textSize="11sp"
+                android:textColor="@color/widget_preview_text_secondary" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="05:01"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@color/widget_preview_text_primary"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
+
+        <!-- Dhuhr -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_preview_dhuhr"
+                android:textSize="11sp"
+                android:textColor="@color/widget_preview_text_secondary" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="12:25"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@color/widget_preview_text_primary"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
+
+        <!-- Asr -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_preview_asr"
+                android:textSize="11sp"
+                android:textColor="@color/widget_preview_text_secondary" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="15:47"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@color/widget_preview_text_primary"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
+
+        <!-- Maghrib -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_preview_maghrib"
+                android:textSize="11sp"
+                android:textColor="@color/widget_preview_text_secondary" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="19:05"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@color/widget_preview_text_primary"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
+
+        <!-- Isha -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_preview_isha"
+                android:textSize="11sp"
+                android:textColor="@color/widget_preview_text_secondary" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="20:35"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@color/widget_preview_text_primary"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

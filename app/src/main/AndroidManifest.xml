@@ -36,6 +36,7 @@
 
         <receiver
             android:name=".widget.PrayerWidgetReceiver"
+            android:label="@string/widget_prayer_title"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -47,6 +48,7 @@
 
         <receiver
             android:name=".widget.PrayerRemainingWidgetReceiver"
+            android:label="@string/widget_prayer_remaining_title"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -54,6 +56,18 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/prayer_remaining_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.NawafilWidgetReceiver"
+            android:label="@string/widget_nawafil_title"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/nawafil_widget_info" />
         </receiver>
 
         <receiver android:name=".notifications.PrayerNotificationReceiver" android:exported="false" />

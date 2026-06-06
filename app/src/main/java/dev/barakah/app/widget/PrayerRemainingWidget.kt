@@ -127,9 +127,10 @@ class PrayerRemainingWidget : GlanceAppWidget() {
             else -> ""
         }
 
+        val is24Hour = android.text.format.DateFormat.is24HourFormat(context)
+
         fun formatTimeStr(timeStr: String): String {
             return try {
-                val is24Hour = android.text.format.DateFormat.is24HourFormat(context)
                 val parts = timeStr.trim().split(":")
                 val hh = parts[0].toInt()
                 val min = parts[1].split(" ")[0].trim().toInt()
@@ -151,12 +152,12 @@ class PrayerRemainingWidget : GlanceAppWidget() {
         }
 
         provideContent {
-            PrayerRemainingWidgetContent(dispName, formatTimeStr(nextTimeStr), diffStr, isAr)
+            PrayerRemainingWidgetContent(dispName, formatTimeStr(nextTimeStr), diffStr, isAr, is24Hour)
         }
     }
 
     @Composable
-    private fun PrayerRemainingWidgetContent(nextName: String, nextTime: String, diffStr: String, isAr: Boolean) {
+    private fun PrayerRemainingWidgetContent(nextName: String, nextTime: String, diffStr: String, isAr: Boolean, is24Hour: Boolean) {
         val bgColor = androidx.glance.color.ColorProvider(day = Color(0xCCFFFFFF), night = Color(0xB3000000))
         val primaryColor = androidx.glance.color.ColorProvider(day = Color(0xFF44474E), night = Color(0xFFC4C6D0))
         val textColor = androidx.glance.color.ColorProvider(day = Color(0xFF1A1C1E), night = Color(0xFFE2E2E6))
@@ -172,18 +173,22 @@ class PrayerRemainingWidget : GlanceAppWidget() {
         ) {
             Text(
                 text = if (isAr) "الصلاة القادمة" else "Next Prayer",
-                style = TextStyle(color = primaryColor, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                style = TextStyle(color = primaryColor, fontSize = 12.sp, fontWeight = FontWeight.Bold),
+                maxLines = 1
             )
             Spacer(modifier = GlanceModifier.height(4.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = nextName,
-                    style = TextStyle(color = textColor, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    style = TextStyle(color = textColor, fontSize = 20.sp, fontWeight = FontWeight.Bold),
+                    maxLines = 1
                 )
                 Spacer(modifier = GlanceModifier.width(8.dp))
+                val timeFontSize = if (is24Hour) 16.sp else 13.5.sp
                 Text(
                     text = nextTime,
-                    style = TextStyle(color = subTextColor, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                    style = TextStyle(color = subTextColor, fontSize = timeFontSize, fontWeight = FontWeight.Medium),
+                    maxLines = 1
                 )
             }
             Spacer(modifier = GlanceModifier.height(8.dp))
@@ -194,7 +199,8 @@ class PrayerRemainingWidget : GlanceAppWidget() {
             ) {
                 Text(
                     text = diffStr,
-                    style = TextStyle(color = primaryColor, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                    style = TextStyle(color = primaryColor, fontSize = 11.sp, fontWeight = FontWeight.Medium),
+                    maxLines = 1
                 )
             }
         }

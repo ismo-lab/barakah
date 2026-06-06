@@ -18,7 +18,7 @@ import androidx.glance.unit.ColorProvider
 import dev.barakah.app.util.PrayerCalculator
 import java.util.*
 
-class PrayerWidget : GlanceAppWidget() {
+class NawafilWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val prefs = context.getSharedPreferences("barakah_prefs", Context.MODE_PRIVATE)
         val lat = prefs.getFloat("loc_lat", 21.4225f).toDouble()
@@ -32,6 +32,15 @@ class PrayerWidget : GlanceAppWidget() {
         
         val asrMethod = prefs.getString("asr_method", "standard") ?: "standard"
         val ishaMethod = prefs.getString("isha_method", "standard") ?: "standard"
+        
+        // Custom offsets (in minutes)
+        val adjFajr = prefs.getInt("adj_fajr", 0)
+        val adjSunrise = prefs.getInt("adj_sunrise", 0)
+        val adjDhuhr = prefs.getInt("adj_dhuhr", 0)
+        val adjAsr = prefs.getInt("adj_asr", 0)
+        val adjMaghrib = prefs.getInt("adj_maghrib", 0)
+        val adjIsha = prefs.getInt("adj_isha", 0)
+
         val m = try {
             PrayerCalculator.CalculationMethod.valueOf(prefs.getString("calc_method", "MWL") ?: "MWL")
         } catch(e: Exception) {
@@ -39,11 +48,42 @@ class PrayerWidget : GlanceAppWidget() {
         }
         
         val times = PrayerCalculator.calculate(
-            lat, lng, offsetHours, calendar, 
+            latitude = lat,
+            longitude = lng,
+            timezoneOffset = offsetHours,
+            calendar = calendar, 
             method = m,
             asrMethod = asrMethod,
-            ishaMethod = ishaMethod
+            ishaMethod = ishaMethod,
+            adjFajr = adjFajr,
+            adjSunrise = adjSunrise,
+            adjDhuhr = adjDhuhr,
+            adjAsr = adjAsr,
+            adjMaghrib = adjMaghrib,
+            adjIsha = adjIsha
         )
+
+        fun calculateOffsetTime(timeStr: String, offsetMinutes: Int): String {
+            return try {
+                val parts = timeStr.trim().split(":")
+                val h = parts[0].toInt()
+                val min = parts[1].split(" ")[0].trim().toInt()
+                val cal = Calendar.getInstance().apply {
+                    set(Calendar.HOUR_OF_DAY, h)
+                    set(Calendar.MINUTE, min)
+                    add(Calendar.MINUTE, offsetMinutes)
+                }
+                String.format(Locale.US, "%02d:%02d", cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
+            } catch (e: Exception) {
+                ""
+            }
+        }
+
+        // Calculate 4 Nawafil times
+        val duhaRaw = calculateOffsetTime(times.sunrise, 20)
+        val qiyamRaw = calculateOffsetTime(times.fajr, -150)
+        val tahajjudRaw = calculateOffsetTime(times.fajr, -90)
+        val witrRaw = calculateOffsetTime(times.isha, 45)
 
         val is24Hour = android.text.format.DateFormat.is24HourFormat(context)
 
@@ -62,7 +102,7 @@ class PrayerWidget : GlanceAppWidget() {
                     } else {
                         if (isAr) "م" else "PM"
                     }
-                    String.format(Locale.getDefault(), "%02d:%02d %s", hour12, min, amPm)
+                    String.format(Locale.getDefault(), "%d:%02d %s", hour12, min, amPm)
                 }
             } catch (e: Exception) {
                 timeStr
@@ -70,12 +110,28 @@ class PrayerWidget : GlanceAppWidget() {
         }
         
         provideContent {
-            PrayerWidgetContent(times, label, isAr, ::formatTimeStr, is24Hour)
+            NawafilWidgetContent(
+                label = label,
+                isAr = isAr,
+                duha = formatTimeStr(duhaRaw),
+                qiyam = formatTimeStr(qiyamRaw),
+                tahajjud = formatTimeStr(tahajjudRaw),
+                witr = formatTimeStr(witrRaw),
+                is24Hour = is24Hour
+            )
         }
     }
 
     @Composable
-    private fun PrayerWidgetContent(times: PrayerCalculator.PrayerTimes, label: String, isAr: Boolean, formatTimeStr: (String) -> String, is24Hour: Boolean) {
+    private fun NawafilWidgetContent(
+        label: String,
+        isAr: Boolean,
+        duha: String,
+        qiyam: String,
+        tahajjud: String,
+        witr: String,
+        is24Hour: Boolean
+    ) {
         val bgColor = androidx.glance.color.ColorProvider(day = Color(0xCCFFFFFF), night = Color(0xB3000000))
         val titleColor = androidx.glance.color.ColorProvider(day = Color(0xFF44474E), night = Color(0xFFC4C6D0))
         val labelColor = androidx.glance.color.ColorProvider(day = Color(0xFF74777F), night = Color(0xFF8E9099))
@@ -109,17 +165,23 @@ class PrayerWidget : GlanceAppWidget() {
                 modifier = GlanceModifier.fillMaxWidth().padding(vertical = 12.dp)
             ) {
                 val timeFontSize = if (is24Hour) 11.sp else 9.5.sp
-                PrayerItem(GlanceModifier.defaultWeight(), if (isAr) "الفجر" else "Fajr", formatTimeStr(times.fajr), labelColor, timeColor, timeFontSize)
-                PrayerItem(GlanceModifier.defaultWeight(), if (isAr) "الظهر" else "Dhuhr", formatTimeStr(times.dhuhr), labelColor, timeColor, timeFontSize)
-                PrayerItem(GlanceModifier.defaultWeight(), if (isAr) "العصر" else "Asr", formatTimeStr(times.asr), labelColor, timeColor, timeFontSize)
-                PrayerItem(GlanceModifier.defaultWeight(), if (isAr) "المغرب" else "Maghrib", formatTimeStr(times.maghrib), labelColor, timeColor, timeFontSize)
-                PrayerItem(GlanceModifier.defaultWeight(), if (isAr) "العشاء" else "Isha", formatTimeStr(times.isha), labelColor, timeColor, timeFontSize)
+                NawafilItem(GlanceModifier.defaultWeight(), if (isAr) "الضحى" else "Duha", duha, labelColor, timeColor, timeFontSize)
+                NawafilItem(GlanceModifier.defaultWeight(), if (isAr) "القيام" else "Qiyam", qiyam, labelColor, timeColor, timeFontSize)
+                NawafilItem(GlanceModifier.defaultWeight(), if (isAr) "التهجد" else "Tahajjud", tahajjud, labelColor, timeColor, timeFontSize)
+                NawafilItem(GlanceModifier.defaultWeight(), if (isAr) "الوتر" else "Witr", witr, labelColor, timeColor, timeFontSize)
             }
         }
     }
 
     @Composable
-    private fun PrayerItem(modifier: GlanceModifier, name: String, time: String, labelColor: ColorProvider, timeColor: ColorProvider, timeFontSize: androidx.compose.ui.unit.TextUnit) {
+    private fun NawafilItem(
+        modifier: GlanceModifier,
+        name: String,
+        time: String,
+        labelColor: ColorProvider,
+        timeColor: ColorProvider,
+        timeFontSize: androidx.compose.ui.unit.TextUnit
+    ) {
         Column(
             modifier = modifier.padding(horizontal = 1.dp),
             horizontalAlignment = Alignment.CenterHorizontally

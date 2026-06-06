@@ -8,5 +8,5 @@
     android:resizeMode="horizontal|vertical"
     android:updatePeriodMillis="1800000"
     android:widgetCategory="home_screen"
-    android:description="@string/widget_prayer_desc"
-    android:previewLayout="@layout/widget_preview_prayer" />
+    android:description="@string/widget_nawafil_desc"
+    android:previewLayout="@layout/widget_preview_nawafil" />
