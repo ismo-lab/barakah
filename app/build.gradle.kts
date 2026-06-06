@@ -316,8 +316,46 @@ tasks.register("downloadArabicTafseer") {
   }
 }
 
+tasks.register("downloadEnglishTafseer") {
+  notCompatibleWithConfigurationCache("Uses network connection and local file references")
+  doLast {
+    val dir = file("src/main/assets/quran/en_tafseer")
+    dir.mkdirs()
+    println("Checking English Tafseer files (1..114) in ${dir.absolutePath}...")
+    var localCount = 0
+    for (surah in 1..114) {
+      val target = File(dir, "$surah.json")
+      if (target.exists() && target.length() > 100) {
+        localCount++
+        continue
+      }
+      try {
+        println("Downloading English Tafseer for surah $surah...")
+        val url = URI("https://cdn.jsdelivr.net/gh/spa5k/tafsir_api@main/tafsir/en-al-jalalayn/$surah.json").toURL()
+        val conn = url.openConnection() as HttpURLConnection
+        conn.requestMethod = "GET"
+        conn.connectTimeout = 10000
+        conn.readTimeout = 10000
+        if (conn.responseCode == 200) {
+          conn.inputStream.use { input ->
+            target.outputStream().use { output ->
+              input.copyTo(output)
+            }
+          }
+          localCount++
+        } else {
+          println("Failed to download English Tafseer for surah $surah. HTTP Code: ${conn.responseCode}")
+        }
+      } catch (e: Exception) {
+        println("Error downloading English Tafseer for surah $surah: ${e.message}")
+      }
+    }
+    println("English Tafseer files update complete. Total of $localCount/114 files downloaded and ready offline.")
+  }
+}
+
 tasks.named("preBuild") {
-  dependsOn("downloadAdhan", "downloadArabicTafseer")
+  dependsOn("downloadAdhan", "downloadArabicTafseer", "downloadEnglishTafseer")
 }
 
 

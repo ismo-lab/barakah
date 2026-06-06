@@ -187,7 +187,151 @@ object QuranData {
         }
     }
 
+    private var cachedEnSurahId: Int = -1
+    private var cachedEnSurahTafseer: Map<Int, String> = emptyMap()
+
+    suspend fun loadEnglishTafseerAsync(context: Context, surahId: Int, ayahId: Int): String {
+        return withContext(Dispatchers.IO) {
+            synchronized(this@QuranData) {
+                if (cachedEnSurahId == surahId && cachedEnSurahTafseer.isNotEmpty()) {
+                    val value = cachedEnSurahTafseer[ayahId]
+                    if (value != null) return@withContext value
+                }
+            }
+
+            var jsonText = ""
+            // 1. Try reading from local assets (100% Offline-First)
+            try {
+                context.assets.open("quran/en_tafseer/$surahId.json").use { inputStream ->
+                    jsonText = inputStream.bufferedReader().use { it.readText() }
+                }
+            } catch (e: Exception) {
+                android.util.Log.w("QuranData", "Local asset en_tafseer for $surahId not found: ${e.message}")
+            }
+
+            // 2. If not found in assets, try local cacheDir (device-side cache fallback)
+            if (jsonText.isEmpty()) {
+                val cacheFile = java.io.File(context.cacheDir, "en_tafseer_$surahId.json")
+                if (cacheFile.exists() && cacheFile.length() > 50) {
+                    try {
+                        jsonText = cacheFile.readText()
+                    } catch (e: Exception) {
+                        android.util.Log.e("QuranData", "Error reading local cached en tafseer: ${e.message}")
+                    }
+                }
+            }
+
+            // 3. Fallback: Download on demand if missing from assets and cache
+            if (jsonText.isEmpty()) {
+                try {
+                    val urlString = "https://cdn.jsdelivr.net/gh/spa5k/tafsir_api@main/tafsir/en-al-jalalayn/$surahId.json"
+                    val url = java.net.URI(urlString).toURL()
+                    val conn = url.openConnection() as java.net.HttpURLConnection
+                    conn.connectTimeout = 8000
+                    conn.readTimeout = 8000
+                    conn.requestMethod = "GET"
+                    if (conn.responseCode == 200) {
+                        jsonText = conn.inputStream.bufferedReader().use { it.readText() }
+                        if (jsonText.isNotEmpty()) {
+                            val cacheFile = java.io.File(context.cacheDir, "en_tafseer_$surahId.json")
+                            cacheFile.writeText(jsonText)
+                        }
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("QuranData", "Error downloading en tafseer: ${e.message}")
+                }
+            }
+
+            val enMap = mutableMapOf<Int, String>()
+            if (jsonText.isNotEmpty()) {
+                try {
+                    val obj = org.json.JSONObject(jsonText)
+                    if (obj.has("ayahs")) {
+                        val ayahsArr = obj.getJSONArray("ayahs")
+                        for (i in 0 until ayahsArr.length()) {
+                            val item = ayahsArr.getJSONObject(i)
+                            val aId = item.optInt("ayah", -1)
+                            val text = item.optString("text", "")
+                            if (aId != -1 && text.isNotEmpty()) {
+                                enMap[aId] = text
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("QuranData", "Error parsing en tafseer json: ${e.message}", e)
+                }
+            }
+
+            synchronized(this@QuranData) {
+                if (enMap.isNotEmpty()) {
+                    cachedEnSurahId = surahId
+                    cachedEnSurahTafseer = enMap
+                    return@withContext cachedEnSurahTafseer[ayahId] ?: "Tafsir is not available for this verse currently."
+                }
+            }
+
+            // Fallback: If network is offline and asset fails, load from Arabic tafseer as friendly translation fallback
+            val arTafseer = loadTafseer(context, surahId, ayahId)
+            if (arTafseer != "التفسير غير متوفر حالياً لهذه الآية.") {
+                return@withContext "Tafsir al-Jalalayn (English) could not be loaded because you are offline. Here is the Arabic Tafseer:\n\n$arTafseer"
+            }
+
+            return@withContext "English Tafseer is currently unavailable. Please check your internet connection and try again."
+        }
+    }
+
     fun loadEnglishTafseer(context: Context, surahId: Int, ayahId: Int): String {
+        synchronized(this) {
+            if (cachedEnSurahId == surahId && cachedEnSurahTafseer.isNotEmpty()) {
+                val value = cachedEnSurahTafseer[ayahId]
+                if (value != null) return value
+            }
+        }
+
+        var jsonText = ""
+        try {
+            context.assets.open("quran/en_tafseer/$surahId.json").use { inputStream ->
+                jsonText = inputStream.bufferedReader().use { it.readText() }
+            }
+        } catch (e: Exception) {
+            android.util.Log.d("QuranData", "Local asset en_tafseer not found synchronously: ${e.message}")
+        }
+
+        if (jsonText.isEmpty()) {
+            val cacheFile = java.io.File(context.cacheDir, "en_tafseer_$surahId.json")
+            if (cacheFile.exists() && cacheFile.length() > 50) {
+                try {
+                    jsonText = cacheFile.readText()
+                } catch (ignored: Exception) {}
+            }
+        }
+
+        val enMap = mutableMapOf<Int, String>()
+        if (jsonText.isNotEmpty()) {
+            try {
+                val obj = org.json.JSONObject(jsonText)
+                if (obj.has("ayahs")) {
+                    val ayahsArr = obj.getJSONArray("ayahs")
+                    for (i in 0 until ayahsArr.length()) {
+                        val item = ayahsArr.getJSONObject(i)
+                        val aId = item.optInt("ayah", -1)
+                        val text = item.optString("text", "")
+                        if (aId != -1 && text.isNotEmpty()) {
+                            enMap[aId] = text
+                        }
+                    }
+                }
+            } catch (ignored: Exception) {}
+        }
+
+        synchronized(this) {
+            if (enMap.isNotEmpty()) {
+                cachedEnSurahId = surahId
+                cachedEnSurahTafseer = enMap
+                return cachedEnSurahTafseer[ayahId] ?: "Tafsir is not available for this verse currently."
+            }
+        }
+
         val arTafseer = loadTafseer(context, surahId, ayahId)
         if (arTafseer != "التفسير غير متوفر حالياً لهذه الآية.") {
             return "English Tafseer is not available currently. Here is the Arabic Tafseer:\n\n$arTafseer"

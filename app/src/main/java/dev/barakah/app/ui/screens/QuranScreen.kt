@@ -40,6 +40,7 @@ import dev.barakah.app.data.QuranData
 import dev.barakah.app.util.PrayerCalculator
 import dev.barakah.app.data.Surah
 import dev.barakah.app.ui.BarakahViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalAnimationApi::class, ExperimentalFoundationApi::class)
 @Composable
@@ -58,6 +59,8 @@ fun QuranScreen(
     
     // Dialog for individual verse Tafseer
     var showVerseTafseerDialog by remember { mutableStateOf<Pair<dev.barakah.app.data.Verse, String>?>(null) }
+    val coroutineScope = rememberCoroutineScope()
+    var isFetchingTafseer by remember { mutableStateOf(false) }
     
     BackHandler(enabled = selectedSurahForReading != null) {
         selectedSurahForReading = null
@@ -611,12 +614,17 @@ fun QuranScreen(
                                     },
                                     onLongClick = {
                                         viewModel.triggerVibration(40)
-                                        val taf = if (isAr) {
-                                            QuranData.loadTafseer(context, surah.id, verse.index)
+                                        if (isAr) {
+                                            val taf = QuranData.loadTafseer(context, surah.id, verse.index)
+                                            showVerseTafseerDialog = Pair(verse, taf)
                                         } else {
-                                            QuranData.loadEnglishTafseer(context, surah.id, verse.index)
+                                            isFetchingTafseer = true
+                                            coroutineScope.launch {
+                                                val taf = QuranData.loadEnglishTafseerAsync(context, surah.id, verse.index)
+                                                showVerseTafseerDialog = Pair(verse, taf)
+                                                isFetchingTafseer = false
+                                            }
                                         }
-                                        showVerseTafseerDialog = Pair(verse, taf)
                                     }
                                 )
                                 .testTag("verse_block_${verse.index}")
@@ -683,6 +691,35 @@ fun QuranScreen(
                 }
             }
         }
+    }
+
+    if (isFetchingTafseer) {
+        AlertDialog(
+            onDismissRequest = { isFetchingTafseer = false },
+            confirmButton = {},
+            title = {
+                Text(
+                    text = "Loading English Tafseer...",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            text = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            },
+            shape = RoundedCornerShape(28.dp)
+        )
     }
 
     if (showVerseTafseerDialog != null) {
