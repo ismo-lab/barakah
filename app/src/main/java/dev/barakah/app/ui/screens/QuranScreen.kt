@@ -59,8 +59,6 @@ fun QuranScreen(
     
     // Dialog for individual verse Tafseer
     var showVerseTafseerDialog by remember { mutableStateOf<Pair<dev.barakah.app.data.Verse, String>?>(null) }
-    val coroutineScope = rememberCoroutineScope()
-    var isFetchingTafseer by remember { mutableStateOf(false) }
     
     BackHandler(enabled = selectedSurahForReading != null) {
         selectedSurahForReading = null
@@ -614,17 +612,12 @@ fun QuranScreen(
                                     },
                                     onLongClick = {
                                         viewModel.triggerVibration(40)
-                                        if (isAr) {
-                                            val taf = QuranData.loadTafseer(context, surah.id, verse.index)
-                                            showVerseTafseerDialog = Pair(verse, taf)
+                                        val taf = if (isAr) {
+                                            QuranData.loadTafseer(context, surah.id, verse.index)
                                         } else {
-                                            isFetchingTafseer = true
-                                            coroutineScope.launch {
-                                                val taf = QuranData.loadEnglishTafseerAsync(context, surah.id, verse.index)
-                                                showVerseTafseerDialog = Pair(verse, taf)
-                                                isFetchingTafseer = false
-                                            }
+                                            QuranData.loadEnglishTafseer(context, surah.id, verse.index)
                                         }
+                                        showVerseTafseerDialog = Pair(verse, taf)
                                     }
                                 )
                                 .testTag("verse_block_${verse.index}")
@@ -691,35 +684,6 @@ fun QuranScreen(
                 }
             }
         }
-    }
-
-    if (isFetchingTafseer) {
-        AlertDialog(
-            onDismissRequest = { isFetchingTafseer = false },
-            confirmButton = {},
-            title = {
-                Text(
-                    text = "Loading English Tafseer...",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            },
-            text = {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            },
-            shape = RoundedCornerShape(28.dp)
-        )
     }
 
     if (showVerseTafseerDialog != null) {

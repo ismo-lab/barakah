@@ -6,6 +6,14 @@
 
 **Barakah** is a privacy-respecting, fully Free and Open Source (FOSS) Islamic companion application crafted specifically for Android. By pairing state-of-the-art Material 3 aesthetics with local offline-first reliability, **Barakah** serves as an eye-safe, advertisement-free spiritual toolkit for daily routines.
 
+## 🌍 Supported Languages / اللغات المدعومة
+
+This companion app exclusively supports the following languages:
+- **العربية (Arabic)**: Native RTL layout rendering, complete support for Quranic scripts, offline Arabic Tafseer, and day-to-day adhkar.
+- **English**: Fully localized interfaces, English Quran translations, and local Tafsir al-Jalalayn (English) companion texts.
+
+No other languages are actively targeted, ensuring a highly optimized, lightweight, and focused offline bundle size.
+
 ---
 
 ## 🌟 Key Pillars & Features
