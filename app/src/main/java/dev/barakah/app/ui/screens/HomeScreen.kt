@@ -1112,7 +1112,7 @@ fun HomeScreen(
                                                 color = MaterialTheme.colorScheme.onSurface
                                             )
                                             Text(
-                                                text = if (isAr) "تشغيل صوت أذان الحرم المكي عند دخول وقت الفريضة بالخلفية" else "Play Mecca Al-Haram Adhan sound offline when a fard prayer starts",
+                                                text = if (isAr) "تشغيل  الأذان عند دخول وقت الفريضة" else "Play Adhan when a fard prayer starts",
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )

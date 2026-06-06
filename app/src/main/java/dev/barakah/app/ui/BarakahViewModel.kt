@@ -103,10 +103,10 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     private val _notifyJumuah = MutableStateFlow(prefs.getBoolean("notify_jumuah", true))
     val notifyJumuah: StateFlow<Boolean> = _notifyJumuah
 
-    private val _notifySuhur = MutableStateFlow(prefs.getBoolean("notify_suhur", true))
+    private val _notifySuhur = MutableStateFlow(prefs.getBoolean("notify_suhur", false))
     val notifySuhur: StateFlow<Boolean> = _notifySuhur
 
-    private val _notifyIftar = MutableStateFlow(prefs.getBoolean("notify_iftar", true))
+    private val _notifyIftar = MutableStateFlow(prefs.getBoolean("notify_iftar", false))
     val notifyIftar: StateFlow<Boolean> = _notifyIftar
 
     // Tasbih haptic feedback state: boolean (default true)
@@ -1003,58 +1003,16 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         _activePrayerName.value = active
         _nextPrayerName.value = nextName
 
-        // Compute exact timeline active item (including Nawafil)
+        // Compute exact timeline active item (consistent across show_nawafil state to keep highlighting active)
         val highlight: String
-        if (showNawafil.value) {
-            val duhaSec = CachedSunriseSec + 20 * 60
-            val witrSec = CachedIshaSec + 45 * 60
-            val qiyamSec = CachedFajrSec - 150 * 60
-            val tahajjudSec = CachedFajrSec - 90 * 60
-
-            when {
-                currentTimeInSec >= witrSec -> {
-                    highlight = "Witr (Nafilah)"
-                }
-                currentTimeInSec < fajrSec -> {
-                    when {
-                        currentTimeInSec >= tahajjudSec -> highlight = "Tahajjud (Nafilah)"
-                        currentTimeInSec >= qiyamSec -> highlight = "Qiyam-ul-Layl (Nafilah)"
-                        else -> highlight = "Witr (Nafilah)"
-                    }
-                }
-                currentTimeInSec < sunriseSec -> {
-                    highlight = "Fajr"
-                }
-                currentTimeInSec < dhuhrSec -> {
-                    if (currentTimeInSec >= duhaSec) {
-                        highlight = "Duha (Nafilah)"
-                    } else {
-                        highlight = "Sunrise"
-                    }
-                }
-                currentTimeInSec < asrSec -> {
-                    highlight = "Dhuhr"
-                }
-                currentTimeInSec < maghribSec -> {
-                    highlight = "Asr"
-                }
-                currentTimeInSec < ishaSec -> {
-                    highlight = "Maghrib"
-                }
-                else -> {
-                    highlight = "Isha"
-                }
-            }
-        } else {
-            when {
-                currentTimeInSec < fajrSec -> highlight = "Isha"
-                currentTimeInSec < sunriseSec -> highlight = "Fajr"
-                currentTimeInSec < dhuhrSec -> highlight = "Sunrise"
-                currentTimeInSec < asrSec -> highlight = "Dhuhr"
-                currentTimeInSec < maghribSec -> highlight = "Asr"
-                currentTimeInSec < ishaSec -> highlight = "Maghrib"
-                else -> highlight = "Isha"
-            }
+        when {
+            currentTimeInSec < fajrSec -> highlight = "Isha"
+            currentTimeInSec < sunriseSec -> highlight = "Fajr"
+            currentTimeInSec < dhuhrSec -> highlight = "Sunrise"
+            currentTimeInSec < asrSec -> highlight = "Dhuhr"
+            currentTimeInSec < maghribSec -> highlight = "Asr"
+            currentTimeInSec < ishaSec -> highlight = "Maghrib"
+            else -> highlight = "Isha"
         }
         _activeHighlightName.value = highlight
 

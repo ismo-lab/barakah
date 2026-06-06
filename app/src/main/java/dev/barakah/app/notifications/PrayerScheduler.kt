@@ -93,10 +93,10 @@ object PrayerScheduler {
             val notifyJumuah = prefs.getBoolean("notify_jumuah", true)
             scheduleAlarm(context, "Friday Jumuah", calculateOffsetTime(times.dhuhr, -45), 13, notifyJumuah)
 
-            val notifySuhur = prefs.getBoolean("notify_suhur", true)
+            val notifySuhur = prefs.getBoolean("notify_suhur", false)
             scheduleAlarm(context, "Suhur Reminder", calculateOffsetTime(times.fajr, -45), 14, notifySuhur)
 
-            val notifyIftar = prefs.getBoolean("notify_iftar", true)
+            val notifyIftar = prefs.getBoolean("notify_iftar", false)
             scheduleAlarm(context, "Iftar Reminder", times.maghrib, 15, notifyIftar)
         }
     }
