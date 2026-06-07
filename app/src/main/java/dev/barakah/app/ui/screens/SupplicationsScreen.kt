@@ -73,9 +73,7 @@ fun SupplicationsScreen(
     val enableTasbihHaptics by viewModel.enableTasbihHaptics.collectAsState()
 
     LaunchedEffect(activeCategory) {
-        if (activeCategory == "Menu") {
-            duaTapCounts.clear()
-        }
+        duaTapCounts.clear()
     }
 
     val menuScrollState = rememberLazyListState()
@@ -565,7 +563,11 @@ fun SupplicationsScreen(
                                                     color = MaterialTheme.colorScheme.outline
                                                 )
                                                 Text(
-                                                    text = "${dua.targetCount.toString().localize(isAr, useWesternNumbersInArabic)} ${if (isAr) "مرات" else "times"}",
+                                                    text = if (isAr) {
+                                                        "${dua.targetCount} مرات".localize(true, useWesternNumbersInArabic)
+                                                    } else {
+                                                        "${dua.targetCount} times"
+                                                    },
                                                     style = MaterialTheme.typography.titleMedium,
                                                     fontWeight = FontWeight.Bold,
                                                     color = MaterialTheme.colorScheme.secondary

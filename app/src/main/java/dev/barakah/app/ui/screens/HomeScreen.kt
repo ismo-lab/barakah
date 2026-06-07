@@ -23,6 +23,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -70,6 +72,51 @@ fun formatDisplayTime(context: android.content.Context, timeStr: String, isAr: B
         formatted.localize(isAr, useWesternNumbersInArabic)
     } catch (e: Exception) {
         timeStr.localize(isAr, useWesternNumbersInArabic)
+    }
+}
+
+data class FormattedTime(
+    val digits: String,
+    val suffix: String = ""
+)
+
+fun parseDisplayTime(context: android.content.Context, timeStr: String, isAr: Boolean = false, useWesternNumbersInArabic: Boolean = false): FormattedTime {
+    if (timeStr.contains("-")) {
+        val parts = timeStr.split("-")
+        if (parts.size == 2) {
+            val start = formatDisplayTime(context, parts[0].trim(), isAr, useWesternNumbersInArabic)
+            val end = formatDisplayTime(context, parts[1].trim(), isAr, useWesternNumbersInArabic)
+            return FormattedTime("$start - $end", "")
+        }
+    }
+    return try {
+        val is24Hour = android.text.format.DateFormat.is24HourFormat(context)
+        val parts = timeStr.trim().split(":")
+        val h = parts[0].toInt()
+        val m = parts[1].split(" ")[0].trim().toInt()
+        
+        val locale = java.util.Locale.US
+        val digitsRaw = if (is24Hour) {
+            java.lang.String.format(locale, "%02d:%02d", h, m)
+        } else {
+            val hour12 = if (h % 12 == 0) 12 else h % 12
+            java.lang.String.format(locale, "%02d:%02d", hour12, m)
+        }
+        val suffixRaw = if (is24Hour) {
+            ""
+        } else {
+            if (h < 12) {
+                if (isAr) "ص" else "AM"
+            } else {
+                if (isAr) "م" else "PM"
+            }
+        }
+        FormattedTime(
+            digits = digitsRaw.localize(isAr, useWesternNumbersInArabic),
+            suffix = suffixRaw.localize(isAr, useWesternNumbersInArabic)
+        )
+    } catch (e: Exception) {
+        FormattedTime(timeStr.localize(isAr, useWesternNumbersInArabic), "")
     }
 }
 
@@ -628,14 +675,133 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Text(
-                            text = formatDisplayTime(context, time, isAr, useWesternNumbersInArabic),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = (-0.5).sp,
-                            maxLines = 1,
-                            softWrap = false
-                        )
+                        val formattedTime = remember(time, isAr, useWesternNumbersInArabic) {
+                            parseDisplayTime(context, time, isAr, useWesternNumbersInArabic)
+                        }
+
+                        val hasColon = remember(formattedTime) {
+                            formattedTime.digits.contains(":") && !formattedTime.digits.contains("-")
+                        }
+                        val timeParts = remember(formattedTime, hasColon) {
+                            if (hasColon) formattedTime.digits.split(":") else emptyList()
+                        }
+                        val hours = if (timeParts.size >= 2) timeParts[0] else ""
+                        val minutes = if (timeParts.size >= 2) timeParts[1] else ""
+
+                        androidx.compose.runtime.CompositionLocalProvider(
+                            androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.End,
+                                modifier = Modifier.width(115.dp)
+                            ) {
+                                if (hasColon) {
+                                    if (isAr) {
+                                        // Arabic: [Suffix] [Space] [Hours] [Colon] [Minutes]
+                                        if (formattedTime.suffix.isNotEmpty()) {
+                                            Text(
+                                                text = formattedTime.suffix,
+                                                style = MaterialTheme.typography.titleMedium,
+                                                fontWeight = FontWeight.Medium,
+                                                color = if (isCurrent) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.82f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                                                maxLines = 1,
+                                                softWrap = false,
+                                                modifier = Modifier.width(28.dp),
+                                                textAlign = TextAlign.Center
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                        } else {
+                                            Spacer(modifier = Modifier.width(32.dp))
+                                        }
+
+                                        Text(
+                                            text = hours,
+                                            style = MaterialTheme.typography.titleLarge.copy(fontFeatureSettings = "tnum"),
+                                            fontWeight = FontWeight.Black,
+                                            maxLines = 1,
+                                            softWrap = false,
+                                            modifier = Modifier.width(28.dp),
+                                            textAlign = TextAlign.Center
+                                        )
+                                        Text(
+                                            text = ":",
+                                            style = MaterialTheme.typography.titleLarge,
+                                            fontWeight = FontWeight.Black,
+                                            maxLines = 1,
+                                            softWrap = false,
+                                            modifier = Modifier.width(8.dp),
+                                            textAlign = TextAlign.Center
+                                        )
+                                        Text(
+                                            text = minutes,
+                                            style = MaterialTheme.typography.titleLarge.copy(fontFeatureSettings = "tnum"),
+                                            fontWeight = FontWeight.Black,
+                                            maxLines = 1,
+                                            softWrap = false,
+                                            modifier = Modifier.width(28.dp),
+                                            textAlign = TextAlign.Center
+                                        )
+                                    } else {
+                                        // English: [Hours] [Colon] [Minutes] [Space] [Suffix]
+                                        Text(
+                                            text = hours,
+                                            style = MaterialTheme.typography.titleLarge.copy(fontFeatureSettings = "tnum"),
+                                            fontWeight = FontWeight.Black,
+                                            maxLines = 1,
+                                            softWrap = false,
+                                            modifier = Modifier.width(28.dp),
+                                            textAlign = TextAlign.Center
+                                        )
+                                        Text(
+                                            text = ":",
+                                            style = MaterialTheme.typography.titleLarge,
+                                            fontWeight = FontWeight.Black,
+                                            maxLines = 1,
+                                            softWrap = false,
+                                            modifier = Modifier.width(8.dp),
+                                            textAlign = TextAlign.Center
+                                        )
+                                        Text(
+                                            text = minutes,
+                                            style = MaterialTheme.typography.titleLarge.copy(fontFeatureSettings = "tnum"),
+                                            fontWeight = FontWeight.Black,
+                                            maxLines = 1,
+                                            softWrap = false,
+                                            modifier = Modifier.width(28.dp),
+                                            textAlign = TextAlign.Center
+                                        )
+
+                                        if (formattedTime.suffix.isNotEmpty()) {
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(
+                                                text = formattedTime.suffix,
+                                                style = MaterialTheme.typography.titleMedium,
+                                                fontWeight = FontWeight.Medium,
+                                                color = if (isCurrent) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.82f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                                                maxLines = 1,
+                                                softWrap = false,
+                                                modifier = Modifier.width(32.dp),
+                                                textAlign = TextAlign.Center
+                                            )
+                                        } else {
+                                            Spacer(modifier = Modifier.width(36.dp))
+                                        }
+                                    }
+                                } else {
+                                    // Fallback for ranges
+                                    Text(
+                                        text = formattedTime.digits,
+                                        style = MaterialTheme.typography.titleLarge.copy(fontFeatureSettings = "tnum"),
+                                        fontWeight = FontWeight.Black,
+                                        maxLines = 1,
+                                        softWrap = false,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        textAlign = TextAlign.End
+                                    )
+                                }
+                            }
+                        }
 
                         val isAlertEnabled = alertSettings.find { it.prayerName == name }?.isEnabled != false
                         IconButton(
@@ -1923,7 +2089,8 @@ val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsSt
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                         letterSpacing = 0.sp,
                         lineHeight = 44.sp,
-                        textDirection = TextDirection.Ltr
+                        textDirection = TextDirection.Ltr,
+                        fontFeatureSettings = "tnum"
                     ),
                     color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.padding(bottom = 4.dp),

@@ -37,6 +37,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import dev.barakah.app.ui.BarakahViewModel
 import dev.barakah.app.util.QiblaManager
 import dev.barakah.app.util.localize
@@ -142,7 +144,15 @@ fun QiblahScreen(
                 modifier = Modifier
                     .size(compassSize)
                     .testTag("compass_dial_outer")
-                    .weight(0.45f),
+                    .weight(0.45f)
+                    .semantics {
+                        val angleFormatted = shortestDiff.toInt().toString().localize(isAr, useWesternNumbersInArabic)
+                        contentDescription = if (isAligned) {
+                            if (isAr) "تم محاذاة اتجاه القبلة بنجاح" else "Qibla is perfectly aligned!"
+                        } else {
+                            if (isAr) "القبلة تبعد $angleFormatted درجة" else "Qibla is $angleFormatted degrees away"
+                        }
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 // Background Radial Glow Aura when aligned
@@ -455,7 +465,15 @@ fun QiblahScreen(
             Box(
                 modifier = Modifier
                     .size(280.dp)
-                    .testTag("compass_dial_outer"),
+                    .testTag("compass_dial_outer")
+                    .semantics {
+                        val angleFormatted = shortestDiff.toInt().toString().localize(isAr, useWesternNumbersInArabic)
+                        contentDescription = if (isAligned) {
+                            if (isAr) "تم محاذاة اتجاه القبلة بنجاح" else "Qibla is perfectly aligned!"
+                        } else {
+                            if (isAr) "القبلة تبعد $angleFormatted درجة" else "Qibla is $angleFormatted degrees away"
+                        }
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 // Background Radial Glow Aura when aligned
