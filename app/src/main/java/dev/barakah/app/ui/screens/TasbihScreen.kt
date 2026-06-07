@@ -187,7 +187,8 @@ fun TasbihScreen(
                             val targets = listOf(33, 99, 100, 0)
                             targets.forEach { t ->
                                 val isSelected = target == t
-                                val label = if (t == 0) (if (isAr) "مفتوح" else "∞ Loop") else t.toString()
+                                val locale = java.util.Locale.getDefault()
+                                val label = if (t == 0) (if (isAr) "مفتوح" else "∞ Loop") else java.lang.String.format(locale, "%d", t)
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
@@ -281,11 +282,13 @@ fun TasbihScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                val locale = java.util.Locale.getDefault()
+                                val counterText = if (target > 0) 
+                                    java.lang.String.format(locale, "%d/%d", count, target.toLong())
+                                else 
+                                    java.lang.String.format(locale, "%d", count)
                                 Text(
-                                    text = if (target > 0) 
-                                        java.lang.String.format(java.util.Locale.US, "%d/%d", count, target.toLong())
-                                    else 
-                                        java.lang.String.format(java.util.Locale.US, "%d", count),
+                                    text = counterText,
                                     style = MaterialTheme.typography.displayMedium.copy(
                                         fontSize = 44.sp,
                                         fontWeight = FontWeight.Black,
@@ -439,11 +442,13 @@ fun TasbihScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    val locale = java.util.Locale.getDefault()
+                    val counterText = if (target > 0) 
+                        java.lang.String.format(locale, "%d/%d", count, target.toLong())
+                    else 
+                        java.lang.String.format(locale, "%d", count)
                     Text(
-                        text = if (target > 0) 
-                            java.lang.String.format(java.util.Locale.US, "%d/%d", count, target.toLong())
-                        else 
-                            java.lang.String.format(java.util.Locale.US, "%d", count),
+                        text = counterText,
                         style = MaterialTheme.typography.displayLarge.copy(
                             fontSize = 64.sp,
                             fontWeight = FontWeight.Black,
@@ -482,7 +487,8 @@ fun TasbihScreen(
                 val targets = listOf(33, 99, 100, 0) // 0 represents "Infinite"
                 targets.forEach { t ->
                     val isSelected = target == t
-                    val label = if (t == 0) (if (isAr) "مفتوح" else "∞ Loop") else t.toString()
+                    val locale = java.util.Locale.getDefault()
+                    val label = if (t == 0) (if (isAr) "مفتوح" else "∞ Loop") else java.lang.String.format(locale, "%d", t)
                     Box(
                         modifier = Modifier
                             .weight(1f)

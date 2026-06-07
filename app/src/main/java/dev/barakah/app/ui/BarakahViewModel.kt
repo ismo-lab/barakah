@@ -361,6 +361,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
                 _filteredDuas.value = searchResult
             }.collect {}
         }
+        updateWidgetsGlobally()
     }
 
     private var lastGpsOffMsgTime = 0L
@@ -508,12 +509,62 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun updateWidgetsGlobally() {
+        val context = getApplication<Application>()
         viewModelScope.launch {
             try {
-                dev.barakah.app.widget.PrayerWidget().updateAll(getApplication())
-                dev.barakah.app.widget.PrayerRemainingWidget().updateAll(getApplication())
-                dev.barakah.app.widget.NawafilWidget().updateAll(getApplication())
+                dev.barakah.app.widget.PrayerWidget().updateAll(context)
             } catch (e: Exception) {
+                android.util.Log.e("BarakahViewModel", "Error updating PrayerWidget", e)
+            }
+            try {
+                dev.barakah.app.widget.PrayerRemainingWidget().updateAll(context)
+            } catch (e: Exception) {
+                android.util.Log.e("BarakahViewModel", "Error updating PrayerRemainingWidget", e)
+            }
+            try {
+                dev.barakah.app.widget.NawafilWidget().updateAll(context)
+            } catch (e: Exception) {
+                android.util.Log.e("BarakahViewModel", "Error updating NawafilWidget", e)
+            }
+
+            // Send system broadcasts to immediately force Android's widget framework to invalidate cache and refresh layout
+            try {
+                val appWidgetManager = android.appwidget.AppWidgetManager.getInstance(context)
+                
+                val prayerIds = appWidgetManager.getAppWidgetIds(
+                    android.content.ComponentName(context, dev.barakah.app.widget.PrayerWidgetReceiver::class.java)
+                )
+                if (prayerIds != null && prayerIds.isNotEmpty()) {
+                    val intent = android.content.Intent(context, dev.barakah.app.widget.PrayerWidgetReceiver::class.java).apply {
+                        action = android.appwidget.AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                        putExtra(android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_IDS, prayerIds)
+                    }
+                    context.sendBroadcast(intent)
+                }
+
+                val remainingIds = appWidgetManager.getAppWidgetIds(
+                    android.content.ComponentName(context, dev.barakah.app.widget.PrayerRemainingWidgetReceiver::class.java)
+                )
+                if (remainingIds != null && remainingIds.isNotEmpty()) {
+                    val intent = android.content.Intent(context, dev.barakah.app.widget.PrayerRemainingWidgetReceiver::class.java).apply {
+                        action = android.appwidget.AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                        putExtra(android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_IDS, remainingIds)
+                    }
+                    context.sendBroadcast(intent)
+                }
+
+                val nawafilIds = appWidgetManager.getAppWidgetIds(
+                    android.content.ComponentName(context, dev.barakah.app.widget.NawafilWidgetReceiver::class.java)
+                )
+                if (nawafilIds != null && nawafilIds.isNotEmpty()) {
+                    val intent = android.content.Intent(context, dev.barakah.app.widget.NawafilWidgetReceiver::class.java).apply {
+                        action = android.appwidget.AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                        putExtra(android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_IDS, nawafilIds)
+                    }
+                    context.sendBroadcast(intent)
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("BarakahViewModel", "Error sending widget update broadcasts", e)
             }
         }
     }

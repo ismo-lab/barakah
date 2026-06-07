@@ -427,7 +427,7 @@ fun QuranScreen(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = surah.id.toString(),
+                                        text = java.lang.String.format(java.util.Locale.getDefault(), "%d", surah.id),
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary
@@ -436,7 +436,7 @@ fun QuranScreen(
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
                                     Text(
-                                        text = if (isAr) "${surah.id}. ${surah.arabic}" else surah.name,
+                                        text = if (isAr) surah.arabic else surah.name,
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -446,8 +446,9 @@ fun QuranScreen(
                                         } else {
                                             if (isAr) "مدنية" else "Medinan"
                                         }
+                                        val versesCountStr = java.lang.String.format(java.util.Locale.getDefault(), "%d", surah.versesCount)
                                         Text(
-                                            text = "$typeTranslated • ${surah.versesCount} ${if (isAr) "آية" else "Verses"}",
+                                            text = "$typeTranslated • $versesCountStr ${if (isAr) "آية" else "Verses"}",
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -635,7 +636,7 @@ fun QuranScreen(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = verse.index.toString(),
+                                        text = java.lang.String.format(java.util.Locale.getDefault(), "%d", verse.index),
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary
@@ -702,8 +703,9 @@ fun QuranScreen(
                 )
             },
             title = {
+                val verseNum = java.lang.String.format(java.util.Locale.getDefault(), "%d", verse.index)
                 Text(
-                    text = if (isAr) "تفسير الآية ${verse.index}" else "Tafseer of Ayah ${verse.index}",
+                    text = if (isAr) "تفسير الآية $verseNum" else "Tafseer of Ayah ${verse.index}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,

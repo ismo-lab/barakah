@@ -137,10 +137,13 @@ fun MainNavigationContainer(
     val currentDestination = navBackStackEntry?.destination
     val showSettingsDialog by viewModel.showSettingsDialog.collectAsState()
 
+    val shouldHideNavigation = showSettingsDialog || currentDestination?.route == "others"
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
+        contentWindowInsets = if (shouldHideNavigation) WindowInsets(0, 0, 0, 0) else ScaffoldDefaults.contentWindowInsets,
         bottomBar = {
-            if (!isLandscape) {
+            if (!isLandscape && !shouldHideNavigation) {
                 NavigationBar(
                     modifier = Modifier
                         .windowInsetsPadding(WindowInsets.navigationBars)
@@ -183,7 +186,7 @@ fun MainNavigationContainer(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            if (isLandscape) {
+            if (isLandscape && !shouldHideNavigation) {
                 NavigationRail(
                     modifier = Modifier
                         .fillMaxHeight()
@@ -223,7 +226,13 @@ fun MainNavigationContainer(
                 }
             }
 
-            Box(modifier = Modifier.weight(1f).fillMaxSize()) {
+            val contentModifier = if (isLandscape && !shouldHideNavigation) {
+                Modifier.weight(1f).fillMaxSize()
+            } else {
+                Modifier.fillMaxSize()
+            }
+
+            Box(modifier = contentModifier) {
                 NavHost(
                     navController = navController,
                     startDestination = "home",

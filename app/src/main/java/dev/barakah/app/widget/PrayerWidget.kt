@@ -7,7 +7,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.action.actionStartActivity
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.layout.*
@@ -15,6 +17,7 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
+import dev.barakah.app.MainActivity
 import dev.barakah.app.util.PrayerCalculator
 import java.util.*
 
@@ -53,8 +56,9 @@ class PrayerWidget : GlanceAppWidget() {
                 val h = parts[0].toInt()
                 val min = parts[1].split(" ")[0].trim().toInt()
                 
-                if (is24Hour) {
-                    String.format(Locale.getDefault(), "%02d:%02d", h, min)
+                val locale = java.util.Locale.getDefault()
+                val formatted = if (is24Hour) {
+                    java.lang.String.format(locale, "%02d:%02d", h, min)
                 } else {
                     val hour12 = if (h % 12 == 0) 12 else h % 12
                     val amPm = if (h < 12) {
@@ -62,8 +66,9 @@ class PrayerWidget : GlanceAppWidget() {
                     } else {
                         if (isAr) "م" else "PM"
                     }
-                    String.format(Locale.getDefault(), "%02d:%02d %s", hour12, min, amPm)
+                    java.lang.String.format(locale, "%02d:%02d %s", hour12, min, amPm)
                 }
+                formatted
             } catch (e: Exception) {
                 timeStr
             }
@@ -85,7 +90,8 @@ class PrayerWidget : GlanceAppWidget() {
             modifier = GlanceModifier
                 .fillMaxSize()
                 .background(bgColor)
-                .padding(14.dp),
+                .padding(14.dp)
+                .clickable(actionStartActivity<MainActivity>()),
             verticalAlignment = Alignment.CenterVertically,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {

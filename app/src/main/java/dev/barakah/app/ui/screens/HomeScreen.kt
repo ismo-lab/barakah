@@ -54,8 +54,9 @@ fun formatDisplayTime(context: android.content.Context, timeStr: String, isAr: B
         val h = parts[0].toInt()
         val m = parts[1].split(" ")[0].trim().toInt()
         
-        if (is24Hour) {
-            String.format(Locale.getDefault(), "%02d:%02d", h, m)
+        val locale = java.util.Locale.getDefault()
+        val formatted = if (is24Hour) {
+            java.lang.String.format(locale, "%02d:%02d", h, m)
         } else {
             val hour12 = if (h % 12 == 0) 12 else h % 12
             val amPm = if (h < 12) {
@@ -63,8 +64,9 @@ fun formatDisplayTime(context: android.content.Context, timeStr: String, isAr: B
             } else {
                 if (isAr) "م" else "PM"
             }
-            String.format(Locale.getDefault(), "%02d:%02d %s", hour12, m, amPm)
+            java.lang.String.format(locale, "%02d:%02d %s", hour12, m, amPm)
         }
+        formatted
     } catch (e: Exception) {
         timeStr
     }
@@ -316,7 +318,7 @@ fun HomeScreen(
 
                     val gregorianDateStr = remember(isAr) {
                         @Suppress("DEPRECATION")
-                        val locale = if (isAr) Locale("ar") else Locale.getDefault()
+                        val locale = java.util.Locale.getDefault()
                         SimpleDateFormat("EEE, d MMM", locale).format(Date())
                     }
                     Text(
@@ -625,7 +627,9 @@ fun HomeScreen(
                             text = formatDisplayTime(context, time, isAr),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Black,
-                            letterSpacing = (-0.5).sp
+                            letterSpacing = (-0.5).sp,
+                            maxLines = 1,
+                            softWrap = false
                         )
 
                         val isAlertEnabled = alertSettings.find { it.prayerName == name }?.isEnabled != false
@@ -674,9 +678,11 @@ fun HomeScreen(
             }
 
             Box(
-                modifier = modifier
+                modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background),
+                    .background(MaterialTheme.colorScheme.background)
+                    .statusBarsPadding()
+                    .navigationBarsPadding(),
                 contentAlignment = Alignment.TopCenter
             ) {
                 Column(
@@ -1884,8 +1890,27 @@ fun CountdownCardView(
                     modifier = Modifier.padding(bottom = 4.dp)
                 )
 
+                val formattedCountdown = remember(countdown, isAr) {
+                    if (isAr) {
+                        try {
+                            val parts = countdown.replace("-", "").split(":")
+                            if (parts.size == 3) {
+                                val locale = java.util.Locale.getDefault()
+                                val h = parts[0].toInt()
+                                val m = parts[1].toInt()
+                                val s = parts[2].toInt()
+                                (if (countdown.startsWith("-")) "-" else "") + java.lang.String.format(locale, "%02d:%02d:%02d", h, m, s)
+                            } else countdown
+                        } catch (e: Exception) {
+                            countdown
+                        }
+                    } else {
+                        countdown
+                    }
+                }
+
                 androidx.compose.material3.Text(
-                    text = countdown,
+                    text = formattedCountdown,
                     style = androidx.compose.material3.MaterialTheme.typography.displayLarge.copy(
                         fontSize = 56.sp,
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Black,

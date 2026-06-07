@@ -7,7 +7,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.action.actionStartActivity
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.layout.*
@@ -15,6 +17,7 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
+import dev.barakah.app.MainActivity
 import dev.barakah.app.util.PrayerCalculator
 import java.util.*
 
@@ -101,7 +104,10 @@ class PrayerRemainingWidget : GlanceAppWidget() {
         val h = diff / 3600
         val mn = (diff % 3600) / 60
 
-        val diffStr = if (isAr) "متبقي $h ساعة و $mn دقيقة" else "Starts in $h hr $mn min"
+        val locale = java.util.Locale.getDefault()
+        val formattedH = java.lang.String.format(locale, "%d", h)
+        val formattedM = java.lang.String.format(locale, "%d", mn)
+        val diffStr = if (isAr) "متبقي $formattedH ساعة و $formattedM دقيقة" else "Starts in $formattedH hr $formattedM min"
 
         val dispName = if (isAr) {
             when (nextName) {
@@ -135,8 +141,9 @@ class PrayerRemainingWidget : GlanceAppWidget() {
                 val hh = parts[0].toInt()
                 val min = parts[1].split(" ")[0].trim().toInt()
                 
-                if (is24Hour) {
-                    String.format(Locale.getDefault(), "%02d:%02d", hh, min)
+                val locale = java.util.Locale.getDefault()
+                val formatted = if (is24Hour) {
+                    java.lang.String.format(locale, "%02d:%02d", hh, min)
                 } else {
                     val hour12 = if (hh % 12 == 0) 12 else hh % 12
                     val amPm = if (hh < 12) {
@@ -144,8 +151,9 @@ class PrayerRemainingWidget : GlanceAppWidget() {
                     } else {
                         if (isAr) "م" else "PM"
                     }
-                    String.format(Locale.getDefault(), "%02d:%02d %s", hour12, min, amPm)
+                    java.lang.String.format(locale, "%02d:%02d %s", hour12, min, amPm)
                 }
+                formatted
             } catch (e: Exception) {
                 timeStr
             }
@@ -167,7 +175,8 @@ class PrayerRemainingWidget : GlanceAppWidget() {
             modifier = GlanceModifier
                 .fillMaxSize()
                 .background(bgColor)
-                .padding(12.dp),
+                .padding(12.dp)
+                .clickable(actionStartActivity<MainActivity>()),
             verticalAlignment = Alignment.CenterVertically,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {

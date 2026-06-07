@@ -600,8 +600,10 @@ fun SupplicationsScreen(
                                                         if (isDone) {
                                                             Icon(imageVector = Icons.Default.Done, contentDescription = "Completed", modifier = Modifier.size(24.dp))
                                                         } else {
+                                                            val locale = java.util.Locale.getDefault()
+                                                            val rawText = java.lang.String.format(locale, "%d/%d", currentCount, dua.targetCount)
                                                             Text(
-                                                                text = java.lang.String.format(java.util.Locale.US, "%d/%d", currentCount, dua.targetCount),
+                                                                text = rawText,
                                                                 style = MaterialTheme.typography.bodySmall.copy(
                                                                     fontFamily = FontFamily.Monospace,
                                                                     fontWeight = FontWeight.ExtraBold,

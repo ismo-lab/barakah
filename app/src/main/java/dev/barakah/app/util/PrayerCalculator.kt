@@ -139,7 +139,7 @@ object PrayerCalculator {
         val totalMinutes = (h * 60.0).roundToInt()
         val m = totalMinutes % 60
         val hh = (totalMinutes / 60) % 24
-        return String.format("%02d:%02d", hh, m)
+        return String.format(java.util.Locale.US, "%02d:%02d", hh, m)
     }
 
     private fun scaleTo360(angle: Double): Double {
