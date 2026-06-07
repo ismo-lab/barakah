@@ -8,6 +8,9 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     
+    <!-- Widget Active Dot Colors -->
+    <color name="widget_active_dot">#FF00668B</color>
+    
     <!-- Widget Preview Theme Support (Light Mode) -->
     <color name="widget_preview_bg">#CCFFFFFF</color>
     <color name="widget_preview_stroke">#1A000000</color>

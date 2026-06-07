@@ -176,7 +176,6 @@ class PrayerWidget : GlanceAppWidget() {
         timeFontSize: androidx.compose.ui.unit.TextUnit,
         isCurrent: Boolean
     ) {
-        val activeDotColor = androidx.glance.color.ColorProvider(day = Color(0xFF00668B), night = Color(0xFF81CFFF))
         Column(
             modifier = modifier.padding(horizontal = 1.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -185,8 +184,8 @@ class PrayerWidget : GlanceAppWidget() {
                 if (isCurrent) {
                     Spacer(
                         modifier = GlanceModifier
-                            .size(4.dp)
-                            .background(activeDotColor)
+                            .size(6.dp)
+                            .background(dev.barakah.app.R.drawable.dot_circle)
                     )
                 }
             }
