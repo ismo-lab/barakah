@@ -182,10 +182,10 @@ class PrayerWidget : GlanceAppWidget() {
         ) {
             Box(modifier = GlanceModifier.height(8.dp), contentAlignment = Alignment.Center) {
                 if (isCurrent) {
-                    Spacer(
-                        modifier = GlanceModifier
-                            .size(6.dp)
-                            .background(dev.barakah.app.R.drawable.dot_circle)
+                    androidx.glance.Image(
+                        provider = androidx.glance.ImageProvider(dev.barakah.app.R.drawable.dot_circle),
+                        contentDescription = "Active Indicator",
+                        modifier = GlanceModifier.size(6.dp)
                     )
                 }
             }
