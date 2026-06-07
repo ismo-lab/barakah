@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.barakah.app.data.Dua
 import dev.barakah.app.ui.BarakahViewModel
+import dev.barakah.app.util.localize
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
@@ -50,6 +51,7 @@ fun SupplicationsScreen(
     val filteredDuas by viewModel.filteredDuas.collectAsState()
     val appLanguage by viewModel.appLanguage.collectAsState()
     val isAr = appLanguage == "ar"
+    val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
 
     val context = LocalContext.current
     val vibrator = remember {
@@ -69,6 +71,12 @@ fun SupplicationsScreen(
     val favoriteDuaIds = remember(duaBookmarks) { duaBookmarks.map { it.duaId }.toSet() }
     val duaTapCounts = remember { mutableStateMapOf<String, Int>() }
     val enableTasbihHaptics by viewModel.enableTasbihHaptics.collectAsState()
+
+    LaunchedEffect(activeCategory) {
+        if (activeCategory == "Menu") {
+            duaTapCounts.clear()
+        }
+    }
 
     val menuScrollState = rememberLazyListState()
 
@@ -557,7 +565,7 @@ fun SupplicationsScreen(
                                                     color = MaterialTheme.colorScheme.outline
                                                 )
                                                 Text(
-                                                    text = "${dua.targetCount} ${if (isAr) "مرات" else "times"}",
+                                                    text = "${dua.targetCount.toString().localize(isAr, useWesternNumbersInArabic)} ${if (isAr) "مرات" else "times"}",
                                                     style = MaterialTheme.typography.titleMedium,
                                                     fontWeight = FontWeight.Bold,
                                                     color = MaterialTheme.colorScheme.secondary
@@ -600,14 +608,13 @@ fun SupplicationsScreen(
                                                         if (isDone) {
                                                             Icon(imageVector = Icons.Default.Done, contentDescription = "Completed", modifier = Modifier.size(24.dp))
                                                         } else {
-                                                            val locale = java.util.Locale.getDefault()
-                                                            val rawText = java.lang.String.format(locale, "%d/%d", currentCount, dua.targetCount)
+                                                            val rawText = "$currentCount/${dua.targetCount}"
                                                             Text(
-                                                                text = rawText,
+                                                                text = rawText.localize(isAr, useWesternNumbersInArabic),
                                                                 style = MaterialTheme.typography.bodySmall.copy(
-                                                                    fontFamily = FontFamily.Monospace,
                                                                     fontWeight = FontWeight.ExtraBold,
-                                                                    fontSize = 11.sp
+                                                                    fontSize = 12.sp,
+                                                                    textDirection = TextDirection.Ltr
                                                                 )
                                                             )
                                                         }

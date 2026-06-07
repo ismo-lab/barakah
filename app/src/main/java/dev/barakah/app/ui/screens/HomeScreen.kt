@@ -33,18 +33,19 @@ import dev.barakah.app.ui.BarakahViewModel
 import dev.barakah.app.notifications.AdhanSoundManager
 import kotlinx.coroutines.launch
 import dev.barakah.app.util.PrayerCalculator
+import dev.barakah.app.util.localize
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import java.text.SimpleDateFormat
 import java.util.*
 
-fun formatDisplayTime(context: android.content.Context, timeStr: String, isAr: Boolean = false): String {
+fun formatDisplayTime(context: android.content.Context, timeStr: String, isAr: Boolean = false, useWesternNumbersInArabic: Boolean = false): String {
     if (timeStr.contains("-")) {
         val parts = timeStr.split("-")
         if (parts.size == 2) {
-            val start = formatDisplayTime(context, parts[0].trim(), isAr)
-            val end = formatDisplayTime(context, parts[1].trim(), isAr)
+            val start = formatDisplayTime(context, parts[0].trim(), isAr, useWesternNumbersInArabic)
+            val end = formatDisplayTime(context, parts[1].trim(), isAr, useWesternNumbersInArabic)
             return "$start - $end"
         }
     }
@@ -54,7 +55,7 @@ fun formatDisplayTime(context: android.content.Context, timeStr: String, isAr: B
         val h = parts[0].toInt()
         val m = parts[1].split(" ")[0].trim().toInt()
         
-        val locale = java.util.Locale.getDefault()
+        val locale = java.util.Locale.US
         val formatted = if (is24Hour) {
             java.lang.String.format(locale, "%02d:%02d", h, m)
         } else {
@@ -66,9 +67,9 @@ fun formatDisplayTime(context: android.content.Context, timeStr: String, isAr: B
             }
             java.lang.String.format(locale, "%02d:%02d %s", hour12, m, amPm)
         }
-        formatted
+        formatted.localize(isAr, useWesternNumbersInArabic)
     } catch (e: Exception) {
-        timeStr
+        timeStr.localize(isAr, useWesternNumbersInArabic)
     }
 }
 
@@ -119,6 +120,7 @@ fun HomeScreen(
     val enableAdhanSound by viewModel.enableAdhanSound.collectAsState()
     val adhanSoundType by viewModel.adhanSoundType.collectAsState()
     val enableTasbihHaptics by viewModel.enableTasbihHaptics.collectAsState()
+    val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
     val fontAr by viewModel.arabicFontSize.collectAsState()
     val fontEn by viewModel.englishFontSize.collectAsState()
     val locationMethod by viewModel.locationMethod.collectAsState()
@@ -309,17 +311,20 @@ fun HomeScreen(
 
                     val hijriDateStr = getHijriDateString()
                     Text(
-                        text = translateHijri(hijriDateStr),
+                        text = translateHijri(hijriDateStr).localize(isAr, useWesternNumbersInArabic),
                         style = if (isLandscape) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.Black,
                         color = MaterialTheme.colorScheme.onBackground,
                         letterSpacing = (-0.5).sp
                     )
 
-                    val gregorianDateStr = remember(isAr) {
+                    val gregorianDateStr = remember(isAr, useWesternNumbersInArabic) {
                         @Suppress("DEPRECATION")
-                        val locale = java.util.Locale.getDefault()
-                        SimpleDateFormat("EEE, d MMM", locale).format(Date())
+                        val locale = if (isAr) java.util.Locale("ar") else java.util.Locale.US
+                        val sdf = SimpleDateFormat("EEE, d MMM", locale)
+                        // Force Western digits in base string for .localize() to work consistently
+                        sdf.numberFormat = java.text.NumberFormat.getInstance(java.util.Locale.US)
+                        sdf.format(Date()).localize(isAr, useWesternNumbersInArabic)
                     }
                     Text(
                         text = gregorianDateStr,
@@ -624,7 +629,7 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text = formatDisplayTime(context, time, isAr),
+                            text = formatDisplayTime(context, time, isAr, useWesternNumbersInArabic),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Black,
                             letterSpacing = (-0.5).sp,
@@ -1854,6 +1859,8 @@ fun CountdownCardView(
     val countdown by viewModel.nextPrayerCountdown.collectAsState()
     val nextPrayerName by viewModel.nextPrayerName.collectAsState()
 
+val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
+
     androidx.compose.material3.Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -1890,35 +1897,38 @@ fun CountdownCardView(
                     modifier = Modifier.padding(bottom = 4.dp)
                 )
 
-                val formattedCountdown = remember(countdown, isAr) {
-                    if (isAr) {
-                        try {
-                            val parts = countdown.replace("-", "").split(":")
-                            if (parts.size == 3) {
-                                val locale = java.util.Locale.getDefault()
-                                val h = parts[0].toInt()
-                                val m = parts[1].toInt()
-                                val s = parts[2].toInt()
-                                (if (countdown.startsWith("-")) "-" else "") + java.lang.String.format(locale, "%02d:%02d:%02d", h, m, s)
-                            } else countdown
-                        } catch (e: Exception) {
-                            countdown
+                val formattedCountdown = remember(countdown, isAr, useWesternNumbersInArabic) {
+                    try {
+                        val parts = countdown.replace("-", "").split(":")
+                        if (parts.size == 3) {
+                            val locale = java.util.Locale.US
+                            val h = parts[0].toInt()
+                            val m = parts[1].toInt()
+                            val s = parts[2].toInt()
+                            val base = java.lang.String.format(locale, "%02d:%02d:%02d", h, m, s)
+                            val prefix = if (countdown.startsWith("-")) "-" else ""
+                            (prefix + base).localize(isAr, useWesternNumbersInArabic)
+                        } else {
+                            countdown.localize(isAr, useWesternNumbersInArabic)
                         }
-                    } else {
-                        countdown
+                    } catch (e: Exception) {
+                        countdown.localize(isAr, useWesternNumbersInArabic)
                     }
                 }
 
                 androidx.compose.material3.Text(
                     text = formattedCountdown,
                     style = androidx.compose.material3.MaterialTheme.typography.displayLarge.copy(
-                        fontSize = 56.sp,
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.Black,
-                        letterSpacing = (-2.5).sp,
-                        lineHeight = 56.sp
+                        fontSize = 44.sp,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                        letterSpacing = 0.sp,
+                        lineHeight = 44.sp,
+                        textDirection = TextDirection.Ltr
                     ),
                     color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.padding(bottom = 4.dp)
+                    modifier = Modifier.padding(bottom = 4.dp),
+                    maxLines = 1,
+                    softWrap = false
                 )
             }
         }

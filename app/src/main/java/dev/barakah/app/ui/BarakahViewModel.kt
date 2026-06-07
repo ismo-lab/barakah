@@ -113,6 +113,10 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     private val _enableTasbihHaptics = MutableStateFlow(prefs.getBoolean("enable_tasbih_haptics", true))
     val enableTasbihHaptics: StateFlow<Boolean> = _enableTasbihHaptics
 
+    // Digit style: Western vs Eastern Arabic numbers when in Arabic locale
+    private val _useWesternNumbersInArabic = MutableStateFlow(prefs.getBoolean("use_western_numbers_in_arabic", false))
+    val useWesternNumbersInArabic: StateFlow<Boolean> = _useWesternNumbersInArabic
+
     // Settings dialog visibility
     private val _showSettingsDialog = MutableStateFlow(false)
     val showSettingsDialog: StateFlow<Boolean> = _showSettingsDialog
@@ -618,6 +622,12 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         prefs.edit().putBoolean("enable_tasbih_haptics", enable).apply()
     }
 
+    fun setUseWesternNumbersInArabic(enable: Boolean) {
+        _useWesternNumbersInArabic.value = enable
+        prefs.edit().putBoolean("use_western_numbers_in_arabic", enable).apply()
+        updateWidgetsGlobally()
+    }
+
     fun setFirstRunComplete() {
         _isFirstRun.value = false
         prefs.edit().putBoolean("is_first_run", false).apply()
@@ -1081,7 +1091,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         val m = (diff % 3600) / 60
         val s = diff % 60
 
-        _nextPrayerCountdown.value = String.format("%02d:%02d:%02d", h, m, s)
+        _nextPrayerCountdown.value = java.lang.String.format(java.util.Locale.US, "%02d:%02d:%02d", h, m, s)
     }
 
     override fun onCleared() {

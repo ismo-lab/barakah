@@ -19,6 +19,7 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import dev.barakah.app.MainActivity
 import dev.barakah.app.util.PrayerCalculator
+import dev.barakah.app.util.localize
 import java.util.*
 
 class PrayerRemainingWidget : GlanceAppWidget() {
@@ -28,6 +29,7 @@ class PrayerRemainingWidget : GlanceAppWidget() {
         val lng = prefs.getFloat("loc_lng", 39.8262f).toDouble()
         val label = prefs.getString("loc_label", "Mecca, KSA") ?: "Mecca, KSA"
         val isAr = prefs.getString("app_lang", "ar") == "ar"
+        val useWesternNumbersInArabic = prefs.getBoolean("use_western_numbers_in_arabic", false)
         
         val calendar = Calendar.getInstance()
         val tz = TimeZone.getDefault()
@@ -104,9 +106,9 @@ class PrayerRemainingWidget : GlanceAppWidget() {
         val h = diff / 3600
         val mn = (diff % 3600) / 60
 
-        val locale = java.util.Locale.getDefault()
-        val formattedH = java.lang.String.format(locale, "%d", h)
-        val formattedM = java.lang.String.format(locale, "%d", mn)
+        val locale = java.util.Locale.US
+        val formattedH = h.toString().localize(isAr, useWesternNumbersInArabic)
+        val formattedM = mn.toString().localize(isAr, useWesternNumbersInArabic)
         val diffStr = if (isAr) "متبقي $formattedH ساعة و $formattedM دقيقة" else "Starts in $formattedH hr $formattedM min"
 
         val dispName = if (isAr) {
@@ -141,7 +143,7 @@ class PrayerRemainingWidget : GlanceAppWidget() {
                 val hh = parts[0].toInt()
                 val min = parts[1].split(" ")[0].trim().toInt()
                 
-                val locale = java.util.Locale.getDefault()
+                val locale = java.util.Locale.US
                 val formatted = if (is24Hour) {
                     java.lang.String.format(locale, "%02d:%02d", hh, min)
                 } else {
@@ -153,9 +155,9 @@ class PrayerRemainingWidget : GlanceAppWidget() {
                     }
                     java.lang.String.format(locale, "%02d:%02d %s", hour12, min, amPm)
                 }
-                formatted
+                formatted.localize(isAr, useWesternNumbersInArabic)
             } catch (e: Exception) {
-                timeStr
+                timeStr.localize(isAr, useWesternNumbersInArabic)
             }
         }
 

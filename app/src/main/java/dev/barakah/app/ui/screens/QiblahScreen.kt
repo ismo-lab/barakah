@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.barakah.app.ui.BarakahViewModel
 import dev.barakah.app.util.QiblaManager
+import dev.barakah.app.util.localize
 import android.view.HapticFeedbackConstants
 import kotlin.math.abs
 
@@ -49,6 +50,7 @@ fun QiblahScreen(
 ) {
     val view = LocalView.current
     val hapticEnabled by viewModel.enableTasbihHaptics.collectAsState()
+    val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
 
     DisposableEffect(viewModel) {
         viewModel.startQiblaTracking()
@@ -344,7 +346,7 @@ fun QiblahScreen(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Text(
-                                    "${compassAzimuth.toInt()}°",
+                                    "${compassAzimuth.toInt()}°".localize(isAr, useWesternNumbersInArabic),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -356,7 +358,7 @@ fun QiblahScreen(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Text(
-                                    "${qiblaBearing.toInt()}°",
+                                    "${qiblaBearing.toInt()}°".localize(isAr, useWesternNumbersInArabic),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.secondary
@@ -619,7 +621,7 @@ fun QiblahScreen(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Text(
-                                    "${compassAzimuth.toInt()}°",
+                                    "${compassAzimuth.toInt()}°".localize(isAr, useWesternNumbersInArabic),
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -631,7 +633,7 @@ fun QiblahScreen(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Text(
-                                    "${qiblaBearing.toInt()}°",
+                                    "${qiblaBearing.toInt()}°".localize(isAr, useWesternNumbersInArabic),
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.secondary

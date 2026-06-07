@@ -40,6 +40,7 @@ import dev.barakah.app.data.QuranData
 import dev.barakah.app.util.PrayerCalculator
 import dev.barakah.app.data.Surah
 import dev.barakah.app.ui.BarakahViewModel
+import dev.barakah.app.util.localize
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalAnimationApi::class, ExperimentalFoundationApi::class)
@@ -72,6 +73,7 @@ fun QuranScreen(
     val englishFontSize by viewModel.englishFontSize.collectAsState()
     val appLanguage by viewModel.appLanguage.collectAsState()
     val isAr = appLanguage == "ar"
+    val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
     val context = androidx.compose.ui.platform.LocalContext.current
 
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
@@ -157,7 +159,10 @@ fun QuranScreen(
                             Text(
                                 text = lastReadingState?.let { 
                                     val s = QuranData.getSurahById(it.surahId)
-                                    if (isAr) "${s?.arabic} - آية ${it.ayahNumber}" else "${s?.name} - Ayah ${it.ayahNumber}"
+                                    val surahName = if (isAr) s?.arabic else s?.name
+                                    val ayahLabel = if (isAr) "آية" else "Ayah"
+                                    val ayahNum = it.ayahNumber.toString()
+                                    "$surahName - $ayahLabel $ayahNum".localize(isAr, useWesternNumbersInArabic)
                                 } ?: (if (isAr) "سورة الفاتحة" else "Surah Al-Fatihah"),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
@@ -427,7 +432,7 @@ fun QuranScreen(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = java.lang.String.format(java.util.Locale.getDefault(), "%d", surah.id),
+                                        text = surah.id.toString().localize(isAr, useWesternNumbersInArabic),
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary
@@ -446,7 +451,7 @@ fun QuranScreen(
                                         } else {
                                             if (isAr) "مدنية" else "Medinan"
                                         }
-                                        val versesCountStr = java.lang.String.format(java.util.Locale.getDefault(), "%d", surah.versesCount)
+                                        val versesCountStr = surah.versesCount.toString().localize(isAr, useWesternNumbersInArabic)
                                         Text(
                                             text = "$typeTranslated • $versesCountStr ${if (isAr) "آية" else "Verses"}",
                                             style = MaterialTheme.typography.bodySmall,
@@ -636,7 +641,7 @@ fun QuranScreen(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = java.lang.String.format(java.util.Locale.getDefault(), "%d", verse.index),
+                                        text = verse.index.toString().localize(isAr, useWesternNumbersInArabic),
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary
@@ -703,7 +708,7 @@ fun QuranScreen(
                 )
             },
             title = {
-                val verseNum = java.lang.String.format(java.util.Locale.getDefault(), "%d", verse.index)
+                val verseNum = verse.index.toString().localize(isAr, useWesternNumbersInArabic)
                 Text(
                     text = if (isAr) "تفسير الآية $verseNum" else "Tafseer of Ayah ${verse.index}",
                     style = MaterialTheme.typography.titleMedium,

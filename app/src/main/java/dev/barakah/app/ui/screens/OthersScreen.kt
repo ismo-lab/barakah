@@ -40,6 +40,7 @@ import androidx.navigation.NavController
 import dev.barakah.app.data.AllahName
 import dev.barakah.app.data.AllahNamesData
 import dev.barakah.app.ui.BarakahViewModel
+import dev.barakah.app.util.localize
 import java.util.Calendar
 
 data class IslamicOccasion(
@@ -72,6 +73,7 @@ fun OthersScreen(
 ) {
     val appLanguage by viewModel.appLanguage.collectAsState()
     val isAr = appLanguage == "ar"
+    val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
     
     val context = LocalContext.current
     val vibrator = remember { context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? Vibrator }
@@ -96,7 +98,7 @@ fun OthersScreen(
                 id = 1,
                 nameAr = "رأس السنة الهجرية",
                 nameEn = "Hijri New Year",
-                hijriDateAr = "١ محرم",
+                hijriDateAr = "1 محرم",
                 hijriDateEn = "1 Muharram",
                 descAr = "بداية العام الهجري الجديد وتوثيق للهجرة النبوية المباركة من مكة المكرمة إلى المدينة المنورة.",
                 descEn = "The first of Muharram marks the beginning of the Islamic New Year, commemorating the Prophet's Hijra from Mecca to Medina.",
@@ -107,7 +109,7 @@ fun OthersScreen(
                 id = 2,
                 nameAr = "يوم عاشوراء",
                 nameEn = "Day of Ashura",
-                hijriDateAr = "١٠ محرم",
+                hijriDateAr = "10 محرم",
                 hijriDateEn = "10 Muharram",
                 descAr = "يوم نجّى الله فيه موسى عليه السلام من فرعون وملئه، ويُستحب صيام هذا اليوم شكراً لله تعالى.",
                 descEn = "The day Allah saved Prophet Musa (Moses) from Pharaoh. Fasting on this day is recommended as an act of gratitude.",
@@ -118,7 +120,7 @@ fun OthersScreen(
                 id = 3,
                 nameAr = "المولد النبوي الشريف",
                 nameEn = "Mawlid al-Nabi",
-                hijriDateAr = "١٢ ربيع الأول",
+                hijriDateAr = "12 ربيع الأول",
                 hijriDateEn = "12 Rabi' al-Awwal",
                 descAr = "ذكرى مولد الحبيب المصطفى محمد صلى الله عليه وسلم، مبعث النور والهدى للبشرية جمعاء.",
                 descEn = "Commemorating the birth of Prophet Muhammad (peace be upon him), sent as a mercy to all creation.",
@@ -129,7 +131,7 @@ fun OthersScreen(
                 id = 4,
                 nameAr = "ليلة الإسراء والمعراج",
                 nameEn = "Isra' and Mi'raj",
-                hijriDateAr = "٢٧ رجب",
+                hijriDateAr = "27 رجب",
                 hijriDateEn = "27 Rajab",
                 descAr = "الرحلة الإعجازية للنبي صلى الله عليه وسلم من المسجد الحرام للمسجد الأقصى وعروجه للسماوات العلا.",
                 descEn = "The miraculous night journey of Prophet Muhammad from Mecca to Jerusalem, and his ascension to the Heavens.",
@@ -140,7 +142,7 @@ fun OthersScreen(
                 id = 5,
                 nameAr = "بداية شهر رمضان المبارك",
                 nameEn = "Ramadan First Day",
-                hijriDateAr = "١ رمضان",
+                hijriDateAr = "1 رمضان",
                 hijriDateEn = "1 Ramadan",
                 descAr = "بداية شهر الصوم والقرآن والاعتكاف، أعظم شهور السنة وفيه ليلة القدر المباركة.",
                 descEn = "The start of the holy month of fasting, spiritual reflection, and devotion, containing the Night of Power.",
@@ -151,7 +153,7 @@ fun OthersScreen(
                 id = 6,
                 nameAr = "ليلة النصف من شعبان",
                 nameEn = "Mid-Sha'ban Night",
-                hijriDateAr = "١٥ شعبان",
+                hijriDateAr = "15 شعبان",
                 hijriDateEn = "15 Sha'ban",
                 descAr = "ليلة مباركة يرجى فيها مغفرة الذنوب وبسط الرحمة وقبول الطاعات.",
                 descEn = "A sacred night in the month of Sha'ban on which forgiveness and divine blessings are widely bestowed.",
@@ -173,7 +175,7 @@ fun OthersScreen(
                 id = 8,
                 nameAr = "عيد الفطر المبارك",
                 nameEn = "Eid al-Fitr",
-                hijriDateAr = "١ شوال",
+                hijriDateAr = "1 شوال",
                 hijriDateEn = "1 Shawwal",
                 descAr = "جائزة الصائمين وعيد بهيج يعقُب شهر رمضان تملأ فيه الفرحة البيوت والقلوب.",
                 descEn = "Festival of breaking the fast, marking the end of Ramadan, filled with joy, gratitude, and charity.",
@@ -184,7 +186,7 @@ fun OthersScreen(
                 id = 9,
                 nameAr = "بداية أشهر الحج المباركة",
                 nameEn = "Start of Hajj Season",
-                hijriDateAr = "١ ذو القعدة",
+                hijriDateAr = "1 ذو القعدة",
                 hijriDateEn = "1 Dhul-Qi'dah",
                 descAr = "بداية الأشهر الحرم التي يُتأهب فيها لزيارة بيت الله العتيق وأداء فريضة الحج المعظمة.",
                 descEn = "The beginning of the sacred Hajj months, preparing the pilgrims for the journey of a lifetime to Mecca.",
@@ -195,7 +197,7 @@ fun OthersScreen(
                 id = 10,
                 nameAr = "يوم عرفة",
                 nameEn = "Day of Arafah",
-                hijriDateAr = "٩ ذو الحجة",
+                hijriDateAr = "9 ذو الحجة",
                 hijriDateEn = "9 Dhul-Hijjah",
                 descAr = "أعظم أيام الدهر وركن الحج الأعظم، ويُستحب صيام لغير الحاج تكفيراً لذنوب سنتين.",
                 descEn = "The most blessed day of the year, the pinnacle of the Hajj pilgrimage. Fasting on this day expiates sins for two years.",
@@ -206,7 +208,7 @@ fun OthersScreen(
                 id = 11,
                 nameAr = "عيد الأضحى المبارك",
                 nameEn = "Eid al-Adha",
-                hijriDateAr = "١٠ ذو الحجة",
+                hijriDateAr = "10 ذو الحجة",
                 hijriDateEn = "10 Dhul-Hijjah",
                 descAr = "عيد النحر الكافي والذكرى المباركة لفداء إسماعيل عليه السلام، وتوزيع الأضاحي وصلة الأرحام.",
                 descEn = "Festival of Sacrifice, commemorating Prophet Ibrahim's obedience, characterized by charity and community sharing.",
@@ -309,6 +311,7 @@ fun OthersScreen(
                     0 -> NamesOfAllahPane(
                         isAr = isAr,
                         names = AllahNamesData.names,
+                        useWesternNumbersInArabic = useWesternNumbersInArabic,
                         onNameClick = { name ->
                             triggerVibration()
                             selectedNameForDetail = name
@@ -317,6 +320,7 @@ fun OthersScreen(
                     1 -> CalendarAndOccasionsPane(
                         isAr = isAr,
                         occasions = occasions,
+                        useWesternNumbersInArabic = useWesternNumbersInArabic,
                         onOccasionClick = { occasion ->
                             triggerVibration()
                             selectedOccasionForDetail = occasion
@@ -439,7 +443,7 @@ fun OthersScreen(
                         if (isAr) "التاريخ الهجري: ${holiday.hijriDateAr}" else "Date: ${holiday.hijriDateEn}"
                     }
                     Text(
-                        text = formattedDate,
+                        text = formattedDate.localize(isAr, useWesternNumbersInArabic),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.secondary,
                         fontWeight = FontWeight.Bold
@@ -479,6 +483,7 @@ fun OthersScreen(
 fun NamesOfAllahPane(
     isAr: Boolean,
     names: List<AllahName>,
+    useWesternNumbersInArabic: Boolean = false,
     onNameClick: (AllahName) -> Unit
 ) {
     Column(
@@ -538,6 +543,7 @@ fun NamesOfAllahPane(
                 AllahNameCard(
                     name = name,
                     isAr = isAr,
+                    useWesternNumbersInArabic = useWesternNumbersInArabic,
                     onCardClick = { onNameClick(name) }
                 )
             }
@@ -552,6 +558,7 @@ fun NamesOfAllahPane(
 fun AllahNameCard(
     name: AllahName,
     isAr: Boolean,
+    useWesternNumbersInArabic: Boolean = false,
     onCardClick: () -> Unit
 ) {
     Card(
@@ -575,7 +582,7 @@ fun AllahNameCard(
         ) {
             // Index tag
             Text(
-                text = "#${name.id}",
+                text = "#${name.id.toString().localize(isAr, useWesternNumbersInArabic)}",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
                 textAlign = TextAlign.Center
@@ -622,6 +629,7 @@ fun AllahNameCard(
 fun CalendarAndOccasionsPane(
     isAr: Boolean,
     occasions: List<IslamicOccasion>,
+    useWesternNumbersInArabic: Boolean = false,
     onOccasionClick: (IslamicOccasion) -> Unit
 ) {
     LazyColumn(
@@ -691,7 +699,7 @@ fun CalendarAndOccasionsPane(
                             if (isAr) item.hijriDateAr else item.hijriDateEn
                         }
                         Text(
-                            text = displayDate,
+                            text = displayDate.localize(isAr, useWesternNumbersInArabic),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold

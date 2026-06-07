@@ -19,6 +19,7 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import dev.barakah.app.MainActivity
 import dev.barakah.app.util.PrayerCalculator
+import dev.barakah.app.util.localize
 import java.util.*
 
 class PrayerWidget : GlanceAppWidget() {
@@ -28,6 +29,7 @@ class PrayerWidget : GlanceAppWidget() {
         val lng = prefs.getFloat("loc_lng", 39.8262f).toDouble()
         val label = prefs.getString("loc_label", "Mecca, KSA") ?: "Mecca, KSA"
         val isAr = prefs.getString("app_lang", "ar") == "ar"
+        val useWesternNumbersInArabic = prefs.getBoolean("use_western_numbers_in_arabic", false)
         
         val calendar = Calendar.getInstance()
         val tz = TimeZone.getDefault()
@@ -56,7 +58,7 @@ class PrayerWidget : GlanceAppWidget() {
                 val h = parts[0].toInt()
                 val min = parts[1].split(" ")[0].trim().toInt()
                 
-                val locale = java.util.Locale.getDefault()
+                val locale = java.util.Locale.US
                 val formatted = if (is24Hour) {
                     java.lang.String.format(locale, "%02d:%02d", h, min)
                 } else {
@@ -68,9 +70,9 @@ class PrayerWidget : GlanceAppWidget() {
                     }
                     java.lang.String.format(locale, "%02d:%02d %s", hour12, min, amPm)
                 }
-                formatted
+                formatted.localize(isAr, useWesternNumbersInArabic)
             } catch (e: Exception) {
-                timeStr
+                timeStr.localize(isAr, useWesternNumbersInArabic)
             }
         }
         

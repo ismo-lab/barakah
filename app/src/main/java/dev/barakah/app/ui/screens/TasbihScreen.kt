@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalView
 import android.view.HapticFeedbackConstants
 import dev.barakah.app.ui.BarakahViewModel
+import dev.barakah.app.util.localize
 import kotlinx.coroutines.launch
 
 @Composable
@@ -47,6 +48,7 @@ fun TasbihScreen(
     val haptic = LocalView.current
     val view = LocalView.current
     val enableTasbihHaptics by viewModel.enableTasbihHaptics.collectAsState()
+    val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
 
     var showDhikrDropdown by remember { mutableStateOf(false) }
 
@@ -187,8 +189,7 @@ fun TasbihScreen(
                             val targets = listOf(33, 99, 100, 0)
                             targets.forEach { t ->
                                 val isSelected = target == t
-                                val locale = java.util.Locale.getDefault()
-                                val label = if (t == 0) (if (isAr) "مفتوح" else "∞ Loop") else java.lang.String.format(locale, "%d", t)
+                                val label = if (t == 0) (if (isAr) "مفتوح" else "∞ Loop") else t.toString().localize(isAr, useWesternNumbersInArabic)
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
@@ -282,21 +283,19 @@ fun TasbihScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                val locale = java.util.Locale.getDefault()
-                                val counterText = if (target > 0) 
-                                    java.lang.String.format(locale, "%d/%d", count, target.toLong())
-                                else 
-                                    java.lang.String.format(locale, "%d", count)
+                                val counterText = if (target > 0) "${count}/${target}" else "$count"
                                 Text(
-                                    text = counterText,
+                                    text = counterText.localize(isAr, useWesternNumbersInArabic),
                                     style = MaterialTheme.typography.displayMedium.copy(
-                                        fontSize = 44.sp,
-                                        fontWeight = FontWeight.Black,
-                                        fontFamily = FontFamily.Monospace,
-                                        letterSpacing = (-1.5).sp,
-                                        lineHeight = 44.sp
+                                        fontSize = 36.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 0.sp,
+                                        lineHeight = 36.sp,
+                                        textDirection = androidx.compose.ui.text.style.TextDirection.Ltr
                                     ),
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    maxLines = 1,
+                                    softWrap = false
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
@@ -442,21 +441,19 @@ fun TasbihScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    val locale = java.util.Locale.getDefault()
-                    val counterText = if (target > 0) 
-                        java.lang.String.format(locale, "%d/%d", count, target.toLong())
-                    else 
-                        java.lang.String.format(locale, "%d", count)
+                    val counterText = if (target > 0) "${count}/${target}" else "$count"
                     Text(
-                        text = counterText,
+                        text = counterText.localize(isAr, useWesternNumbersInArabic),
                         style = MaterialTheme.typography.displayLarge.copy(
-                            fontSize = 64.sp,
-                            fontWeight = FontWeight.Black,
-                            fontFamily = FontFamily.Monospace,
-                            letterSpacing = (-2.5).sp,
-                            lineHeight = 64.sp
+                            fontSize = 52.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.sp,
+                            lineHeight = 52.sp,
+                            textDirection = androidx.compose.ui.text.style.TextDirection.Ltr
                         ),
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        maxLines = 1,
+                        softWrap = false
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
@@ -487,8 +484,7 @@ fun TasbihScreen(
                 val targets = listOf(33, 99, 100, 0) // 0 represents "Infinite"
                 targets.forEach { t ->
                     val isSelected = target == t
-                    val locale = java.util.Locale.getDefault()
-                    val label = if (t == 0) (if (isAr) "مفتوح" else "∞ Loop") else java.lang.String.format(locale, "%d", t)
+                    val label = if (t == 0) (if (isAr) "مفتوح" else "∞ Loop") else t.toString().localize(isAr, useWesternNumbersInArabic)
                     Box(
                         modifier = Modifier
                             .weight(1f)
