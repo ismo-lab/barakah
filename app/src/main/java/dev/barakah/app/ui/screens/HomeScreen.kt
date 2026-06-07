@@ -35,6 +35,7 @@ import dev.barakah.app.ui.BarakahViewModel
 import dev.barakah.app.notifications.AdhanSoundManager
 import kotlinx.coroutines.launch
 import dev.barakah.app.util.PrayerCalculator
+import dev.barakah.app.util.TimeUtils
 import dev.barakah.app.util.localize
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -42,101 +43,6 @@ import com.google.accompanist.permissions.rememberPermissionState
 import java.text.SimpleDateFormat
 import java.util.*
 
-fun formatDisplayTime(context: android.content.Context, timeStr: String, isAr: Boolean = false, useWesternNumbersInArabic: Boolean = false): String {
-    if (timeStr.contains("-")) {
-        val parts = timeStr.split("-")
-        if (parts.size == 2) {
-            val start = formatDisplayTime(context, parts[0].trim(), isAr, useWesternNumbersInArabic)
-            val end = formatDisplayTime(context, parts[1].trim(), isAr, useWesternNumbersInArabic)
-            return "$start - $end"
-        }
-    }
-    return try {
-        val is24Hour = android.text.format.DateFormat.is24HourFormat(context)
-        val parts = timeStr.trim().split(":")
-        val h = parts[0].toInt()
-        val m = parts[1].split(" ")[0].trim().toInt()
-        
-        val locale = java.util.Locale.US
-        val formatted = if (is24Hour) {
-            java.lang.String.format(locale, "%02d:%02d", h, m)
-        } else {
-            val hour12 = if (h % 12 == 0) 12 else h % 12
-            val amPm = if (h < 12) {
-                if (isAr) "ص" else "AM"
-            } else {
-                if (isAr) "م" else "PM"
-            }
-            java.lang.String.format(locale, "%02d:%02d %s", hour12, m, amPm)
-        }
-        formatted.localize(isAr, useWesternNumbersInArabic)
-    } catch (e: Exception) {
-        timeStr.localize(isAr, useWesternNumbersInArabic)
-    }
-}
-
-data class FormattedTime(
-    val digits: String,
-    val suffix: String = ""
-)
-
-fun parseDisplayTime(context: android.content.Context, timeStr: String, isAr: Boolean = false, useWesternNumbersInArabic: Boolean = false): FormattedTime {
-    if (timeStr.contains("-")) {
-        val parts = timeStr.split("-")
-        if (parts.size == 2) {
-            val start = formatDisplayTime(context, parts[0].trim(), isAr, useWesternNumbersInArabic)
-            val end = formatDisplayTime(context, parts[1].trim(), isAr, useWesternNumbersInArabic)
-            return FormattedTime("$start - $end", "")
-        }
-    }
-    return try {
-        val is24Hour = android.text.format.DateFormat.is24HourFormat(context)
-        val parts = timeStr.trim().split(":")
-        val h = parts[0].toInt()
-        val m = parts[1].split(" ")[0].trim().toInt()
-        
-        val locale = java.util.Locale.US
-        val digitsRaw = if (is24Hour) {
-            java.lang.String.format(locale, "%02d:%02d", h, m)
-        } else {
-            val hour12 = if (h % 12 == 0) 12 else h % 12
-            java.lang.String.format(locale, "%02d:%02d", hour12, m)
-        }
-        val suffixRaw = if (is24Hour) {
-            ""
-        } else {
-            if (h < 12) {
-                if (isAr) "ص" else "AM"
-            } else {
-                if (isAr) "م" else "PM"
-            }
-        }
-        FormattedTime(
-            digits = digitsRaw.localize(isAr, useWesternNumbersInArabic),
-            suffix = suffixRaw.localize(isAr, useWesternNumbersInArabic)
-        )
-    } catch (e: Exception) {
-        FormattedTime(timeStr.localize(isAr, useWesternNumbersInArabic), "")
-    }
-}
-
-fun calculateOffsetTime(timeStr: String, offsetMinutes: Int): String {
-    return try {
-        val parts = timeStr.trim().split(":")
-        val h = parts[0].toInt()
-        val m = parts[1].split(" ")[0].trim().toInt()
-        val cal = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, h)
-            set(Calendar.MINUTE, m)
-            add(Calendar.MINUTE, offsetMinutes)
-        }
-        val nh = cal.get(Calendar.HOUR_OF_DAY)
-        val nm = cal.get(Calendar.MINUTE)
-        String.format(Locale.US, "%02d:%02d", nh, nm)
-    } catch (e: Exception) {
-        timeStr
-    }
-}
 
 @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -266,7 +172,7 @@ fun HomeScreen(
             Triple("Sunrise", times.sunrise, "Sunrise Shuruq")
         )
         if (showNawafil) {
-            val duhaTime = calculateOffsetTime(times.sunrise, 20)
+            val duhaTime = TimeUtils.calculateOffsetTime(times.sunrise, 20)
             list.add(Triple("Duha (Nafilah)", duhaTime, "Duha Voluntary Prayer"))
         }
         list.add(Triple("Dhuhr", times.dhuhr, "Midday Prayer"))
@@ -299,7 +205,7 @@ fun HomeScreen(
                 list.add(Triple("Witr (Nafilah)", "${times.isha} - ${times.fajr}", "Witr Voluntary Prayer"))
             } catch (e: Exception) {
                 // Fallback if parsing fails
-                val witrTime = calculateOffsetTime(times.isha, 45)
+                val witrTime = TimeUtils.calculateOffsetTime(times.isha, 45)
                 list.add(Triple("Witr (Nafilah)", witrTime, "Witr Voluntary Prayer"))
             }
         }
@@ -342,7 +248,7 @@ fun HomeScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Place,
-                            contentDescription = null,
+                            contentDescription = if (isAr) "الموقع الحالي" else "Current location",
                             tint = MaterialTheme.colorScheme.secondary,
                             modifier = Modifier.size(16.dp)
                         )
@@ -542,7 +448,7 @@ fun HomeScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Icon(
-                        imageVector = Icons.Default.MenuBook,
+                        imageVector = Icons.AutoMirrored.Filled.MenuBook,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
                         modifier = Modifier.size(32.dp)
@@ -673,7 +579,7 @@ fun HomeScreen(
 
                     // Combine Time and Notification Icon at the End
                     val formattedTime = remember(time, isAr, useWesternNumbersInArabic) {
-                        parseDisplayTime(context, time, isAr, useWesternNumbersInArabic)
+                        TimeUtils.parseDisplayTime(context, time, isAr, useWesternNumbersInArabic)
                     }
 
                     val hasColon = remember(formattedTime) {
@@ -1891,7 +1797,7 @@ fun DailyEssentialsSection(navController: androidx.navigation.NavController, vie
                 )
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Icon(Icons.Default.WbSunny, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(28.dp))
+                    Icon(Icons.Default.WbSunny, contentDescription = if (isAr) "أذكار الصباح" else "Morning Adhkar", tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(28.dp))
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
                         text = if (isAr) "أذكار الصباح" else "Morning Adhkar",
@@ -1919,7 +1825,7 @@ fun DailyEssentialsSection(navController: androidx.navigation.NavController, vie
                 )
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Icon(Icons.Default.NightsStay, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(28.dp))
+                    Icon(Icons.Default.NightsStay, contentDescription = if (isAr) "أذكار المساء" else "Evening Adhkar", tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(28.dp))
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
                         text = if (isAr) "أذكار المساء" else "Evening Adhkar",
@@ -1977,7 +1883,7 @@ fun ExploreMoreSection(navController: androidx.navigation.NavController, isAr: B
                     ) {
                         Icon(
                             imageVector = Icons.Default.Widgets,
-                            contentDescription = null,
+                            contentDescription = if (isAr) "أيقونة أخرى" else "Others icon",
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
@@ -1999,7 +1905,7 @@ fun ExploreMoreSection(navController: androidx.navigation.NavController, isAr: B
                 }
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = null,
+                    contentDescription = if (isAr) "عرض المزيد" else "View more",
                     tint = MaterialTheme.colorScheme.primary
                 )
             }

@@ -144,7 +144,7 @@ fun QuranScreen(
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                         Icon(
                             imageVector = Icons.Outlined.Book,
-                            contentDescription = null,
+                            contentDescription = if (isAr) "أيقونة آخر قراءة" else "Last read icon",
                             tint = MaterialTheme.colorScheme.secondary,
                             modifier = Modifier.size(28.dp)
                         )
@@ -261,7 +261,7 @@ fun QuranScreen(
                                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                 ) 
                             },
-                            leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
+                            leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = if (isAr) "بحث" else "Search icon") },
                             trailingIcon = {
                                 if (searchQuery.isNotEmpty()) {
                                     IconButton(onClick = { searchQuery = "" }) {
@@ -335,7 +335,7 @@ fun QuranScreen(
                                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                 ) 
                             },
-                            leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
+                            leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = if (isAr) "بحث" else "Search icon") },
                             trailingIcon = {
                                 if (searchQuery.isNotEmpty()) {
                                     IconButton(onClick = { searchQuery = "" }) {
@@ -711,7 +711,7 @@ fun QuranScreen(
             icon = {
                 Icon(
                     imageVector = Icons.Default.Info,
-                    contentDescription = null,
+                    contentDescription = if (isAr) "معلومات التفسير" else "Tafseer information",
                     tint = MaterialTheme.colorScheme.primary
                 )
             },

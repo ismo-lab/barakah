@@ -77,34 +77,7 @@ class PrayerWidget : GlanceAppWidget() {
         }
         
         provideContent {
-            val now = Calendar.getInstance()
-            val nowMin = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
-
-            fun toMin(t: String): Int {
-                return try {
-                    val p = t.split(":")
-                    p[0].toInt() * 60 + p[1].split(" ")[0].toInt()
-                } catch(e: Exception) { 0 }
-            }
-
-            val f = toMin(times.fajr)
-            val d = toMin(times.dhuhr)
-            val a = toMin(times.asr)
-            val m = toMin(times.maghrib)
-            val i = toMin(times.isha)
-
-            fun isCurrent(pName: String): Boolean {
-                return when(pName) {
-                    "Fajr", "الفجر" -> nowMin in f until d
-                    "Dhuhr", "الظهر" -> nowMin in d until a
-                    "Asr", "العصر" -> nowMin in a until m
-                    "Maghrib", "المغرب" -> nowMin in m until i
-                    "Isha", "العشاء" -> nowMin >= i || nowMin < f
-                    else -> false
-                }
-            }
-
-            PrayerWidgetContent(times, label, isAr, ::formatTimeStr, is24Hour, ::isCurrent)
+            PrayerWidgetContent(times, label, isAr, ::formatTimeStr, is24Hour)
         }
     }
 
@@ -114,8 +87,7 @@ class PrayerWidget : GlanceAppWidget() {
         label: String, 
         isAr: Boolean, 
         formatTimeStr: (String) -> String, 
-        is24Hour: Boolean,
-        isCurrent: (String) -> Boolean
+        is24Hour: Boolean
     ) {
         val bgColor = androidx.glance.color.ColorProvider(day = Color(0xCCFFFFFF), night = Color(0xB3000000))
         val titleColor = androidx.glance.color.ColorProvider(day = Color(0xFF44474E), night = Color(0xFFC4C6D0))
@@ -151,17 +123,11 @@ class PrayerWidget : GlanceAppWidget() {
                 modifier = GlanceModifier.fillMaxWidth().padding(vertical = 12.dp)
             ) {
                 val timeFontSize = if (is24Hour) 11.sp else 9.5.sp
-                val p1 = if (isAr) "الفجر" else "Fajr"
-                val p2 = if (isAr) "الظهر" else "Dhuhr"
-                val p3 = if (isAr) "العصر" else "Asr"
-                val p4 = if (isAr) "المغرب" else "Maghrib"
-                val p5 = if (isAr) "العشاء" else "Isha"
-                
-                PrayerItem(GlanceModifier.defaultWeight(), p1, formatTimeStr(times.fajr), labelColor, timeColor, timeFontSize, isCurrent(p1))
-                PrayerItem(GlanceModifier.defaultWeight(), p2, formatTimeStr(times.dhuhr), labelColor, timeColor, timeFontSize, isCurrent(p2))
-                PrayerItem(GlanceModifier.defaultWeight(), p3, formatTimeStr(times.asr), labelColor, timeColor, timeFontSize, isCurrent(p3))
-                PrayerItem(GlanceModifier.defaultWeight(), p4, formatTimeStr(times.maghrib), labelColor, timeColor, timeFontSize, isCurrent(p4))
-                PrayerItem(GlanceModifier.defaultWeight(), p5, formatTimeStr(times.isha), labelColor, timeColor, timeFontSize, isCurrent(p5))
+                PrayerItem(GlanceModifier.defaultWeight(), if (isAr) "الفجر" else "Fajr", formatTimeStr(times.fajr), labelColor, timeColor, timeFontSize)
+                PrayerItem(GlanceModifier.defaultWeight(), if (isAr) "الظهر" else "Dhuhr", formatTimeStr(times.dhuhr), labelColor, timeColor, timeFontSize)
+                PrayerItem(GlanceModifier.defaultWeight(), if (isAr) "العصر" else "Asr", formatTimeStr(times.asr), labelColor, timeColor, timeFontSize)
+                PrayerItem(GlanceModifier.defaultWeight(), if (isAr) "المغرب" else "Maghrib", formatTimeStr(times.maghrib), labelColor, timeColor, timeFontSize)
+                PrayerItem(GlanceModifier.defaultWeight(), if (isAr) "العشاء" else "Isha", formatTimeStr(times.isha), labelColor, timeColor, timeFontSize)
             }
         }
     }
@@ -173,23 +139,12 @@ class PrayerWidget : GlanceAppWidget() {
         time: String, 
         labelColor: androidx.glance.unit.ColorProvider, 
         timeColor: androidx.glance.unit.ColorProvider, 
-        timeFontSize: androidx.compose.ui.unit.TextUnit,
-        isCurrent: Boolean
+        timeFontSize: androidx.compose.ui.unit.TextUnit
     ) {
         Column(
             modifier = modifier.padding(horizontal = 1.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Box(modifier = GlanceModifier.height(8.dp), contentAlignment = Alignment.Center) {
-                if (isCurrent) {
-                    androidx.glance.Image(
-                        provider = androidx.glance.ImageProvider(dev.barakah.app.R.drawable.dot_circle),
-                        contentDescription = "Active Indicator",
-                        modifier = GlanceModifier.size(6.dp)
-                    )
-                }
-            }
-            Spacer(modifier = GlanceModifier.height(2.dp))
             Text(
                 text = name,
                 style = TextStyle(color = labelColor, fontSize = 11.sp, fontWeight = FontWeight.Medium),

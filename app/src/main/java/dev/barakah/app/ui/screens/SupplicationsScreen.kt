@@ -108,7 +108,7 @@ fun SupplicationsScreen(
         return if (clean.contains("bookmark") || clean.contains("favorite") || clean.contains("المفضلة") || clean.contains("مرجعية") || clean.contains("محفوظ")) {
             Icons.Default.Bookmark
         } else {
-            Icons.Default.MenuBook
+            Icons.AutoMirrored.Filled.MenuBook
         }
     }
 
@@ -172,7 +172,7 @@ fun SupplicationsScreen(
                                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                             ) 
                         },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = if (isAr) "بحث" else "Search icon", tint = MaterialTheme.colorScheme.primary) },
                         trailingIcon = {
                             if (searchPattern.isNotEmpty()) {
                                 IconButton(onClick = { viewModel.updateDuaSearch("") }) {
@@ -259,7 +259,7 @@ fun SupplicationsScreen(
                                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                             ) 
                         },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = if (isAr) "بحث" else "Search icon", tint = MaterialTheme.colorScheme.primary) },
                         trailingIcon = {
                             if (searchPattern.isNotEmpty()) {
                                 IconButton(onClick = { viewModel.updateDuaSearch("") }) {
@@ -353,7 +353,7 @@ fun SupplicationsScreen(
                                         Box(contentAlignment = Alignment.Center) {
                                             Icon(
                                                 imageVector = icon,
-                                                contentDescription = null,
+                                                contentDescription = if (isAr) "أيقونة القسم" else "Category icon",
                                                 tint = color,
                                                 modifier = Modifier.size(24.dp)
                                             )
@@ -372,7 +372,7 @@ fun SupplicationsScreen(
                                     
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                        contentDescription = null,
+                                        contentDescription = if (isAr) "فتح القسم" else "Open category",
                                         tint = MaterialTheme.colorScheme.outline
                                     )
                                 }
@@ -414,7 +414,7 @@ fun SupplicationsScreen(
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
                             Icon(
                                 imageVector = Icons.Default.Search,
-                                contentDescription = null,
+                                contentDescription = if (isAr) "لا توجد نتائج" else "No results",
                                 modifier = Modifier.size(64.dp),
                                 tint = MaterialTheme.colorScheme.outline
                             )

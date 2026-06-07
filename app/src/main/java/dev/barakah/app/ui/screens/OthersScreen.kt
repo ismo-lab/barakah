@@ -505,7 +505,7 @@ fun NamesOfAllahPane(
             ) {
                 Icon(
                     imageVector = Icons.Default.AutoAwesome,
-                    contentDescription = null,
+                    contentDescription = if (isAr) "أيقونة" else "Stars icon",
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp)
                 )
