@@ -636,14 +636,15 @@ fun HomeScreen(
                     androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
                 }
             ) {
-                Row(
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                        .padding(horizontal = 16.dp, vertical = 14.dp)
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
+                    // Prayer Name at Start
+                    Column(
+                        modifier = Modifier.align(Alignment.CenterStart)
+                    ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = translatePrayer(name),
@@ -668,37 +669,36 @@ fun HomeScreen(
                                 }
                             }
                         }
-
                     }
 
+                    // Combine Time and Notification Icon at the End
+                    val formattedTime = remember(time, isAr, useWesternNumbersInArabic) {
+                        parseDisplayTime(context, time, isAr, useWesternNumbersInArabic)
+                    }
+
+                    val hasColon = remember(formattedTime) {
+                        formattedTime.digits.contains(":") && !formattedTime.digits.contains("-")
+                    }
+                    val timeParts = remember(formattedTime, hasColon) {
+                        if (hasColon) formattedTime.digits.split(":") else emptyList()
+                    }
+                    val hours = if (timeParts.size >= 2) timeParts[0] else ""
+                    val minutes = if (timeParts.size >= 2) timeParts[1] else ""
+
                     Row(
+                        modifier = Modifier.align(Alignment.CenterEnd),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        val formattedTime = remember(time, isAr, useWesternNumbersInArabic) {
-                            parseDisplayTime(context, time, isAr, useWesternNumbersInArabic)
-                        }
-
-                        val hasColon = remember(formattedTime) {
-                            formattedTime.digits.contains(":") && !formattedTime.digits.contains("-")
-                        }
-                        val timeParts = remember(formattedTime, hasColon) {
-                            if (hasColon) formattedTime.digits.split(":") else emptyList()
-                        }
-                        val hours = if (timeParts.size >= 2) timeParts[0] else ""
-                        val minutes = if (timeParts.size >= 2) timeParts[1] else ""
-
                         androidx.compose.runtime.CompositionLocalProvider(
                             androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.End,
-                                modifier = Modifier.width(115.dp)
+                                horizontalArrangement = Arrangement.End
                             ) {
                                 if (hasColon) {
                                     if (isAr) {
-                                        // Arabic: [Suffix] [Space] [Hours] [Colon] [Minutes]
                                         if (formattedTime.suffix.isNotEmpty()) {
                                             Text(
                                                 text = formattedTime.suffix,
@@ -711,8 +711,6 @@ fun HomeScreen(
                                                 textAlign = TextAlign.Center
                                             )
                                             Spacer(modifier = Modifier.width(4.dp))
-                                        } else {
-                                            Spacer(modifier = Modifier.width(32.dp))
                                         }
 
                                         Text(
@@ -721,7 +719,6 @@ fun HomeScreen(
                                             fontWeight = FontWeight.Black,
                                             maxLines = 1,
                                             softWrap = false,
-                                            modifier = Modifier.width(28.dp),
                                             textAlign = TextAlign.Center
                                         )
                                         Text(
@@ -739,18 +736,15 @@ fun HomeScreen(
                                             fontWeight = FontWeight.Black,
                                             maxLines = 1,
                                             softWrap = false,
-                                            modifier = Modifier.width(28.dp),
                                             textAlign = TextAlign.Center
                                         )
                                     } else {
-                                        // English: [Hours] [Colon] [Minutes] [Space] [Suffix]
                                         Text(
                                             text = hours,
                                             style = MaterialTheme.typography.titleLarge.copy(fontFeatureSettings = "tnum"),
                                             fontWeight = FontWeight.Black,
                                             maxLines = 1,
                                             softWrap = false,
-                                            modifier = Modifier.width(28.dp),
                                             textAlign = TextAlign.Center
                                         )
                                         Text(
@@ -768,7 +762,6 @@ fun HomeScreen(
                                             fontWeight = FontWeight.Black,
                                             maxLines = 1,
                                             softWrap = false,
-                                            modifier = Modifier.width(28.dp),
                                             textAlign = TextAlign.Center
                                         )
 
@@ -781,28 +774,24 @@ fun HomeScreen(
                                                 color = if (isCurrent) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.82f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                                                 maxLines = 1,
                                                 softWrap = false,
-                                                modifier = Modifier.width(32.dp),
                                                 textAlign = TextAlign.Center
                                             )
-                                        } else {
-                                            Spacer(modifier = Modifier.width(36.dp))
                                         }
                                     }
                                 } else {
-                                    // Fallback for ranges
                                     Text(
                                         text = formattedTime.digits,
                                         style = MaterialTheme.typography.titleLarge.copy(fontFeatureSettings = "tnum"),
                                         fontWeight = FontWeight.Black,
                                         maxLines = 1,
                                         softWrap = false,
-                                        modifier = Modifier.fillMaxWidth(),
                                         textAlign = TextAlign.End
                                     )
                                 }
                             }
                         }
 
+                        // Alert Icon
                         val isAlertEnabled = alertSettings.find { it.prayerName == name }?.isEnabled != false
                         IconButton(
                             onClick = {
@@ -810,12 +799,14 @@ fun HomeScreen(
                                     notifPermissionState.launchPermissionRequest()
                                 }
                                 viewModel.togglePrayerAlert(name, !isAlertEnabled)
-                            }
+                            },
+                            modifier = Modifier.size(40.dp)
                         ) {
                             Icon(
                                 imageVector = if (isAlertEnabled) Icons.Outlined.NotificationsActive else Icons.Outlined.Notifications,
                                 contentDescription = "Toggle alert for $name",
-                                tint = if (isCurrent) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                tint = if (isCurrent) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                modifier = Modifier.size(22.dp)
                             )
                         }
                     }

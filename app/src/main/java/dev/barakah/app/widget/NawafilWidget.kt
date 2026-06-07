@@ -117,6 +117,40 @@ class NawafilWidget : GlanceAppWidget() {
         }
         
         provideContent {
+            val now = Calendar.getInstance()
+            val nowMin = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
+
+            fun toMin(t: String): Int {
+                return try {
+                    val p = t.split(":")
+                    p[0].toInt() * 60 + p[1].split(" ")[0].toInt()
+                } catch(e: Exception) { 0 }
+            }
+
+            val dMin = toMin(duhaRaw)
+            val qMin = toMin(qiyamRaw)
+            val tMin = toMin(tahajjudRaw)
+            val wMin = toMin(witrRaw)
+            val dhuhrMin = toMin(times.dhuhr)
+            val fajrMin = toMin(times.fajr)
+
+            fun isCurrentNawafil(nName: String): Boolean {
+                return when(nName) {
+                    "Duha", "الضحى" -> nowMin in dMin until dhuhrMin
+                    "Qiyam", "القيام" -> nowMin in qMin until tMin
+                    "Tahajjud", "التهجد" -> nowMin in tMin until fajrMin
+                    "Witr", "الوتر" -> {
+                        // Witr usually from Isha/Witr start until Qiyam or Fajr
+                        if (wMin < fajrMin) { // rare but possible depending on lat
+                             nowMin in wMin until fajrMin
+                        } else {
+                             nowMin >= wMin || nowMin < fajrMin
+                        }
+                    }
+                    else -> false
+                }
+            }
+
             NawafilWidgetContent(
                 label = label,
                 isAr = isAr,
@@ -124,7 +158,8 @@ class NawafilWidget : GlanceAppWidget() {
                 qiyam = formatTimeStr(qiyamRaw),
                 tahajjud = formatTimeStr(tahajjudRaw),
                 witr = formatTimeStr(witrRaw),
-                is24Hour = is24Hour
+                is24Hour = is24Hour,
+                isCurrent = ::isCurrentNawafil
             )
         }
     }
@@ -137,7 +172,8 @@ class NawafilWidget : GlanceAppWidget() {
         qiyam: String,
         tahajjud: String,
         witr: String,
-        is24Hour: Boolean
+        is24Hour: Boolean,
+        isCurrent: (String) -> Boolean
     ) {
         val bgColor = androidx.glance.color.ColorProvider(day = Color(0xCCFFFFFF), night = Color(0xB3000000))
         val titleColor = androidx.glance.color.ColorProvider(day = Color(0xFF44474E), night = Color(0xFFC4C6D0))
@@ -173,10 +209,15 @@ class NawafilWidget : GlanceAppWidget() {
                 modifier = GlanceModifier.fillMaxWidth().padding(vertical = 12.dp)
             ) {
                 val timeFontSize = if (is24Hour) 11.sp else 9.5.sp
-                NawafilItem(GlanceModifier.defaultWeight(), if (isAr) "الضحى" else "Duha", duha, labelColor, timeColor, timeFontSize)
-                NawafilItem(GlanceModifier.defaultWeight(), if (isAr) "القيام" else "Qiyam", qiyam, labelColor, timeColor, timeFontSize)
-                NawafilItem(GlanceModifier.defaultWeight(), if (isAr) "التهجد" else "Tahajjud", tahajjud, labelColor, timeColor, timeFontSize)
-                NawafilItem(GlanceModifier.defaultWeight(), if (isAr) "الوتر" else "Witr", witr, labelColor, timeColor, timeFontSize)
+                val n1 = if (isAr) "الضحى" else "Duha"
+                val n2 = if (isAr) "القيام" else "Qiyam"
+                val n3 = if (isAr) "التهجد" else "Tahajjud"
+                val n4 = if (isAr) "الوتر" else "Witr"
+                
+                NawafilItem(GlanceModifier.defaultWeight(), n1, duha, labelColor, timeColor, timeFontSize, isCurrent(n1))
+                NawafilItem(GlanceModifier.defaultWeight(), n2, qiyam, labelColor, timeColor, timeFontSize, isCurrent(n2))
+                NawafilItem(GlanceModifier.defaultWeight(), n3, tahajjud, labelColor, timeColor, timeFontSize, isCurrent(n3))
+                NawafilItem(GlanceModifier.defaultWeight(), n4, witr, labelColor, timeColor, timeFontSize, isCurrent(n4))
             }
         }
     }
@@ -186,14 +227,26 @@ class NawafilWidget : GlanceAppWidget() {
         modifier: GlanceModifier,
         name: String,
         time: String,
-        labelColor: ColorProvider,
-        timeColor: ColorProvider,
-        timeFontSize: androidx.compose.ui.unit.TextUnit
+        labelColor: androidx.glance.unit.ColorProvider,
+        timeColor: androidx.glance.unit.ColorProvider,
+        timeFontSize: androidx.compose.ui.unit.TextUnit,
+        isCurrent: Boolean
     ) {
+        val activeDotColor = androidx.glance.color.ColorProvider(day = Color(0xFF00668B), night = Color(0xFF81CFFF))
         Column(
             modifier = modifier.padding(horizontal = 1.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Box(modifier = GlanceModifier.height(8.dp), contentAlignment = Alignment.Center) {
+                if (isCurrent) {
+                    Spacer(
+                        modifier = GlanceModifier
+                            .size(4.dp)
+                            .background(activeDotColor)
+                    )
+                }
+            }
+            Spacer(modifier = GlanceModifier.height(2.dp))
             Text(
                 text = name,
                 style = TextStyle(color = labelColor, fontSize = 11.sp, fontWeight = FontWeight.Medium),

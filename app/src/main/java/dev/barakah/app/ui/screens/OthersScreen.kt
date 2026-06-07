@@ -708,7 +708,7 @@ fun CalendarAndOccasionsPane(
 
                     Icon(
                         imageVector = Icons.Default.Info,
-                        contentDescription = "Details",
+                        contentDescription = if (isAr) "تفاصيل" else "Details",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                         modifier = Modifier.size(20.dp)
                     )

@@ -171,7 +171,7 @@ fun QuranScreen(
                     }
                     Icon(
                         imageVector = Icons.Default.PlayArrow,
-                        contentDescription = "Resume reading",
+                        contentDescription = if (isAr) "متابعة القراءة" else "Resume reading",
                         tint = MaterialTheme.colorScheme.secondary
                     )
                 }
@@ -265,7 +265,7 @@ fun QuranScreen(
                             trailingIcon = {
                                 if (searchQuery.isNotEmpty()) {
                                     IconButton(onClick = { searchQuery = "" }) {
-                                        Icon(Icons.Default.Clear, contentDescription = "Clear search")
+                                        Icon(Icons.Default.Clear, contentDescription = if (isAr) "مسح البحث" else "Clear search")
                                     }
                                 }
                             },
@@ -339,7 +339,7 @@ fun QuranScreen(
                             trailingIcon = {
                                 if (searchQuery.isNotEmpty()) {
                                     IconButton(onClick = { searchQuery = "" }) {
-                                        Icon(Icons.Default.Clear, contentDescription = "Clear search")
+                                        Icon(Icons.Default.Clear, contentDescription = if (isAr) "مسح البحث" else "Clear search")
                                     }
                                 }
                             },
@@ -487,7 +487,11 @@ fun QuranScreen(
                                 ) {
                                     Icon(
                                         imageVector = if (isBookmarked) Icons.Outlined.Bookmark else Icons.Outlined.BookmarkBorder,
-                                        contentDescription = "Bookmark toggle",
+                                        contentDescription = if (isAr) {
+                                            if (isBookmarked) "إزالة الإشارة المرجعية" else "إضافة إشارة مرجعية"
+                                        } else {
+                                            if (isBookmarked) "Remove bookmark" else "Add bookmark"
+                                        },
                                         tint = if (isBookmarked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                                     )
                                 }
@@ -557,7 +561,7 @@ fun QuranScreen(
                             onClick = { selectedSurahForReading = null },
                             modifier = Modifier.testTag("back_to_catalog")
                         ) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = if (isAr) "رجوع" else "Back")
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(
@@ -572,7 +576,11 @@ fun QuranScreen(
                         IconButton(onClick = { viewModel.toggleBookmark(surah) }) {
                             Icon(
                                 imageVector = if (isBookmarked) Icons.Outlined.Bookmark else Icons.Outlined.BookmarkBorder,
-                                contentDescription = "Bookmark surah",
+                                contentDescription = if (isAr) {
+                                    if (isBookmarked) "إزالة الإشارة المرجعية للسورة" else "حفظ إشارة مرجعية للسورة"
+                                } else {
+                                    if (isBookmarked) "Remove surah bookmark" else "Bookmark surah"
+                                },
                                 tint = if (isBookmarked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }

@@ -204,7 +204,7 @@ fun SupplicationsScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                contentDescription = "Back to categories",
+                                contentDescription = if (isAr) "الرجوع إلى الأقسام" else "Back to categories",
                                 tint = MaterialTheme.colorScheme.onPrimary
                             )
                         }
@@ -233,7 +233,7 @@ fun SupplicationsScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                    contentDescription = "Back to categories",
+                                    contentDescription = if (isAr) "الرجوع إلى الأقسام" else "Back to categories",
                                     tint = MaterialTheme.colorScheme.onPrimary
                                 )
                             }
@@ -461,7 +461,11 @@ fun SupplicationsScreen(
                                     ) {
                                         Icon(
                                             imageVector = if (isFavorite) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
-                                            contentDescription = "Bookmark",
+                                            contentDescription = if (isAr) {
+                                                if (isFavorite) "إزالة الإشارة المرجعية للدعاء" else "إضافة إشارة مرجعية"
+                                            } else {
+                                                if (isFavorite) "Remove bookmark" else "Bookmark"
+                                            },
                                             tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                                         )
                                     }
@@ -588,7 +592,7 @@ fun SupplicationsScreen(
                                                     ) {
                                                         Icon(
                                                             imageVector = Icons.Default.Refresh,
-                                                            contentDescription = "Reset Count",
+                                                            contentDescription = if (isAr) "إعادة تعيين العداد" else "Reset Count",
                                                             tint = MaterialTheme.colorScheme.outline,
                                                             modifier = Modifier.size(18.dp)
                                                         )
@@ -608,7 +612,7 @@ fun SupplicationsScreen(
                                                 ) {
                                                     Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                                                         if (isDone) {
-                                                            Icon(imageVector = Icons.Default.Done, contentDescription = "Completed", modifier = Modifier.size(24.dp))
+                                                            Icon(imageVector = Icons.Default.Done, contentDescription = if (isAr) "مكتمل" else "Completed", modifier = Modifier.size(24.dp))
                                                         } else {
                                                             val rawText = "$currentCount/${dua.targetCount}"
                                                             Text(

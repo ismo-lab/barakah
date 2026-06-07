@@ -33,6 +33,9 @@ import android.view.HapticFeedbackConstants
 import dev.barakah.app.ui.BarakahViewModel
 import dev.barakah.app.util.localize
 import kotlinx.coroutines.launch
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.onClick
 
 @Composable
 fun TasbihScreen(
@@ -261,7 +264,15 @@ fun TasbihScreen(
                             .fillMaxHeight(0.9f)
                             .aspectRatio(1f)
                             .scale(blobScale)
-                            .testTag("tap_zone_blob"),
+                            .testTag("tap_zone_blob")
+                            .semantics {
+                                role = androidx.compose.ui.semantics.Role.Button
+                                onClick(label = if (isAr) "التسبيح" else "Increment count") {
+                                    isTapped = true
+                                    viewModel.incrementTasbih()
+                                    true
+                                }
+                            },
                         shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp, bottomStart = 80.dp, bottomEnd = 80.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.secondaryContainer
@@ -419,7 +430,15 @@ fun TasbihScreen(
                 .fillMaxWidth(0.85f)
                 .aspectRatio(1f)
                 .scale(blobScale)
-                .testTag("tap_zone_blob"),
+                .testTag("tap_zone_blob")
+                .semantics {
+                    role = androidx.compose.ui.semantics.Role.Button
+                    onClick(label = if (isAr) "التسبيح" else "Increment count") {
+                        isTapped = true
+                        viewModel.incrementTasbih()
+                        true
+                    }
+                },
             shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp, bottomStart = 80.dp, bottomEnd = 80.dp), // Fluid asymmetrical capsule
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.secondaryContainer
