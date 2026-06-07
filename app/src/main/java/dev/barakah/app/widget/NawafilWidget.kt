@@ -134,19 +134,16 @@ class NawafilWidget : GlanceAppWidget() {
             val dhuhrMin = toMin(times.dhuhr)
             val fajrMin = toMin(times.fajr)
 
+            fun isBetween(now: Int, start: Int, end: Int): Boolean {
+                return if (start <= end) now in start until end else now >= start || now < end
+            }
+
             fun isCurrentNawafil(nName: String): Boolean {
                 return when(nName) {
-                    "Duha", "الضحى" -> nowMin in dMin until dhuhrMin
-                    "Qiyam", "القيام" -> nowMin in qMin until tMin
-                    "Tahajjud", "التهجد" -> nowMin in tMin until fajrMin
-                    "Witr", "الوتر" -> {
-                        // Witr usually from Isha/Witr start until Qiyam or Fajr
-                        if (wMin < fajrMin) { // rare but possible depending on lat
-                             nowMin in wMin until fajrMin
-                        } else {
-                             nowMin >= wMin || nowMin < fajrMin
-                        }
-                    }
+                    "Duha", "الضحى" -> isBetween(nowMin, dMin, dhuhrMin)
+                    "Qiyam", "القيام" -> isBetween(nowMin, qMin, tMin)
+                    "Tahajjud", "التهجد" -> isBetween(nowMin, tMin, fajrMin)
+                    "Witr", "الوتر" -> isBetween(nowMin, wMin, qMin)
                     else -> false
                 }
             }
