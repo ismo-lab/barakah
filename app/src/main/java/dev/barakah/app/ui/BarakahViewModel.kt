@@ -68,9 +68,6 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     private val _englishFontSize = MutableStateFlow(prefs.getFloat("english_font_size", 16f))
     val englishFontSize: StateFlow<Float> = _englishFontSize
 
-    private val _quranFontFamily = MutableStateFlow(prefs.getString("quran_font_family", "serif") ?: "serif")
-    val quranFontFamily: StateFlow<String> = _quranFontFamily
-
     // Selected location method: "auto" or "manual"
     private val _locationMethod = MutableStateFlow(prefs.getString("location_method", "manual") ?: "manual")
     val locationMethod: StateFlow<String> = _locationMethod
@@ -601,11 +598,6 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         prefs.edit().putFloat("english_font_size", size).apply()
     }
 
-    fun setQuranFontFamily(font: String) {
-        _quranFontFamily.value = font
-        prefs.edit().putString("quran_font_family", font).apply()
-    }
-
     fun setLocationMethod(method: String) {
         _locationMethod.value = method
         prefs.edit().putString("location_method", method).apply()
@@ -817,7 +809,6 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         setAmoledDark(true)
         setArabicFontSize(24f)
         setEnglishFontSize(16f)
-        setQuranFontFamily("serif")
         setLocationMethod("manual")
         updateLocation(21.4225, 39.8262, "Mecca, KSA", false)
         setAsrMethod("standard")

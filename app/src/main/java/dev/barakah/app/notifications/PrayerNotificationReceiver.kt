@@ -11,16 +11,23 @@ import dev.barakah.app.MainActivity
 import dev.barakah.app.R
 
 class PrayerNotificationReceiver : BroadcastReceiver() {
+    companion object {
+        const val ID_PRAYER = 1000
+        const val ID_ADHKAR = 1001
+        const val ID_DAILY = 1002
+    }
+
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
         if (action == "dev.barakah.app.ACTION_STOP_ADHAN") {
             try {
                 AdhanSoundManager.stop()
                 val notifId = intent.getIntExtra("PRAYER_ID", -1)
+                val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 if (notifId != -1) {
-                    val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                     notificationManager.cancel(notifId)
                 }
+                notificationManager.cancel(ID_PRAYER)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -76,7 +83,6 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
                 val tomorrow = java.util.Calendar.getInstance().apply { add(java.util.Calendar.DAY_OF_YEAR, 1) }
                 val dayOfWeek = tomorrow.get(java.util.Calendar.DAY_OF_WEEK)
                 if (dayOfWeek == java.util.Calendar.MONDAY || dayOfWeek == java.util.Calendar.THURSDAY) {
-                    val notifId = if (dayOfWeek == java.util.Calendar.MONDAY) 101 else 102
                     val title = if (isAr) "تذكير بصيام السنة" else "Sunnah Fasting Reminder"
                     val dayStr = if (dayOfWeek == java.util.Calendar.MONDAY) {
                         if (isAr) "الإثنين" else "Monday"
@@ -95,7 +101,7 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
                         .setAutoCancel(true)
                         .setContentIntent(pendingIntent)
                         
-                    notificationManager.notify(notifId, builder.build())
+                    notificationManager.notify(ID_DAILY, builder.build())
                 }
             }
             
@@ -155,7 +161,6 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
                 }
                 
                 if (occasionName != null && occasionNameAr != null) {
-                    val notifId = 103
                     val title = if (isAr) "تذكير بالمناسبة الإسلامية" else "Islamic Occasion Reminder"
                     val text = if (isAr) "تذكير: غداً هو $occasionNameAr. نسأل الله لنا ولكم القبول والبركة."
                                else "Reminder: Tomorrow is $occasionName. Wishing you a blessed day."
@@ -169,7 +174,7 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
                         .setAutoCancel(true)
                         .setContentIntent(pendingIntent)
                         
-                    notificationManager.notify(notifId, builder.build())
+                    notificationManager.notify(ID_DAILY, builder.build())
                 }
             }
             
@@ -273,7 +278,12 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
             builder.addAction(R.drawable.ic_notification, stopText, stopPendingIntent)
         }
             
-        notificationManager.notify(prayerId, builder.build())
+        val notifId = when (prayerName) {
+            "Morning Adhkar", "Evening Adhkar", "Friday Jumuah" -> ID_ADHKAR
+            else -> ID_PRAYER
+        }
+            
+        notificationManager.notify(notifId, builder.build())
 
         // Play local offline Adhan sound if enabled
         if (enableAdhanSound && prayerName in playablePrayers) {

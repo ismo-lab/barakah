@@ -78,7 +78,6 @@ fun HomeScreen(
     val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
     val fontAr by viewModel.arabicFontSize.collectAsState()
     val fontEn by viewModel.englishFontSize.collectAsState()
-    val quranFontFamily by viewModel.quranFontFamily.collectAsState()
     val locationMethod by viewModel.locationMethod.collectAsState()
 
     val showNawafil by viewModel.showNawafil.collectAsState()
@@ -1660,46 +1659,6 @@ fun HomeScreen(
                                         Text(text = "${fontEn.toInt()}sp", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, modifier = Modifier.width(40.dp), textAlign = TextAlign.End)
                                     }
 
-                                    Spacer(modifier = Modifier.height(6.dp))
-
-                                    // Font Family Selectors
-                                    Text(
-                                        text = if (isAr) "نوع خط المصحف الشريف: " else "Quran Font Type: ",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        listOf(
-                                            Triple("serif", if (isAr) "كلاسيكي" else "Classic", FontFamily.Serif),
-                                            Triple("sans_serif", if (isAr) "حديث" else "Modern", FontFamily.SansSerif),
-                                            Triple("monospace", if (isAr) "تقني" else "Tech", FontFamily.Monospace),
-                                            Triple("default", if (isAr) "تلقائي" else "System", FontFamily.Default)
-                                        ).forEach { (key, label, family) ->
-                                            OutlinedButton(
-                                                onClick = { viewModel.setQuranFontFamily(key) },
-                                                modifier = Modifier.weight(1f).height(38.dp),
-                                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp),
-                                                colors = ButtonDefaults.outlinedButtonColors(
-                                                    containerColor = if (quranFontFamily == key) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
-                                                ),
-                                                border = androidx.compose.foundation.BorderStroke(
-                                                    width = if (quranFontFamily == key) 1.8.dp else 1.dp,
-                                                    color = if (quranFontFamily == key) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
-                                                )
-                                            ) {
-                                                Text(
-                                                    text = label,
-                                                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = family),
-                                                    fontWeight = if (quranFontFamily == key) FontWeight.Bold else FontWeight.Normal,
-                                                    color = if (quranFontFamily == key) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
-                                                )
-                                            }
-                                        }
-                                    }
-
                                     Spacer(modifier = Modifier.height(10.dp))
 
                                     // Real-time Text Size Preview Layout
@@ -1721,25 +1680,18 @@ fun HomeScreen(
                                             verticalArrangement = Arrangement.spacedBy(10.dp)
                                         ) {
                                             Text(
-                                                text = if (isAr) "معاينة حجم ونوع خط المصحف والتراجم" else "Quran Font & Translation Preview",
+                                                text = if (isAr) "معاينة حجم خط المصحف والتراجم" else "Quran Font & Translation Preview",
                                                 style = MaterialTheme.typography.labelSmall,
                                                 color = MaterialTheme.colorScheme.primary,
                                                 fontWeight = FontWeight.Bold,
                                                 modifier = Modifier.align(Alignment.Start)
                                             )
-                                            
-                                            val previewFontFamily = when (quranFontFamily) {
-                                                "serif" -> FontFamily.Serif
-                                                "sans_serif" -> FontFamily.SansSerif
-                                                "monospace" -> FontFamily.Monospace
-                                                else -> FontFamily.Default
-                                            }
 
                                             // Arabic verse preview
                                             Text(
                                                 text = "بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ",
                                                 fontSize = fontAr.sp,
-                                                fontFamily = previewFontFamily,
+                                                fontFamily = FontFamily.Serif,
                                                 fontWeight = FontWeight.Bold,
                                                 color = MaterialTheme.colorScheme.onSurface,
                                                 textAlign = TextAlign.Center,

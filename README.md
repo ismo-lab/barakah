@@ -5,12 +5,9 @@
 <h1 align="center">Barakah (بَرَكَة)</h1>
 
 <p align="center">
-  <a href="https://github.com/ismo-lab/barakah/actions/workflows/android.yml">
-    <img src="https://github.com/ismo-lab/barakah/actions/workflows/android.yml/badge.svg" alt="Android Build Status" />
-  </a>
-  <img src="https://img.shields.io/badge/Kotlin-1.9.22-800080?style=flat-square&logo=kotlin&logoColor=white" alt="Kotlin" />
-  <img src="https://img.shields.io/badge/Jetpack_Compose-M3-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white" alt="Jetpack Compose" />
-  <img src="https://img.shields.io/badge/Open--Source-FOSS-007ACC?style=flat-square&logo=open-source&logoColor=white" alt="FOSS" />
+  <img src="https://img.shields.io/badge/Platform-Android-3DDC84?style=flat-square&logo=android&logoColor=white" alt="Android" />
+  <img src="https://img.shields.io/badge/Language-Kotlin-7F52FF?style=flat-square&logo=kotlin&logoColor=white" alt="Kotlin" />
+  <img src="https://img.shields.io/badge/UI-Jetpack_Compose-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white" alt="Jetpack Compose" />
   <img src="https://img.shields.io/badge/Privacy-100%25-4CAF50?style=flat-square&logo=shield-halved&logoColor=white" alt="Privacy First" />
   <img src="https://img.shields.io/badge/License-GPL--3.0-blue?style=flat-square" alt="License" />
 </p>
