@@ -7,8 +7,8 @@
     </linearGradient>
   </defs>
 
-  <!-- Circular App Icon Base with fully rounded corners -->
-  <rect width="512" height="512" rx="256" ry="256" fill="url(#bgGrad)" />
+  <!-- Samsung-style Squircle App Icon Base with rounded corners -->
+  <rect width="512" height="512" rx="120" ry="120" fill="url(#bgGrad)" />
 
   <!-- Centered Crescent Moon without any shadow/glow -->
   <g transform="translate(132, 128) scale(11.5)">
