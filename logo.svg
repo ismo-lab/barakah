@@ -10,8 +10,8 @@
   <!-- Samsung-style Squircle App Icon Base with rounded corners -->
   <rect width="512" height="512" rx="120" ry="120" fill="url(#bgGrad)" />
 
-  <!-- Centered Crescent Moon without any shadow/glow -->
-  <g transform="translate(132, 128) scale(11.5)">
+  <!-- Centered Crescent Moon -->
+  <svg x="64" y="64" width="384" height="384" viewBox="0 0 24 24">
     <path d="M21,12.79 A9,9 0 1,1 11.21,3 A7,7 0 0,0 21,12.79 z" fill="#FFFFFF" />
-  </g>
+  </svg>
 </svg>
