@@ -290,9 +290,6 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     private val _qiblaBearing = MutableStateFlow(0.0)
     val qiblaBearing: StateFlow<Double> = _qiblaBearing
 
-    // Haptic Alignment Lock
-    private var lastAlignmentPulseTime = 0L
-
     // Coroutines ticks
     private var countdownJob: Job? = null
 
@@ -963,6 +960,8 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         sensorManager.stop()
     }
 
+    private val _isQiblaAligned = MutableStateFlow(false)
+
     private fun checkQiblaAlignment(compassAzimuth: Float) {
         if (!isQiblaScreenActive) return
         if (!_enableTasbihHaptics.value) return
@@ -972,11 +971,12 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         val normDiff = if (diff > 180f) 360f - diff else diff
 
         if (normDiff < 4.0) { // Aligned within 4 degrees
-            val now = System.currentTimeMillis()
-            if (now - lastAlignmentPulseTime > 1500) { // Once every 1.5 seconds maximum
-                lastAlignmentPulseTime = now
-                triggerVibration(70)
+            if (!_isQiblaAligned.value) {
+                _isQiblaAligned.value = true
+                triggerVibration(100)
             }
+        } else {
+            _isQiblaAligned.value = false
         }
     }
 

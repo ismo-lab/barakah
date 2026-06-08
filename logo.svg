@@ -7,11 +7,11 @@
     </linearGradient>
   </defs>
 
-  <!-- Samsung-style Squircle App Icon Base with rounded corners -->
-  <rect width="512" height="512" rx="120" ry="120" fill="url(#bgGrad)" />
+  <!-- Circular App Icon Base with fully rounded corners -->
+  <rect width="512" height="512" rx="256" ry="256" fill="url(#bgGrad)" />
 
-  <!-- Centered Crescent Moon -->
-  <svg x="64" y="64" width="384" height="384" viewBox="0 0 24 24">
+  <!-- Centered Crescent Moon without any shadow/glow -->
+  <g transform="translate(64, 64) scale(16)">
     <path d="M21,12.79 A9,9 0 1,1 11.21,3 A7,7 0 0,0 21,12.79 z" fill="#FFFFFF" />
-  </svg>
+  </g>
 </svg>

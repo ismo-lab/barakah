@@ -3,10 +3,10 @@ package dev.barakah.app.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // Bold Typography Theme Colors (High contrast, forest greens, lime accents, off-white background)
-val GreenPrimaryLight = Color(0xFF386B44)       // Deep Forest green
-val GreenOnPrimaryLight = Color(0xFFECF3E9)     // Soft light off-white
-val GreenPrimaryContainerLight = Color(0xFFB7F397) // Vibrant Lime Green
-val GreenOnPrimaryContainerLight = Color(0xFF00210E) // Very Dark Forest Green
+val GreenPrimaryLight = Color(0xFF125C34)       // Deep Forest green
+val GreenOnPrimaryLight = Color(0xFFFFFFFF)     // Soft light off-white
+val GreenPrimaryContainerLight = Color(0xFFE2F0E7) // Vibrant Lime Green
+val GreenOnPrimaryContainerLight = Color(0xFF072B17) // Very Dark Forest Green
 
 val GoldSecondaryLight = Color(0xFF414941)       // Muted Dark Slate Green
 val GoldOnSecondaryLight = Color(0xFFFFFFFF)
@@ -22,10 +22,10 @@ val SurfaceVariantLight = Color(0xFFF0F5EB)     // Warm light minty-green
 val OnSurfaceVariantLight = Color(0xFF5C635C)   // Secondary text gray-green
 
 // Dark Theme Colors supporting same theme vibe (High-contrast bold neon accent)
-val GreenPrimaryDark = Color(0xFFB7F397)        // Lime accent as primary key in dark
-val GreenOnPrimaryDark = Color(0xFF00210E)
-val GreenPrimaryContainerDark = Color(0xFF386B44)
-val GreenOnPrimaryContainerDark = Color(0xFFECF3E9)
+val GreenPrimaryDark = Color(0xFF81D7A1)        // Lime accent as primary key in dark
+val GreenOnPrimaryDark = Color(0xFF003816)
+val GreenPrimaryContainerDark = Color(0xFF125C34)
+val GreenOnPrimaryContainerDark = Color(0xFFE2F0E7)
 
 val GoldSecondaryDark = Color(0xFFD7E8CD)
 val GoldOnSecondaryDark = Color(0xFF111F0E)
