@@ -55,6 +55,7 @@ fun HomeScreen(
 ) {
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
     val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+    val isShortScreen = configuration.screenHeightDp < 600
     val locationLabel by viewModel.locationLabel.collectAsState()
     val times by viewModel.prayerTimes.collectAsState()
     val activeHighlight by viewModel.activeHighlightName.collectAsState()
@@ -237,7 +238,7 @@ fun HomeScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 4.dp, vertical = if (isLandscape) 4.dp else 12.dp)
+                    .padding(horizontal = 4.dp, vertical = if (isLandscape || isShortScreen) 4.dp else 12.dp)
                     .testTag("location_card"),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -267,7 +268,7 @@ fun HomeScreen(
                     val hijriDateStr = getHijriDateString()
                     Text(
                         text = translateHijri(hijriDateStr).localize(isAr, useWesternNumbersInArabic),
-                        style = if (isLandscape) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineLarge,
+                        style = if (isLandscape || isShortScreen) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.Black,
                         color = MaterialTheme.colorScheme.onBackground,
                         letterSpacing = (-0.5).sp
@@ -314,7 +315,7 @@ fun HomeScreen(
 
         // 2. DYNAMIC EXPRESSIVE COUNTDOWN CARD
         item {
-            Box(modifier = Modifier.padding(vertical = if (isLandscape) 4.dp else 12.dp)) {
+            Box(modifier = Modifier.padding(vertical = if (isLandscape || isShortScreen) 4.dp else 12.dp)) {
                 CountdownCardView(
                     viewModel = viewModel,
                     isAr = isAr,
@@ -1978,12 +1979,16 @@ fun CountdownCardView(
 
 val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
 
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+    val isShortScreen = configuration.screenHeightDp < 600
+
     androidx.compose.material3.Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 16.dp)
+            .padding(bottom = if (isShortScreen || isLandscape) 8.dp else 16.dp)
             .testTag("countdown_card"),
-        shape = androidx.compose.foundation.shape.AbsoluteRoundedCornerShape(topLeft = 48.dp, bottomRight = 48.dp, topRight = 16.dp, bottomLeft = 16.dp),
+        shape = androidx.compose.foundation.shape.AbsoluteRoundedCornerShape(topLeft = if (isShortScreen || isLandscape) 32.dp else 48.dp, bottomRight = if (isShortScreen || isLandscape) 32.dp else 48.dp, topRight = 16.dp, bottomLeft = 16.dp),
         colors = androidx.compose.material3.CardDefaults.cardColors(
             containerColor = androidx.compose.material3.MaterialTheme.colorScheme.primary
         )
@@ -1999,7 +2004,10 @@ val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsSt
                         )
                     )
                 )
-                .padding(horizontal = 24.dp, vertical = 28.dp)
+                .padding(
+                    horizontal = 24.dp,
+                    vertical = if (isShortScreen || isLandscape) 14.dp else 28.dp
+                )
         ) {
             androidx.compose.foundation.layout.Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -2011,7 +2019,7 @@ val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsSt
                     color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f),
                     fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
                     letterSpacing = 2.sp,
-                    modifier = Modifier.padding(bottom = 4.dp)
+                    modifier = Modifier.padding(bottom = 2.dp)
                 )
 
                 val formattedCountdown = remember(countdown, isAr, useWesternNumbersInArabic) {
@@ -2036,15 +2044,15 @@ val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsSt
                 androidx.compose.material3.Text(
                     text = formattedCountdown,
                     style = androidx.compose.material3.MaterialTheme.typography.displayLarge.copy(
-                        fontSize = 44.sp,
+                        fontSize = if (isShortScreen || isLandscape) 32.sp else 44.sp,
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                         letterSpacing = 0.sp,
-                        lineHeight = 44.sp,
+                        lineHeight = if (isShortScreen || isLandscape) 32.sp else 44.sp,
                         textDirection = TextDirection.Ltr,
                         fontFeatureSettings = "tnum"
                     ),
                     color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.padding(bottom = 4.dp),
+                    modifier = Modifier.padding(bottom = 2.dp),
                     maxLines = 1,
                     softWrap = false
                 )

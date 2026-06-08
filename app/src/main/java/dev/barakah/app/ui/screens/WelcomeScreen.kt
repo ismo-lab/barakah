@@ -1,6 +1,7 @@
 package dev.barakah.app.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -41,6 +42,9 @@ fun WelcomeScreen(viewModel: BarakahViewModel) {
     val currentLang by viewModel.appLanguage.collectAsState()
     val isAr = currentLang == "ar"
 
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val isShortScreen = configuration.screenHeightDp < 600
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -51,25 +55,28 @@ fun WelcomeScreen(viewModel: BarakahViewModel) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
+                .padding(if (isShortScreen) 16.dp else 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(if (isShortScreen) 8.dp else 32.dp))
             
             // Header
             Text(
                 text = if (isAr) "مرحباً بك في بركة" else "Welcome to Barakah",
-                style = MaterialTheme.typography.displaySmall,
+                style = if (isShortScreen) MaterialTheme.typography.titleLarge else MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Black,
                 color = MaterialTheme.colorScheme.primary
             )
-            Text(
-                text = if (isAr) "تطبيقك الإسلامي المجاني ومفتوح المصدر" else "Your free and open source Islam app",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.secondary
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
+            if (!isShortScreen) {
+                Text(
+                    text = if (isAr) "تطبيقك الإسلامي المجاني ومفتوح المصدر" else "Your free and open source Islam app",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+                Spacer(modifier = Modifier.height(32.dp))
+            } else {
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
             when (step) {
                 1 -> LanguageStep(viewModel, onNext = { step = 2 })
@@ -96,20 +103,27 @@ fun LanguageStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
         }
     }
     
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val isShortScreen = configuration.screenHeightDp < 600
+    val scrollState = androidx.compose.foundation.rememberScrollState()
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = if (isShortScreen) Modifier.verticalScroll(scrollState) else Modifier
+    ) {
         Icon(
             imageVector = Icons.Default.Language,
             contentDescription = null,
-            modifier = Modifier.size(80.dp),
+            modifier = Modifier.size(if (isShortScreen) 40.dp else 80.dp),
             tint = MaterialTheme.colorScheme.primary
         )
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(if (isShortScreen) 12.dp else 24.dp))
         Text(
             text = "اختر لغة التطبيق / Select Language",
-            style = MaterialTheme.typography.titleLarge,
+            style = if (isShortScreen) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(if (isShortScreen) 16.dp else 32.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             LanguageCard(
@@ -124,7 +138,11 @@ fun LanguageStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
             )
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        if (isShortScreen) {
+            Spacer(modifier = Modifier.height(24.dp))
+        } else {
+            Spacer(modifier = Modifier.weight(1f))
+        }
 
         Button(
             onClick = {
@@ -199,26 +217,31 @@ fun LanguageCard(label: String, isSelected: Boolean, onClick: () -> Unit) {
          it.name.contains(query, ignoreCase = true) || it.nameAr.contains(query)
      }.take(5)
 
+     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+     val isShortScreen = configuration.screenHeightDp < 600
+
      Column(horizontalAlignment = Alignment.CenterHorizontally) {
          Icon(
              imageVector = Icons.Default.LocationOn,
              contentDescription = null,
-             modifier = Modifier.size(80.dp),
+             modifier = Modifier.size(if (isShortScreen) 40.dp else 80.dp),
              tint = MaterialTheme.colorScheme.primary
          )
-         Spacer(modifier = Modifier.height(24.dp))
+         Spacer(modifier = Modifier.height(if (isShortScreen) 12.dp else 24.dp))
          Text(
              text = if (isAr) "تحديد الموقع" else "Set Your Location",
-             style = MaterialTheme.typography.titleLarge,
+             style = if (isShortScreen) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
              fontWeight = FontWeight.Bold
          )
-         Text(
-             text = if (isAr) "لحساب مواقيت الصلاة واتجاه القبلة بدقة" else "For accurate prayer times and Qibla",
-             style = MaterialTheme.typography.bodyMedium,
-             color = MaterialTheme.colorScheme.outline
-         )
+         if (!isShortScreen) {
+             Text(
+                 text = if (isAr) "لحساب مواقيت الصلاة واتجاه القبلة بدقة" else "For accurate prayer times and Qibla",
+                 style = MaterialTheme.typography.bodyMedium,
+                 color = MaterialTheme.colorScheme.outline
+             )
+         }
          
-         Spacer(modifier = Modifier.height(32.dp))
+         Spacer(modifier = Modifier.height(if (isShortScreen) 12.dp else 32.dp))
 
          // GPS Button
          Button(
@@ -320,28 +343,34 @@ fun NotificationsStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
     val adhanSoundType by viewModel.adhanSoundType.collectAsState()
     val showNawafil by viewModel.showNawafil.collectAsState()
 
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val isShortScreen = configuration.screenHeightDp < 600
+
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxHeight()) {
         Icon(
             imageVector = Icons.Default.Notifications,
             contentDescription = null,
-            modifier = Modifier.size(64.dp),
+            modifier = Modifier.size(if (isShortScreen) 36.dp else 64.dp),
             tint = MaterialTheme.colorScheme.primary
         )
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(if (isShortScreen) 6.dp else 12.dp))
         Text(
             text = if (isAr) "تخصيص التنبيهات" else "Configure Notifications",
-            style = MaterialTheme.typography.titleLarge,
+            style = if (isShortScreen) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
-        Text(
-            text = if (isAr) "اختر التنبيهات التي ترغب في تلقيها يومياً" else "Select which reminders you want to receive",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.outline,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 16.dp)
-        )
-        
-        Spacer(modifier = Modifier.height(16.dp))
+        if (!isShortScreen) {
+            Text(
+                text = if (isAr) "اختر التنبيهات التي ترغب في تلقيها يومياً" else "Select which reminders you want to receive",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.outline,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        } else {
+            Spacer(modifier = Modifier.height(8.dp))
+        }
 
         // Notifications toggles card list - scrollable
         LazyColumn(
@@ -570,6 +599,9 @@ fun CalculationStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
     val asrMethod by viewModel.asrMethod.collectAsState()
     val ishaMethod by viewModel.ishaMethod.collectAsState()
 
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val isShortScreen = configuration.screenHeightDp < 600
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxHeight()
@@ -577,24 +609,27 @@ fun CalculationStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
         Icon(
             imageVector = Icons.Default.School,
             contentDescription = null,
-            modifier = Modifier.size(64.dp),
+            modifier = Modifier.size(if (isShortScreen) 36.dp else 64.dp),
             tint = MaterialTheme.colorScheme.primary
         )
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(if (isShortScreen) 6.dp else 12.dp))
         Text(
             text = if (isAr) "المذهب والحساب الفقهي" else "Juristic Calculations",
-            style = MaterialTheme.typography.titleLarge,
+            style = if (isShortScreen) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
-        Text(
-            text = if (isAr) "تسمح هذه الإعدادات بتخصيص حساب صلاة العصر والعشاء" else "These settings customize calculations for Asr and Isha prayers",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.outline,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 16.dp)
-        )
-        
-        Spacer(modifier = Modifier.height(24.dp))
+        if (!isShortScreen) {
+            Text(
+                text = if (isAr) "تسمح هذه الإعدادات بتخصيص حساب صلاة العصر والعشاء" else "These settings customize calculations for Asr and Isha prayers",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.outline,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+        } else {
+            Spacer(modifier = Modifier.height(10.dp))
+        }
 
         LazyColumn(
             modifier = Modifier

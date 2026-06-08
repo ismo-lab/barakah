@@ -120,14 +120,15 @@ fun QiblahScreen(
 
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
     val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+    val isShortScreen = configuration.screenHeightDp < 620
 
-    val compassSize = if (isLandscape) 210.dp else 280.dp
-    val glowSize = if (isLandscape) 200.dp else 270.dp
-    val dialRingSize = if (isLandscape) 180.dp else 250.dp
-    val canvasSize = if (isLandscape) 170.dp else 240.dp
-    val pointerSize = if (isLandscape) 140.dp else 210.dp
-    val innerCoreSize = if (isLandscape) 56.dp else 76.dp
-    val coreIconSize = if (isLandscape) 26.dp else 36.dp
+    val compassSize = if (isLandscape || isShortScreen) 210.dp else 280.dp
+    val glowSize = if (isLandscape || isShortScreen) 200.dp else 270.dp
+    val dialRingSize = if (isLandscape || isShortScreen) 180.dp else 250.dp
+    val canvasSize = if (isLandscape || isShortScreen) 170.dp else 240.dp
+    val pointerSize = if (isLandscape || isShortScreen) 140.dp else 210.dp
+    val innerCoreSize = if (isLandscape || isShortScreen) 56.dp else 76.dp
+    val coreIconSize = if (isLandscape || isShortScreen) 26.dp else 36.dp
 
     if (isLandscape) {
         Row(
@@ -464,7 +465,7 @@ fun QiblahScreen(
             // 2. LIVE ROTATING COMPASS DIAL CARD
             Box(
                 modifier = Modifier
-                    .size(280.dp)
+                    .size(compassSize)
                     .testTag("compass_dial_outer")
                     .semantics {
                         val angleFormatted = shortestDiff.toInt().toString().localize(isAr, useWesternNumbersInArabic)
@@ -480,7 +481,7 @@ fun QiblahScreen(
                 if (isAligned) {
                     Box(
                         modifier = Modifier
-                            .size(270.dp)
+                            .size(glowSize)
                             .rotate(relativeAngle)
                             .clip(CircleShape)
                             .background(
@@ -497,7 +498,7 @@ fun QiblahScreen(
                 // Outer ring
                 Box(
                     modifier = Modifier
-                        .size(250.dp)
+                        .size(dialRingSize)
                         .border(2.dp, alignmentColor.copy(alpha = 0.4f), CircleShape)
                 )
 
@@ -508,7 +509,7 @@ fun QiblahScreen(
 
                 Canvas(
                     modifier = Modifier
-                        .size(240.dp)
+                        .size(canvasSize)
                         .rotate(-animatedHeading) // Orient dial opposite to heading so true North stays Up
                 ) {
                     // Draw 360 degree ticks
@@ -547,7 +548,7 @@ fun QiblahScreen(
                 // Live Rotating Pointer pointing to Mecca
                 Box(
                     modifier = Modifier
-                        .size(210.dp)
+                        .size(pointerSize)
                         .rotate(relativeAngle) // Relative rotation pointing Mecca
                         .testTag("compass_pointer"),
                     contentAlignment = Alignment.Center
@@ -567,14 +568,14 @@ fun QiblahScreen(
                             lineTo(center.x + 14.dp.toPx(), center.y - pointerLen + 24.dp.toPx())
                             close()
                          }
-                         drawPath(arrowPath, secondaryColor)
+                          drawPath(arrowPath, secondaryColor)
                     }
                 }
 
                 // Beautiful Static Inner Core with Kaaba Icon representation
                 Surface(
                     modifier = Modifier
-                        .size(76.dp)
+                        .size(innerCoreSize)
                         .border(3.dp, alignmentColor, CircleShape),
                     shape = CircleShape,
                     color = if (isAligned) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
@@ -585,7 +586,7 @@ fun QiblahScreen(
                             imageVector = Icons.Default.Explore,
                             contentDescription = null,
                             tint = alignmentColor,
-                            modifier = Modifier.size(36.dp)
+                            modifier = Modifier.size(coreIconSize)
                         )
                     }
                 }

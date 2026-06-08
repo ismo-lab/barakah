@@ -358,10 +358,11 @@ fun OthersScreen(
             text = {
                 val configuration = androidx.compose.ui.platform.LocalConfiguration.current
                 val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+                val isShortScreen = configuration.screenHeightDp < 600
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(max = if (isLandscape) 140.dp else 420.dp)
+                        .heightIn(max = if (isLandscape || isShortScreen) 180.dp else 420.dp)
                         .verticalScroll(androidx.compose.foundation.rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -455,12 +456,13 @@ fun OthersScreen(
             text = {
                 val configuration = androidx.compose.ui.platform.LocalConfiguration.current
                 val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+                val isShortScreen = configuration.screenHeightDp < 600
                 Surface(
                     shape = RoundedCornerShape(12.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(max = if (isLandscape) 140.dp else 420.dp)
+                        .heightIn(max = if (isLandscape || isShortScreen) 160.dp else 420.dp)
                 ) {
                     Box(
                         modifier = Modifier
