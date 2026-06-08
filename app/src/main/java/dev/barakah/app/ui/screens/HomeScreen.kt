@@ -3,6 +3,7 @@ package dev.barakah.app.ui.screens
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -26,6 +27,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextDirection
@@ -76,6 +78,7 @@ fun HomeScreen(
     val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
     val fontAr by viewModel.arabicFontSize.collectAsState()
     val fontEn by viewModel.englishFontSize.collectAsState()
+    val quranFontFamily by viewModel.quranFontFamily.collectAsState()
     val locationMethod by viewModel.locationMethod.collectAsState()
 
     val showNawafil by viewModel.showNawafil.collectAsState()
@@ -1437,7 +1440,7 @@ fun HomeScreen(
                                     }
 
                                     Text(
-                                        text = if (isAr) "صلاة العصر: وقت المذهب الشافعي أم الحنفي" else "Asr Prayer: Shafi'i vs Hanafi School",
+                                        text = if (isAr) "صلاة العصر: حساب الجمهور أم الحنفي" else "Asr Prayer: Standard vs Hanafi School",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -1647,6 +1650,7 @@ fun HomeScreen(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(text = if (isAr) "الترجمة الإنجليزية: " else "English: ", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(100.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
                                         Slider(
                                             value = fontEn,
                                             onValueChange = { viewModel.setEnglishFontSize(it) },
@@ -1654,6 +1658,104 @@ fun HomeScreen(
                                             modifier = Modifier.weight(1f)
                                         )
                                         Text(text = "${fontEn.toInt()}sp", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, modifier = Modifier.width(40.dp), textAlign = TextAlign.End)
+                                    }
+
+                                    Spacer(modifier = Modifier.height(6.dp))
+
+                                    // Font Family Selectors
+                                    Text(
+                                        text = if (isAr) "نوع خط المصحف الشريف: " else "Quran Font Type: ",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        listOf(
+                                            Triple("serif", if (isAr) "كلاسيكي" else "Classic", FontFamily.Serif),
+                                            Triple("sans_serif", if (isAr) "حديث" else "Modern", FontFamily.SansSerif),
+                                            Triple("monospace", if (isAr) "تقني" else "Tech", FontFamily.Monospace),
+                                            Triple("default", if (isAr) "تلقائي" else "System", FontFamily.Default)
+                                        ).forEach { (key, label, family) ->
+                                            OutlinedButton(
+                                                onClick = { viewModel.setQuranFontFamily(key) },
+                                                modifier = Modifier.weight(1f).height(38.dp),
+                                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp),
+                                                colors = ButtonDefaults.outlinedButtonColors(
+                                                    containerColor = if (quranFontFamily == key) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                                                ),
+                                                border = androidx.compose.foundation.BorderStroke(
+                                                    width = if (quranFontFamily == key) 1.8.dp else 1.dp,
+                                                    color = if (quranFontFamily == key) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                                                )
+                                            ) {
+                                                Text(
+                                                    text = label,
+                                                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = family),
+                                                    fontWeight = if (quranFontFamily == key) FontWeight.Bold else FontWeight.Normal,
+                                                    color = if (quranFontFamily == key) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(10.dp))
+
+                                    // Real-time Text Size Preview Layout
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.12f))
+                                            .border(
+                                                1.dp,
+                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                                RoundedCornerShape(12.dp)
+                                            )
+                                            .padding(14.dp)
+                                    ) {
+                                        Column(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                                        ) {
+                                            Text(
+                                                text = if (isAr) "معاينة حجم ونوع خط المصحف والتراجم" else "Quran Font & Translation Preview",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.primary,
+                                                fontWeight = FontWeight.Bold,
+                                                modifier = Modifier.align(Alignment.Start)
+                                            )
+                                            
+                                            val previewFontFamily = when (quranFontFamily) {
+                                                "serif" -> FontFamily.Serif
+                                                "sans_serif" -> FontFamily.SansSerif
+                                                "monospace" -> FontFamily.Monospace
+                                                else -> FontFamily.Default
+                                            }
+
+                                            // Arabic verse preview
+                                            Text(
+                                                text = "بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ",
+                                                fontSize = fontAr.sp,
+                                                fontFamily = previewFontFamily,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface,
+                                                textAlign = TextAlign.Center,
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                            
+                                            // English translation preview
+                                            Text(
+                                                text = "In the name of Allah, the Beneficent, the Merciful",
+                                                fontSize = fontEn.sp,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                textAlign = TextAlign.Center,
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                        }
                                     }
                                 }
                             }

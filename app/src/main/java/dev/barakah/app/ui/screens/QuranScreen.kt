@@ -71,6 +71,15 @@ fun QuranScreen(
     // Fonts collected directly from centralized viewModel
     val arabicFontSize by viewModel.arabicFontSize.collectAsState()
     val englishFontSize by viewModel.englishFontSize.collectAsState()
+    val quranFontFamily by viewModel.quranFontFamily.collectAsState()
+    val activeFontFamily = remember(quranFontFamily) {
+        when (quranFontFamily) {
+            "serif" -> FontFamily.Serif
+            "sans_serif" -> FontFamily.SansSerif
+            "monospace" -> FontFamily.Monospace
+            else -> FontFamily.Default
+        }
+    }
     val appLanguage by viewModel.appLanguage.collectAsState()
     val isAr = appLanguage == "ar"
     val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
@@ -471,7 +480,7 @@ fun QuranScreen(
                                             style = MaterialTheme.typography.titleLarge,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.primary,
-                                            fontFamily = FontFamily.Serif
+                                            fontFamily = activeFontFamily
                                         )
                                         Text(
                                             text = surah.translation,
@@ -607,7 +616,7 @@ fun QuranScreen(
                                         fontSize = (arabicFontSize + 2).sp,
                                         fontWeight = FontWeight.Bold,
                                         textAlign = TextAlign.Center,
-                                        fontFamily = FontFamily.Serif,
+                                        fontFamily = activeFontFamily,
                                         color = MaterialTheme.colorScheme.primary
                                     )
                                 )
@@ -669,7 +678,7 @@ fun QuranScreen(
                                 text = verse.arabic,
                                 style = androidx.compose.ui.text.TextStyle(
                                     fontSize = arabicFontSize.sp,
-                                    fontFamily = FontFamily.Serif,
+                                    fontFamily = activeFontFamily,
                                     textDirection = TextDirection.Rtl,
                                     lineHeight = (arabicFontSize * 1.5).sp,
                                     textAlign = TextAlign.Right
@@ -738,7 +747,7 @@ fun QuranScreen(
                         text = verse.arabic,
                         style = androidx.compose.ui.text.TextStyle(
                             fontSize = (arabicFontSize - 2).sp,
-                            fontFamily = FontFamily.Serif,
+                            fontFamily = activeFontFamily,
                             textDirection = TextDirection.Rtl,
                             textAlign = TextAlign.Right,
                             fontWeight = FontWeight.Medium,

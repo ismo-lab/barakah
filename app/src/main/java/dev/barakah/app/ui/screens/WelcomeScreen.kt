@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.GpsFixed
 import androidx.compose.material.icons.filled.Language
@@ -36,7 +37,7 @@ import com.google.accompanist.permissions.isGranted
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun WelcomeScreen(viewModel: BarakahViewModel) {
-    var step by remember { mutableIntStateOf(1) } // 1: Language, 2: Notifications, 3: Location
+    var step by remember { mutableIntStateOf(1) } // 1: Language, 2: Calculations, 3: Notifications, 4: Location
     val currentLang by viewModel.appLanguage.collectAsState()
     val isAr = currentLang == "ar"
 
@@ -72,8 +73,9 @@ fun WelcomeScreen(viewModel: BarakahViewModel) {
 
             when (step) {
                 1 -> LanguageStep(viewModel, onNext = { step = 2 })
-                2 -> NotificationsStep(viewModel, onNext = { step = 3 })
-                3 -> LocationStep(viewModel, onFinish = { viewModel.setFirstRunComplete() })
+                2 -> CalculationStep(viewModel, onNext = { step = 3 })
+                3 -> NotificationsStep(viewModel, onNext = { step = 4 })
+                4 -> LocationStep(viewModel, onFinish = { viewModel.setFirstRunComplete() })
             }
         }
     }
@@ -556,6 +558,191 @@ fun NotificationToggleCard(
             if (content != null) {
                 content()
             }
+        }
+    }
+}
+
+@Composable
+fun CalculationStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
+    val currentLang by viewModel.appLanguage.collectAsState()
+    val isAr = currentLang == "ar"
+    
+    val asrMethod by viewModel.asrMethod.collectAsState()
+    val ishaMethod by viewModel.ishaMethod.collectAsState()
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxHeight()
+    ) {
+        Icon(
+            imageVector = Icons.Default.School,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(
+            text = if (isAr) "المذهب والحساب الفقهي" else "Juristic Calculations",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = if (isAr) "تسمح هذه الإعدادات بتخصيص حساب صلاة العصر والعشاء" else "These settings customize calculations for Asr and Isha prayers",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.outline,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+        
+        Spacer(modifier = Modifier.height(24.dp))
+
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Asr Section
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Text(
+                            text = if (isAr) "صلاة العصر: حساب الجمهور أم الحنفي" else "Asr Prayer: Standard vs Hanafi School",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = { viewModel.setAsrMethod("standard") },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = if (asrMethod == "standard") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                                ),
+                                border = androidx.compose.foundation.BorderStroke(
+                                    width = if (asrMethod == "standard") 2.dp else 1.dp,
+                                    color = if (asrMethod == "standard") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                )
+                            ) {
+                                Text(
+                                    text = if (isAr) "الجمهور (شافعي...)" else "Standard (Shafi'i)",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (asrMethod == "standard") MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                            OutlinedButton(
+                                onClick = { viewModel.setAsrMethod("hanafi") },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = if (asrMethod == "hanafi") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                                ),
+                                border = androidx.compose.foundation.BorderStroke(
+                                    width = if (asrMethod == "hanafi") 2.dp else 1.dp,
+                                    color = if (asrMethod == "hanafi") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                )
+                            ) {
+                                Text(
+                                    text = if (isAr) "المذهب الحنفي" else "Hanafi School",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (asrMethod == "hanafi") MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Isha Section
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Text(
+                            text = if (isAr) "صلاة العشاء: التقدير الفلكي أم الحنفي" else "Isha Prayer: Standard Angle vs Hanafi Angle (18°)",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = { viewModel.setIshaMethod("standard") },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = if (ishaMethod == "standard") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                                ),
+                                border = androidx.compose.foundation.BorderStroke(
+                                    width = if (ishaMethod == "standard") 2.dp else 1.dp,
+                                    color = if (ishaMethod == "standard") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                )
+                            ) {
+                                Text(
+                                    text = if (isAr) "الحساب فلكياً" else "Standard Angle",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (ishaMethod == "standard") MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                            OutlinedButton(
+                                onClick = { viewModel.setIshaMethod("hanafi") },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = if (ishaMethod == "hanafi") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                                ),
+                                border = androidx.compose.foundation.BorderStroke(
+                                    width = if (ishaMethod == "hanafi") 2.dp else 1.dp,
+                                    color = if (ishaMethod == "hanafi") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                )
+                            ) {
+                                Text(
+                                    text = if (isAr) "حنفي (18 درجة)" else "Hanafi Angle (18°)",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (ishaMethod == "hanafi") MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = onNext,
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Text(
+                text = if (isAr) "التالي" else "Next",
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
         }
     }
 }

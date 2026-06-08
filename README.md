@@ -1,8 +1,19 @@
-# ✨ Barakah (بَرَكَة) ✨
+<p align="center">
+  <img src="logo.svg" width="128" height="128" alt="Barakah App Icon" />
+</p>
 
-[![Android Build Status](https://img.shields.io/badge/Android-Build--Passing-success?style=for-the-badge&logo=android&logoColor=white&color=3DDC84)](https://github.com/ismo-lab/barakah)
-[![FOSS](https://img.shields.io/badge/Open--Source-FOSS-blue?style=for-the-badge&logo=open-source&logoColor=white&color=007ACC)](https://github.com/ismo-lab/barakah)
-[![Privacy First](https://img.shields.io/badge/Privacy-100%25-green?style=for-the-badge&logo=shield&logoColor=white&color=4CAF50)](#privacy-first)
+<h1 align="center">Barakah (بَرَكَة)</h1>
+
+<p align="center">
+  <a href="https://github.com/ismo-lab/barakah/actions/workflows/android.yml">
+    <img src="https://github.com/ismo-lab/barakah/actions/workflows/android.yml/badge.svg" alt="Android Build Status" />
+  </a>
+  <img src="https://img.shields.io/badge/Kotlin-1.9.22-800080?style=flat-square&logo=kotlin&logoColor=white" alt="Kotlin" />
+  <img src="https://img.shields.io/badge/Jetpack_Compose-M3-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white" alt="Jetpack Compose" />
+  <img src="https://img.shields.io/badge/Open--Source-FOSS-007ACC?style=flat-square&logo=open-source&logoColor=white" alt="FOSS" />
+  <img src="https://img.shields.io/badge/Privacy-100%25-4CAF50?style=flat-square&logo=shield-halved&logoColor=white" alt="Privacy First" />
+  <img src="https://img.shields.io/badge/License-GPL--3.0-blue?style=flat-square" alt="License" />
+</p>
 
 **Barakah** is a privacy-respecting, fully Free and Open Source (FOSS) Islamic companion application crafted specifically for Android. By pairing Material 3 aesthetics with local offline-first reliability, **Barakah** serves as an eye-safe, advertisement-free spiritual toolkit for daily routines.
 
