@@ -288,95 +288,6 @@ tasks.register("downloadAdhan") {
   }
 }
 
-tasks.register("downloadOthmaniFont") {
-  notCompatibleWithConfigurationCache("Uses network connection and local file references")
-  doLast {
-    val dest = file("src/main/assets/fonts/uthmanic.ttf")
-    if (dest.exists() && dest.length() > 100000) {
-      println("Uthmanic font already exists, skipping download.")
-      return@doLast
-    }
-    dest.parentFile.mkdirs()
-    println("Downloading Uthmanic font to ${dest.absolutePath}...")
-    val urlOptions = listOf(
-      "https://github.com/itqan/itqan-font/raw/refs/heads/master/fonts/UthmanicHafs1.ttf",
-      "https://github.com/itqan/itqan-font/raw/refs/heads/main/fonts/UthmanicHafs1.ttf",
-      "https://github.com/hasandor/Quran-App/raw/refs/heads/master/assets/fonts/uthmanic_hafs.ttf",
-      "https://github.com/Khaled-El-Morsi/Quran-Reading-App-Tarteel/raw/refs/heads/main/assets/fonts/KFGQPC-Uthman-Taha-Naskh-Regular.ttf",
-      "https://github.com/mushaf/font/raw/refs/heads/master/fonts/KFGQPC-Uthman-Taha-Naskh-Regular.ttf",
-      "https://github.com/nawawi/uthmanic-hafs-font/raw/refs/heads/main/UthmanicHafs1.ttf",
-      "https://github.com/nawawi/uthmanic-hafs-font/raw/refs/heads/master/UthmanicHafs1.ttf",
-      "https://github.com/mushaf/font/raw/refs/heads/master/fonts/UthmanicHafs1.ttf",
-      "https://github.com/MustafaM/quran-data/raw/refs/heads/master/fonts/UthmanicHafs1_Ver18.ttf",
-      "https://github.com/MustafaM/quran-data/raw/refs/heads/master/fonts/UthmanicHafs1-Ver18.ttf",
-      "https://github.com/google/fonts/raw/main/ofl/amiri/Amiri-Regular.ttf"
-    )
-    var success = false
-    for (urlStr in urlOptions) {
-      println("Trying to download font from $urlStr...")
-      try {
-        var currentUrlStr = urlStr
-        var conn: HttpURLConnection
-        var attempts = 0
-        while (attempts < 5) {
-          val url = URI(currentUrlStr).toURL()
-          conn = url.openConnection() as HttpURLConnection
-          conn.instanceFollowRedirects = true
-          conn.requestMethod = "GET"
-          conn.connectTimeout = 30000
-          conn.readTimeout = 30000
-          conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-          val status = conn.responseCode
-          if (status == HttpURLConnection.HTTP_MOVED_TEMP || status == HttpURLConnection.HTTP_MOVED_PERM || status == HttpURLConnection.HTTP_SEE_OTHER || status == 307 || status == 308) {
-            val newUrl = conn.getHeaderField("Location")
-            currentUrlStr = newUrl
-            attempts++
-            continue
-          }
-          if (status == 200) {
-            conn.inputStream.use { input ->
-              dest.outputStream().use { output ->
-                input.copyTo(output)
-              }
-            }
-            println("Downloaded font successfully! Size: ${dest.length()} bytes")
-            success = true
-          } else {
-            println("HTTP status $status for font download attempt")
-          }
-          break
-        }
-      } catch (e: Exception) {
-        println("Exception while downloading font from $urlStr: ${e.message}")
-      }
-      if (success) break
-    }
-    if (!success) {
-      println("Warning: Could not download Uthmanic font from any options.")
-    }
-  }
-}
-
-tasks.register("checkFont") {
-  doLast {
-    val dest = file("src/main/assets/fonts/uthmanic.ttf")
-    if (dest.exists()) {
-      println("FONT_DIAGNOSTICS: File exists, size = ${dest.length()} bytes")
-      val bytes = dest.readBytes()
-      if (bytes.size > 20) {
-        val head = bytes.sliceArray(0..15).map { String.format("%02X", it) }.joinToString(" ")
-        println("FONT_DIAGNOSTICS: Header Hex = $head")
-        val ascii = bytes.sliceArray(0..15).map { if (it in 32..126) it.toChar() else '.' }.joinToString("")
-        println("FONT_DIAGNOSTICS: Header ASCII = $ascii")
-      } else {
-        println("FONT_DIAGNOSTICS: File too short!")
-      }
-    } else {
-      println("FONT_DIAGNOSTICS: File does not exist!")
-    }
-  }
-}
-
 tasks.register("downloadArabicTafseer") {
   notCompatibleWithConfigurationCache("Uses network connection and local file references")
   doLast {
@@ -444,7 +355,7 @@ tasks.register("downloadEnglishTafseer") {
 }
 
 tasks.named("preBuild") {
-  dependsOn("downloadAdhan", "downloadArabicTafseer", "downloadEnglishTafseer", "downloadOthmaniFont")
+  dependsOn("downloadAdhan", "downloadArabicTafseer", "downloadEnglishTafseer")
 }
 
 

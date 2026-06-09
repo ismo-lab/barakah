@@ -104,25 +104,3 @@ val Typography = Typography(
     )
 )
 
-@Composable
-fun rememberQuranFontFamily(fontOption: String): FontFamily {
-    val context = LocalContext.current
-    return remember(fontOption) {
-        if (fontOption == "othmani") {
-            try {
-                val tf = android.graphics.Typeface.createFromAsset(context.assets, "fonts/uthmanic.ttf")
-                if (tf != null) {
-                    FontFamily(tf)
-                } else {
-                    FontFamily.Default
-                }
-            } catch (e: Exception) {
-                android.util.Log.e("Type", "Error loading uthmanic font, falling back", e)
-                FontFamily.Default
-            }
-        } else {
-            FontFamily.Default
-        }
-    }
-}
-

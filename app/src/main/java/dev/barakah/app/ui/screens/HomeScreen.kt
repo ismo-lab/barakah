@@ -34,7 +34,6 @@ import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.barakah.app.ui.BarakahViewModel
-import dev.barakah.app.ui.theme.rememberQuranFontFamily
 import dev.barakah.app.notifications.AdhanSoundManager
 import kotlinx.coroutines.launch
 import dev.barakah.app.util.PrayerCalculator
@@ -80,7 +79,6 @@ fun HomeScreen(
     val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
     val fontAr by viewModel.arabicFontSize.collectAsState()
     val fontEn by viewModel.englishFontSize.collectAsState()
-    val quranFontOption by viewModel.quranFontOption.collectAsState()
     val locationMethod by viewModel.locationMethod.collectAsState()
 
     val showNawafil by viewModel.showNawafil.collectAsState()
@@ -1667,7 +1665,7 @@ fun HomeScreen(
                                     Spacer(modifier = Modifier.height(4.dp))
 
                                     Text(
-                                        text = if (isAr) "نوع الخط العربي للمصحف" else "Quranic Arabic Font Type",
+                                        text = "",
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.SemiBold
                                     )
@@ -1676,39 +1674,36 @@ fun HomeScreen(
                                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
                                         OutlinedButton(
-                                            onClick = { viewModel.setQuranFontOption("default") },
-                                            modifier = Modifier.weight(1f),
-                                            colors = ButtonDefaults.outlinedButtonColors(
-                                                containerColor = if (quranFontOption == "default") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
-                                            ),
+                                            onClick = {},
+                                            modifier = Modifier.size(0.dp),
                                             border = androidx.compose.foundation.BorderStroke(
-                                                width = if (quranFontOption == "default") 2.dp else 1.dp,
-                                                color = if (quranFontOption == "default") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                                width = 1.dp,
+                                                color = Color.Transparent
                                             )
                                         ) {
                                             Text(
                                                 text = if (isAr) "الخط الافتراضي" else "Default Font",
                                                 fontWeight = FontWeight.Bold,
                                                 style = MaterialTheme.typography.bodyMedium,
-                                                color = if (quranFontOption == "default") MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                                color = Color.Transparent
                                             )
                                         }
                                         OutlinedButton(
-                                            onClick = { viewModel.setQuranFontOption("othmani") },
-                                            modifier = Modifier.weight(1f),
+                                            onClick = {},
+                                            modifier = Modifier.size(0.dp),
                                             colors = ButtonDefaults.outlinedButtonColors(
-                                                containerColor = if (quranFontOption == "othmani") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                                                containerColor = Color.Transparent
                                             ),
                                             border = androidx.compose.foundation.BorderStroke(
-                                                width = if (quranFontOption == "othmani") 2.dp else 1.dp,
-                                                color = if (quranFontOption == "othmani") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                                width = 1.dp,
+                                                color = Color.Transparent
                                             )
                                         ) {
                                             Text(
                                                 text = if (isAr) "الخط العثماني" else "Othmani Font",
                                                 fontWeight = FontWeight.Bold,
                                                 style = MaterialTheme.typography.bodyMedium,
-                                                color = if (quranFontOption == "othmani") MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                                color = Color.Transparent
                                             )
                                         }
                                     }
@@ -1716,7 +1711,7 @@ fun HomeScreen(
                                     Spacer(modifier = Modifier.height(10.dp))
 
                                     // Real-time Text Size Preview Layout
-                                    val previewFontFamily = rememberQuranFontFamily(quranFontOption)
+                                    val previewFontFamily = FontFamily.Default
                                     Box(
                                         modifier = Modifier
                                             .fillMaxWidth()

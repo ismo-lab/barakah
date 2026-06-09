@@ -68,10 +68,6 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     private val _englishFontSize = MutableStateFlow(prefs.getFloat("english_font_size", 16f))
     val englishFontSize: StateFlow<Float> = _englishFontSize
 
-    // Quran font family option: "default" or "othmani"
-    private val _quranFontOption = MutableStateFlow(prefs.getString("quran_font_option", "default") ?: "default")
-    val quranFontOption: StateFlow<String> = _quranFontOption
-
     // Selected location method: "auto" or "manual"
     private val _locationMethod = MutableStateFlow(prefs.getString("location_method", "manual") ?: "manual")
     val locationMethod: StateFlow<String> = _locationMethod
@@ -597,11 +593,6 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     fun setEnglishFontSize(size: Float) {
         _englishFontSize.value = size
         prefs.edit().putFloat("english_font_size", size).apply()
-    }
-
-    fun setQuranFontOption(option: String) {
-        _quranFontOption.value = option
-        prefs.edit().putString("quran_font_option", option).apply()
     }
 
     fun setLocationMethod(method: String) {

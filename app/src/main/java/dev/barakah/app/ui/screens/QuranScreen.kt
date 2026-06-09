@@ -38,7 +38,6 @@ import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.barakah.app.data.QuranData
-import dev.barakah.app.ui.theme.rememberQuranFontFamily
 import dev.barakah.app.util.PrayerCalculator
 import dev.barakah.app.data.Surah
 import dev.barakah.app.ui.BarakahViewModel
@@ -73,8 +72,7 @@ fun QuranScreen(
     // Fonts collected directly from centralized viewModel
     val arabicFontSize by viewModel.arabicFontSize.collectAsState()
     val englishFontSize by viewModel.englishFontSize.collectAsState()
-    val quranFontOption by viewModel.quranFontOption.collectAsState()
-    val quranFontFamily = rememberQuranFontFamily(quranFontOption)
+    val quranFontFamily = FontFamily.Default
     val appLanguage by viewModel.appLanguage.collectAsState()
     val isAr = appLanguage == "ar"
     val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()

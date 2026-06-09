@@ -46,22 +46,14 @@ Built from the ground up for Material Design 3
 
 ## 📚 Attributions & Dataset Sources
 
-Barakah relies gratefully on the efforts of the global FOSS Islamic developer community for its offline-ready datasets, reference scripts, and typographical fonts:
+Barakah relies gratefully on the efforts of the global FOSS Islamic developer community for its offline-ready datasets, reference scripts, and audio assets:
 
-* **Quran Text, Translation & Font**:
-  * Arabic scripts and structured chapter datasets adapted from public-domain FOSS datasets including [MustafaM/quran-data](https://github.com/MustafaM/quran-data) and [spa5k/u-quran](https://github.com/spa5k/u-quran).
-  * Premium and highly authentic **Uthmanic Hafs Font** collections inspired by/sourced from [itqan/itqan-font](https://github.com/itqan/itqan-font) and [nawawi/uthmanic-hafs-font](https://github.com/nawawi/uthmanic-hafs-font).
-  * Arabic Naskh web/fallback styles sourced via [Google Fonts](https://github.com/google/fonts).
-
-* **Quran Tafseer (Exegesis)**:
-  * **Arabic Tafseer (Al-Muyassar)**: JSON catalog schema curated by [00AhmedMokhtar00/QuranTafseer-ar-json](https://github.com/00AhmedMokhtar00/QuranTafseer-ar-json).
-  * **English Tafseer (Al-Jalalayn)**: Organized, offline-ready JSON exegesis parsed from [spa5k/tafsir_api](https://github.com/spa5k/tafsir_api).
-
-* **Duas & Supplications (Hisnul Muslim)**:
-  * Comprehensive Arabic and English daily Adhkar datasets derived from the [spa5k/hisnmuslim](https://github.com/spa5k/hisnmuslim) databases.
-
-* **Prayer Coordinates & Astronomical Calculations**:
-  * Mathematical equations modeled alongside native calculations inspired by Batoul Apps' [Adhan](https://github.com/batoulapps/adhan-java) calculations.
+- **Hadith Compilation**: [hadith.json](https://github.com/4thel00z/hadith.json)
+- **Hisnul Muslim Supplications**: [HisnElMuslim](https://github.com/asellam/HisnElMuslim)
+- **Holy Quran Database**: [Quran-Data](https://github.com/rn0x/Quran-Data)
+- **Holy Quran Database & Tafseer**: [Quran-Data](https://github.com/rn0x/Quran-Data), [QuranTafseer-ar-json](https://github.com/00AhmedMokhtar00/QuranTafseer-ar-json), and [tafsir_api](https://github.com/spa5k/tafsir_api) by spa5k
+- **Astronomical Mathematics**: [Adhan SDK](https://github.com/batoulapps/adhan-java)
+- **Adhan Audio Assets**: [adhan-mp3](https://github.com/Kiwifu/adhan-mp3) by Kiwifu
 
 ---
 
