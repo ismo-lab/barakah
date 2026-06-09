@@ -299,8 +299,16 @@ tasks.register("downloadOthmaniFont") {
     dest.parentFile.mkdirs()
     println("Downloading Uthmanic font to ${dest.absolutePath}...")
     val urlOptions = listOf(
-      "https://github.com/nawawi/uthmanic-hafs-font/raw/master/UthmanicHafs1.ttf",
-      "https://github.com/MustafaM/quran-data/raw/master/fonts/UthmanicHafs1-Ver18.ttf",
+      "https://github.com/itqan/itqan-font/raw/refs/heads/master/fonts/UthmanicHafs1.ttf",
+      "https://github.com/itqan/itqan-font/raw/refs/heads/main/fonts/UthmanicHafs1.ttf",
+      "https://github.com/hasandor/Quran-App/raw/refs/heads/master/assets/fonts/uthmanic_hafs.ttf",
+      "https://github.com/Khaled-El-Morsi/Quran-Reading-App-Tarteel/raw/refs/heads/main/assets/fonts/KFGQPC-Uthman-Taha-Naskh-Regular.ttf",
+      "https://github.com/mushaf/font/raw/refs/heads/master/fonts/KFGQPC-Uthman-Taha-Naskh-Regular.ttf",
+      "https://github.com/nawawi/uthmanic-hafs-font/raw/refs/heads/main/UthmanicHafs1.ttf",
+      "https://github.com/nawawi/uthmanic-hafs-font/raw/refs/heads/master/UthmanicHafs1.ttf",
+      "https://github.com/mushaf/font/raw/refs/heads/master/fonts/UthmanicHafs1.ttf",
+      "https://github.com/MustafaM/quran-data/raw/refs/heads/master/fonts/UthmanicHafs1_Ver18.ttf",
+      "https://github.com/MustafaM/quran-data/raw/refs/heads/master/fonts/UthmanicHafs1-Ver18.ttf",
       "https://github.com/google/fonts/raw/main/ofl/amiri/Amiri-Regular.ttf"
     )
     var success = false
@@ -317,6 +325,7 @@ tasks.register("downloadOthmaniFont") {
           conn.requestMethod = "GET"
           conn.connectTimeout = 30000
           conn.readTimeout = 30000
+          conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
           val status = conn.responseCode
           if (status == HttpURLConnection.HTTP_MOVED_TEMP || status == HttpURLConnection.HTTP_MOVED_PERM || status == HttpURLConnection.HTTP_SEE_OTHER || status == 307 || status == 308) {
             val newUrl = conn.getHeaderField("Location")
@@ -344,6 +353,26 @@ tasks.register("downloadOthmaniFont") {
     }
     if (!success) {
       println("Warning: Could not download Uthmanic font from any options.")
+    }
+  }
+}
+
+tasks.register("checkFont") {
+  doLast {
+    val dest = file("src/main/assets/fonts/uthmanic.ttf")
+    if (dest.exists()) {
+      println("FONT_DIAGNOSTICS: File exists, size = ${dest.length()} bytes")
+      val bytes = dest.readBytes()
+      if (bytes.size > 20) {
+        val head = bytes.sliceArray(0..15).map { String.format("%02X", it) }.joinToString(" ")
+        println("FONT_DIAGNOSTICS: Header Hex = $head")
+        val ascii = bytes.sliceArray(0..15).map { if (it in 32..126) it.toChar() else '.' }.joinToString("")
+        println("FONT_DIAGNOSTICS: Header ASCII = $ascii")
+      } else {
+        println("FONT_DIAGNOSTICS: File too short!")
+      }
+    } else {
+      println("FONT_DIAGNOSTICS: File does not exist!")
     }
   }
 }

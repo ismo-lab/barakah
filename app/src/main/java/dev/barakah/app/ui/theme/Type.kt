@@ -114,14 +114,14 @@ fun rememberQuranFontFamily(fontOption: String): FontFamily {
                 if (tf != null) {
                     FontFamily(tf)
                 } else {
-                    FontFamily.Serif
+                    FontFamily.Default
                 }
             } catch (e: Exception) {
                 android.util.Log.e("Type", "Error loading uthmanic font, falling back", e)
-                FontFamily.Serif
+                FontFamily.Default
             }
         } else {
-            FontFamily.Serif
+            FontFamily.Default
         }
     }
 }
