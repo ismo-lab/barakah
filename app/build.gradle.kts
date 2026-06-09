@@ -288,6 +288,66 @@ tasks.register("downloadAdhan") {
   }
 }
 
+tasks.register("downloadOthmaniFont") {
+  notCompatibleWithConfigurationCache("Uses network connection and local file references")
+  doLast {
+    val dest = file("src/main/assets/fonts/uthmanic.ttf")
+    if (dest.exists() && dest.length() > 100000) {
+      println("Uthmanic font already exists, skipping download.")
+      return@doLast
+    }
+    dest.parentFile.mkdirs()
+    println("Downloading Uthmanic font to ${dest.absolutePath}...")
+    val urlOptions = listOf(
+      "https://github.com/nawawi/uthmanic-hafs-font/raw/master/UthmanicHafs1.ttf",
+      "https://github.com/MustafaM/quran-data/raw/master/fonts/UthmanicHafs1-Ver18.ttf",
+      "https://github.com/google/fonts/raw/main/ofl/amiri/Amiri-Regular.ttf"
+    )
+    var success = false
+    for (urlStr in urlOptions) {
+      println("Trying to download font from $urlStr...")
+      try {
+        var currentUrlStr = urlStr
+        var conn: HttpURLConnection
+        var attempts = 0
+        while (attempts < 5) {
+          val url = URI(currentUrlStr).toURL()
+          conn = url.openConnection() as HttpURLConnection
+          conn.instanceFollowRedirects = true
+          conn.requestMethod = "GET"
+          conn.connectTimeout = 30000
+          conn.readTimeout = 30000
+          val status = conn.responseCode
+          if (status == HttpURLConnection.HTTP_MOVED_TEMP || status == HttpURLConnection.HTTP_MOVED_PERM || status == HttpURLConnection.HTTP_SEE_OTHER || status == 307 || status == 308) {
+            val newUrl = conn.getHeaderField("Location")
+            currentUrlStr = newUrl
+            attempts++
+            continue
+          }
+          if (status == 200) {
+            conn.inputStream.use { input ->
+              dest.outputStream().use { output ->
+                input.copyTo(output)
+              }
+            }
+            println("Downloaded font successfully! Size: ${dest.length()} bytes")
+            success = true
+          } else {
+            println("HTTP status $status for font download attempt")
+          }
+          break
+        }
+      } catch (e: Exception) {
+        println("Exception while downloading font from $urlStr: ${e.message}")
+      }
+      if (success) break
+    }
+    if (!success) {
+      println("Warning: Could not download Uthmanic font from any options.")
+    }
+  }
+}
+
 tasks.register("downloadArabicTafseer") {
   notCompatibleWithConfigurationCache("Uses network connection and local file references")
   doLast {
@@ -355,7 +415,7 @@ tasks.register("downloadEnglishTafseer") {
 }
 
 tasks.named("preBuild") {
-  dependsOn("downloadAdhan", "downloadArabicTafseer", "downloadEnglishTafseer")
+  dependsOn("downloadAdhan", "downloadArabicTafseer", "downloadEnglishTafseer", "downloadOthmaniFont")
 }
 
 

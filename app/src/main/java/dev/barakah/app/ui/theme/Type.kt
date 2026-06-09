@@ -1,7 +1,11 @@
 package dev.barakah.app.ui.theme
 
 import androidx.compose.material3.Typography
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
@@ -99,3 +103,25 @@ val Typography = Typography(
         letterSpacing = 0.5.sp
     )
 )
+
+@Composable
+fun rememberQuranFontFamily(fontOption: String): FontFamily {
+    val context = LocalContext.current
+    return remember(fontOption) {
+        if (fontOption == "othmani") {
+            try {
+                FontFamily(
+                    Font(
+                        path = "fonts/uthmanic.ttf",
+                        assetManager = context.assets
+                    )
+                )
+            } catch (e: Exception) {
+                FontFamily.Serif
+            }
+        } else {
+            FontFamily.Serif
+        }
+    }
+}
+
