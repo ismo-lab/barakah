@@ -110,13 +110,14 @@ fun rememberQuranFontFamily(fontOption: String): FontFamily {
     return remember(fontOption) {
         if (fontOption == "othmani") {
             try {
-                FontFamily(
-                    Font(
-                        path = "fonts/uthmanic.ttf",
-                        assetManager = context.assets
-                    )
-                )
+                val tf = android.graphics.Typeface.createFromAsset(context.assets, "fonts/uthmanic.ttf")
+                if (tf != null) {
+                    FontFamily(tf)
+                } else {
+                    FontFamily.Serif
+                }
             } catch (e: Exception) {
+                android.util.Log.e("Type", "Error loading uthmanic font, falling back", e)
                 FontFamily.Serif
             }
         } else {
