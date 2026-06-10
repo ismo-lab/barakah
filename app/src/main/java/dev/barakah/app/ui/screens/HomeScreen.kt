@@ -1662,53 +1662,7 @@ fun HomeScreen(
 
                                     Spacer(modifier = Modifier.height(8.dp))
                                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                                    Spacer(modifier = Modifier.height(4.dp))
-
-                                    Text(
-                                        text = "",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        OutlinedButton(
-                                            onClick = {},
-                                            modifier = Modifier.size(0.dp),
-                                            border = androidx.compose.foundation.BorderStroke(
-                                                width = 1.dp,
-                                                color = Color.Transparent
-                                            )
-                                        ) {
-                                            Text(
-                                                text = if (isAr) "الخط الافتراضي" else "Default Font",
-                                                fontWeight = FontWeight.Bold,
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = Color.Transparent
-                                            )
-                                        }
-                                        OutlinedButton(
-                                            onClick = {},
-                                            modifier = Modifier.size(0.dp),
-                                            colors = ButtonDefaults.outlinedButtonColors(
-                                                containerColor = Color.Transparent
-                                            ),
-                                            border = androidx.compose.foundation.BorderStroke(
-                                                width = 1.dp,
-                                                color = Color.Transparent
-                                            )
-                                        ) {
-                                            Text(
-                                                text = if (isAr) "الخط العثماني" else "Othmani Font",
-                                                fontWeight = FontWeight.Bold,
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = Color.Transparent
-                                            )
-                                        }
-                                    }
-
-                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Spacer(modifier = Modifier.height(8.dp))
 
                                     // Real-time Text Size Preview Layout
                                     val previewFontFamily = FontFamily.Default
