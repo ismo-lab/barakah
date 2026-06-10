@@ -57,4 +57,10 @@ Barakah relies gratefully on the efforts of the global FOSS Islamic developer co
 
 ---
 
+## 📄 License
+
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+
+---
+
 Made as a humble contribution to the Muslim Ummah. May Allah grant Barakah in our lives. 🤲
