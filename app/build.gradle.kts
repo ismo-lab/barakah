@@ -14,18 +14,46 @@ import java.util.zip.GZIPOutputStream
 // Automatically extract keystore from base64 string on build to prevent signing corruption across devices and GitHub actions
 val keystoreFile = file("keystore.jks")
 val base64File = rootProject.file("debug.keystore.base64")
-if (base64File.exists()) {
-  try {
-    // Strip any possible whitespace, newlines, carriage returns, or non-base64 characters
-    val rawContent = base64File.readText().trim()
-    if (rawContent.isNotEmpty()) {
-      // Use MimeDecoder to handle any line breaks (CRLF/LF) added during git/checkout operations
-      val decodedBytes = Base64.getMimeDecoder().decode(rawContent)
-      keystoreFile.writeBytes(decodedBytes)
-      println("Dynamic keystore extraction successful: ${keystoreFile.length()} bytes")
+if (!keystoreFile.exists()) {
+  if (base64File.exists()) {
+    try {
+      // Strip any possible whitespace, newlines, carriage returns, or non-base64 characters
+      val rawContent = base64File.readText().trim()
+      if (rawContent.isNotEmpty()) {
+        // Use MimeDecoder to handle any line breaks (CRLF/LF) added during git/checkout operations
+        val decodedBytes = Base64.getMimeDecoder().decode(rawContent)
+        keystoreFile.writeBytes(decodedBytes)
+        println("Dynamic keystore extraction successful: ${keystoreFile.length()} bytes")
+      }
+    } catch (e: Exception) {
+      println("Dynamic keystore extraction failed: ${e.message}")
     }
-  } catch (e: Exception) {
-    println("Dynamic keystore extraction failed: ${e.message}")
+  }
+  
+  // If keystore file still does not exist (e.g. on CI/GitHub Actions where base64 might be missing), generate a fallback
+  if (!keystoreFile.exists()) {
+    try {
+      println("Generating fallback debug keystore for signing...")
+      val process = ProcessBuilder(
+        "keytool", "-genkey", "-v",
+        "-keystore", keystoreFile.absolutePath,
+        "-storepass", "android",
+        "-alias", "androiddebugkey",
+        "-keypass", "android",
+        "-keyalg", "RSA",
+        "-keysize", "2048",
+        "-validity", "10000",
+        "-dname", "CN=Android Debug,O=Android,C=US"
+      ).start()
+      val exitCode = process.waitFor()
+      if (exitCode == 0) {
+        println("Fallback debug keystore generated successfully: ${keystoreFile.length()} bytes")
+      } else {
+        println("Fallback debug keystore generation failed with exit code $exitCode")
+      }
+    } catch (e: Exception) {
+      println("Failed to generate fallback debug keystore: ${e.message}")
+    }
   }
 }
 
