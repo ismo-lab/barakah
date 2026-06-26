@@ -7,6 +7,55 @@ object HijriCalendarHelper {
 
     data class HijriDate(val day: Int, val month: Int, val year: Int)
 
+    fun getTodayHijriDate(): HijriDate {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            try {
+                val todayLocalDate = java.time.LocalDate.now()
+                val hijriDate = java.time.chrono.HijrahDate.from(todayLocalDate)
+                val day = hijriDate.get(java.time.temporal.ChronoField.DAY_OF_MONTH)
+                val month = hijriDate.get(java.time.temporal.ChronoField.MONTH_OF_YEAR)
+                val year = hijriDate.get(java.time.temporal.ChronoField.YEAR)
+                return HijriDate(day, month, year)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        
+        val today = Calendar.getInstance()
+        val day = today.get(Calendar.DAY_OF_MONTH)
+        val month = today.get(Calendar.MONTH) + 1
+        val year = today.get(Calendar.YEAR)
+        
+        val jd = getJulianDay(year, month, day)
+        return getHijriFromJulian(jd)
+    }
+
+    fun getTodayHijriDateString(isAr: Boolean = false): String {
+        val hijri = getTodayHijriDate()
+        val monthNamesAr = listOf(
+            "", "محرم", "صفر", "ربيع الأول", "ربيع الآخر", 
+            "جمادى الأولى", "جمادى الآخرة", "رجب", "شعبان", 
+            "رمضان", "شوال", "ذو القعدة", "ذو الحجة"
+        )
+        val monthNamesEn = listOf(
+            "", "Muharram", "Safar", "Rabi' al-Awwal", "Rabi' al-Thani", 
+            "Jumada al-Awwal", "Jumada al-Thani", "Rajab", "Sha'ban", 
+            "Ramadan", "Shawwal", "Dhul-Qi'dah", "Dhul-Hijjah"
+        )
+        
+        val monthName = if (isAr) {
+            if (hijri.month in 1..12) monthNamesAr[hijri.month] else "محرم"
+        } else {
+            if (hijri.month in 1..12) monthNamesEn[hijri.month] else "Muharram"
+        }
+        
+        return if (isAr) {
+            "${hijri.day} $monthName ${hijri.year} هـ"
+        } else {
+            "${hijri.day} $monthName ${hijri.year} AH"
+        }
+    }
+
     fun getTomorrowHijriDate(): HijriDate {
         val tomorrow = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, 1) }
         
@@ -27,14 +76,6 @@ object HijriCalendarHelper {
         val day = tomorrow.get(Calendar.DAY_OF_MONTH)
         val month = tomorrow.get(Calendar.MONTH) + 1
         val year = tomorrow.get(Calendar.YEAR)
-        
-        if (year == 2026 && month == 5) {
-            val hijriDay = day - 18 + 1
-            return if (hijriDay > 0) HijriDate(hijriDay, 12, 1447) else HijriDate(30 + hijriDay, 11, 1447)
-        } else if (year == 2026 && month == 6) {
-            val hijriDay = day + 13
-            return if (hijriDay <= 30) HijriDate(hijriDay, 12, 1447) else HijriDate(hijriDay - 30, 1, 1448)
-        }
         
         // Simple astronomical formula fallback (Kuwaiti algorithm)
         val jd = getJulianDay(year, month, day)
@@ -94,12 +135,40 @@ object HijriCalendarHelper {
     }
 
     fun getGregorianEquivalent(hijriMonth: Int, hijriDay: Int, isAr: Boolean): String {
-        // Use a Gregorian search around the current Gregorian year (covering current + next)
-        val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+        val today = Calendar.getInstance()
+        val currentYear = today.get(Calendar.YEAR)
+        val currentMonth = today.get(Calendar.MONTH) + 1
+        val currentDay = today.get(Calendar.DAY_OF_MONTH)
+        
         val searchYears = listOf(currentYear, currentYear + 1)
         val monthNamesEn = listOf("", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
         val monthNamesAr = listOf("", "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر")
         
+        // Phase 1: Search from today onwards (current or upcoming occurrence)
+        for (year in searchYears) {
+            val startMonth = if (year == currentYear) currentMonth else 1
+            for (month in startMonth..12) {
+                val startDayVal = if (year == currentYear && month == currentMonth) currentDay else 1
+                val daysInMonth = when (month) {
+                    2 -> if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) 29 else 28
+                    4, 6, 9, 11 -> 30
+                    else -> 31
+                }
+                for (day in startDayVal..daysInMonth) {
+                    val jd = getJulianDay(year, month, day)
+                    val hijri = getHijriFromJulian(jd)
+                    if (hijri.month == hijriMonth && hijri.day == hijriDay) {
+                        return if (isAr) {
+                            "$day ${monthNamesAr[month]} $year"
+                        } else {
+                            "$day ${monthNamesEn[month]} $year"
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Phase 2: Fallback search of the entire period (Jan 1 of current year to Dec 31 of next year)
         for (year in searchYears) {
             for (month in 1..12) {
                 val daysInMonth = when (month) {

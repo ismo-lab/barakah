@@ -72,8 +72,12 @@ android {
 
     val finalVersionCode = if (isBuilding) {
       val next = currentVersionCode + 1
+      val major = 1
+      val minor = next / 100
+      val patch = next % 100
+      val formattedVersionName = "$major.$minor.${patch.toString().padStart(2, '0')}"
       versionProps.setProperty("VERSION_CODE", next.toString())
-      versionProps.setProperty("VERSION_NAME", "1.0.$next")
+      versionProps.setProperty("VERSION_NAME", formattedVersionName)
       val fos = FileOutputStream(versionFile)
       try {
         versionProps.store(fos, "Auto-incremented build version")
@@ -85,8 +89,11 @@ android {
       currentVersionCode
     }
 
+    val major = 1
+    val minor = finalVersionCode / 100
+    val patch = finalVersionCode % 100
     versionCode = finalVersionCode
-    versionName = "1.0.$finalVersionCode"
+    versionName = "$major.$minor.${patch.toString().padStart(2, '0')}"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }

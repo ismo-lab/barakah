@@ -265,7 +265,7 @@ fun HomeScreen(
                         )
                     }
 
-                    val hijriDateStr = getHijriDateString()
+                    val hijriDateStr = getHijriDateString(isAr)
                     Text(
                         text = translateHijri(hijriDateStr).localize(isAr, useWesternNumbersInArabic),
                         style = if (isLandscape || isShortScreen) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineLarge,
@@ -1796,21 +1796,8 @@ fun HomeScreen(
     }
 }
 
-private fun getHijriDateString(): String {
-    val today = Calendar.getInstance()
-    val day = today.get(Calendar.DAY_OF_MONTH)
-    val month = today.get(Calendar.MONTH) + 1
-    val year = today.get(Calendar.YEAR)
-    
-    // Exact approximate offset for Islamic calendar calculation context in May 2026
-    if (year == 2026 && month == 5) {
-        val hijriDay = day - 18 + 1
-        return if (hijriDay > 0) "$hijriDay Dhul-Hijjah 1447 AH" else "${30 + hijriDay} Dhul-Qi'dah 1447 AH"
-    } else if (year == 2026 && month == 6) {
-        val hijriDay = day + 13
-        return if (hijriDay <= 30) "$hijriDay Dhul-Hijjah 1447 AH" else "${hijriDay - 30} Muharram 1448 AH"
-    }
-    return "13 Dhul-Hijjah 1447 AH"
+private fun getHijriDateString(isAr: Boolean = false): String {
+    return dev.barakah.app.util.HijriCalendarHelper.getTodayHijriDateString(isAr)
 }
 
 data class Quadruple<A, B, C, D>(
