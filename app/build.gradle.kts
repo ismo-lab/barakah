@@ -11,51 +11,7 @@ import java.util.Base64
 import java.io.File
 import java.util.zip.GZIPOutputStream
 
-// Automatically extract keystore from base64 string on build to prevent signing corruption across devices and GitHub actions
-val keystoreFile = file("keystore.jks")
-val base64File = rootProject.file("debug.keystore.base64")
-if (!keystoreFile.exists()) {
-  if (base64File.exists()) {
-    try {
-      // Strip any possible whitespace, newlines, carriage returns, or non-base64 characters
-      val rawContent = base64File.readText().trim()
-      if (rawContent.isNotEmpty()) {
-        // Use MimeDecoder to handle any line breaks (CRLF/LF) added during git/checkout operations
-        val decodedBytes = Base64.getMimeDecoder().decode(rawContent)
-        keystoreFile.writeBytes(decodedBytes)
-        println("Dynamic keystore extraction successful: ${keystoreFile.length()} bytes")
-      }
-    } catch (e: Exception) {
-      println("Dynamic keystore extraction failed: ${e.message}")
-    }
-  }
-  
-  // If keystore file still does not exist (e.g. on CI/GitHub Actions where base64 might be missing), generate a fallback
-  if (!keystoreFile.exists()) {
-    try {
-      println("Generating fallback debug keystore for signing...")
-      val process = ProcessBuilder(
-        "keytool", "-genkey", "-v",
-        "-keystore", keystoreFile.absolutePath,
-        "-storepass", "android",
-        "-alias", "androiddebugkey",
-        "-keypass", "android",
-        "-keyalg", "RSA",
-        "-keysize", "2048",
-        "-validity", "10000",
-        "-dname", "CN=Android Debug,O=Android,C=US"
-      ).start()
-      val exitCode = process.waitFor()
-      if (exitCode == 0) {
-        println("Fallback debug keystore generated successfully: ${keystoreFile.length()} bytes")
-      } else {
-        println("Fallback debug keystore generation failed with exit code $exitCode")
-      }
-    } catch (e: Exception) {
-      println("Failed to generate fallback debug keystore: ${e.message}")
-    }
-  }
-}
+// Dynamic keystore extraction happens on-demand during configuration phase in signingConfigs below
 
 plugins {
   alias(libs.plugins.android.application)
@@ -128,7 +84,27 @@ android {
 
   signingConfigs {
     create("sharedConfig") {
-      storeFile = file("keystore.jks")
+      val keystoreFile = file("keystore.jks")
+      val base64File = rootProject.file("debug.keystore.base64")
+      if (!keystoreFile.exists()) {
+        if (base64File.exists()) {
+          try {
+            // Remove any potential whitespace/formatting from base64
+            val rawContent = base64File.readText().replace("\\s".toRegex(), "")
+            if (rawContent.isNotEmpty()) {
+              val decodedBytes = Base64.getDecoder().decode(rawContent)
+              keystoreFile.writeBytes(decodedBytes)
+              println("Dynamic keystore extraction successful: ${keystoreFile.length()} bytes")
+            }
+          } catch (e: Exception) {
+            throw GradleException("Failed to decode base64 keystore: ${e.message}", e)
+          }
+        } else {
+          throw GradleException("Signing configuration error: Keystore file '${keystoreFile.absolutePath}' is missing, and the base64 source '${base64File.absolutePath}' was not found. Please ensure 'debug.keystore.base64' is committed to the root of the repository.")
+        }
+      }
+      
+      storeFile = keystoreFile
       storePassword = "android"
       keyAlias = "androiddebugkey"
       keyPassword = "android"
