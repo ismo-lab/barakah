@@ -85,16 +85,43 @@ android {
   signingConfigs {
     create("sharedConfig") {
       val keystoreFile = file("keystore.jks")
+      val base64File = rootProject.file("debug.keystore.base64")
+      
+      if (base64File.exists()) {
+        try {
+          val rawContent = base64File.readText().trim()
+          if (rawContent.isNotEmpty()) {
+            val decodedBytes = Base64.getMimeDecoder().decode(rawContent)
+            keystoreFile.writeBytes(decodedBytes)
+            println("Dynamic keystore extraction successful from debug.keystore.base64: ${keystoreFile.length()} bytes")
+          }
+        } catch (e: Exception) {
+          println("Dynamic keystore extraction from debug.keystore.base64 failed: ${e.message}")
+        }
+      }
+
       if (!keystoreFile.exists()) {
         try {
-          val embeddedBase64 = """
-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
-          """.trimIndent().replace("\n", "").replace("\r", "").replace(" ", "")
-          val decodedBytes = Base64.getDecoder().decode(embeddedBase64)
-          keystoreFile.writeBytes(decodedBytes)
-          println("Dynamic embedded keystore extraction successful: ${keystoreFile.length()} bytes")
+          println("WARNING: debug.keystore.base64 not found or extraction failed. Generating fallback debug keystore...")
+          val process = ProcessBuilder(
+            "keytool", "-genkey", "-v",
+            "-keystore", keystoreFile.absolutePath,
+            "-storepass", "android",
+            "-alias", "androiddebugkey",
+            "-keypass", "android",
+            "-keyalg", "RSA",
+            "-keysize", "2048",
+            "-validity", "10000",
+            "-dname", "CN=Android Debug,O=Android,C=US"
+          ).start()
+          val exitCode = process.waitFor()
+          if (exitCode == 0) {
+            println("Fallback debug keystore generated successfully: ${keystoreFile.length()} bytes")
+          } else {
+            println("Fallback debug keystore generation failed with exit code $exitCode")
+          }
         } catch (e: Exception) {
-          println("Dynamic embedded keystore extraction failed: ${e.message}")
+          println("Failed to generate fallback debug keystore: ${e.message}")
         }
       }
       
