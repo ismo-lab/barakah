@@ -32,8 +32,7 @@ class NawafilWidget : GlanceAppWidget() {
         val useWesternNumbersInArabic = prefs.getBoolean("use_western_numbers_in_arabic", false)
         
         val calendar = Calendar.getInstance()
-        val tz = TimeZone.getDefault()
-        val offsetHours = tz.getOffset(calendar.timeInMillis) / 3600000.0
+        val offsetHours = PrayerCalculator.getEffectiveTimezoneOffset(lat, lng)
         
         val asrMethod = prefs.getString("asr_method", "standard") ?: "standard"
         val ishaMethod = prefs.getString("isha_method", "standard") ?: "standard"

@@ -147,4 +147,41 @@ object PrayerCalculator {
         if (a < 0) a += 360.0
         return a
     }
+
+    fun getEffectiveTimezoneOffset(latitude: Double, longitude: Double): Double {
+        // 1. Calculate standard timezone offset for the location (15 degrees = 1 hour)
+        var standardOffset = Math.round(longitude / 15.0).toDouble()
+        
+        // Adjust for half-hour / fractional timezone zones
+        if (latitude in 6.0..37.5 && longitude in 68.0..97.5) {
+            standardOffset = 5.5
+        } else if (latitude in 26.0..30.5 && longitude in 80.0..88.5) {
+            standardOffset = 5.75
+        } else if (latitude in 25.0..40.0 && longitude in 44.0..63.5) {
+            standardOffset = 3.5
+        } else if (latitude in 29.0..38.5 && longitude in 60.5..75.0) {
+            standardOffset = 4.5
+        } else if (latitude in 9.0..28.5 && longitude in 92.0..101.5) {
+            standardOffset = 6.5
+        } else if (latitude in -38.0..-10.0 && longitude in 129.0..141.0) {
+            standardOffset = 9.5
+        } else if (latitude in 46.5..52.0 && longitude in -60.0..-52.5) {
+            standardOffset = -3.5
+        }
+        
+        // 2. Get device's current timezone offset
+        val deviceTz = TimeZone.getDefault()
+        val deviceOffset = deviceTz.getOffset(System.currentTimeMillis()) / 3600000.0
+        
+        // 3. Compare standardOffset and deviceOffset.
+        // If they are within 1.5 hours, use the device's timezone offset (captures local DST, custom timezone borders, etc.)
+        // If they differ by more than 1.5 hours, the device's timezone is likely a mismatch (e.g. preview VM, travel, or manual clock settings).
+        // In that case, use the location's standard timezone offset.
+        val difference = Math.abs(standardOffset - deviceOffset)
+        return if (difference <= 1.5) {
+            deviceOffset
+        } else {
+            standardOffset
+        }
+    }
 }

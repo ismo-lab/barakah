@@ -23,8 +23,7 @@ object PrayerScheduler {
             val lng = prefs.getFloat("loc_lng", 39.8262f).toDouble()
             
             val calendar = Calendar.getInstance()
-            val tz = TimeZone.getDefault()
-            val offsetHours = tz.getOffset(calendar.timeInMillis) / 3600000.0
+            val offsetHours = dev.barakah.app.util.PrayerCalculator.getEffectiveTimezoneOffset(lat, lng)
             
             val asrMethod = prefs.getString("asr_method", "standard") ?: "standard"
             val ishaMethod = prefs.getString("isha_method", "standard") ?: "standard"

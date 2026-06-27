@@ -208,8 +208,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             val adjM = prefs.getInt("adj_maghrib", 0)
             val adjI = prefs.getInt("adj_isha", 0)
             val cal = Calendar.getInstance()
-            val tz = TimeZone.getDefault()
-            val offsetHours = tz.getOffset(cal.timeInMillis) / 3600000.0
+            val offsetHours = PrayerCalculator.getEffectiveTimezoneOffset(lat, lng)
             PrayerCalculator.calculate(
                 latitude = lat,
                 longitude = lng,
@@ -292,6 +291,8 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
     // Coroutines ticks
     private var countdownJob: Job? = null
+    private var lastCheckedDayOfYear = -1
+    private var lastCheckedTimeZoneId = ""
 
     init {
         // Guarantee app default language is arabic when first open
@@ -299,8 +300,12 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             prefs.edit().putString("app_lang", "ar").apply()
         }
 
-        // Initialize parsed seconds
-        updateParsedSeconds(_prayerTimes.value)
+        // Initialize parsed seconds and observe for subsequent dynamic updates
+        viewModelScope.launch {
+            _prayerTimes.collect { times ->
+                updateParsedSeconds(times)
+            }
+        }
 
         // Initialize databases & values asynchronously in the background
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
@@ -672,8 +677,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
     private fun recalculatePrayerTimes() {
         val calendar = Calendar.getInstance()
-        val tz = TimeZone.getDefault()
-        val offsetHours = tz.getOffset(calendar.timeInMillis) / 3600000.0
+        val offsetHours = PrayerCalculator.getEffectiveTimezoneOffset(_currentLocation.value.first, _currentLocation.value.second)
 
         val newTimes = PrayerCalculator.calculate(
             latitude = _currentLocation.value.first,
@@ -1000,13 +1004,26 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         countdownJob = viewModelScope.launch {
             while (true) {
                 calculateNextPrayer()
-                delay(1000)
+                // Align delay exactly to the start of the next wall-clock second to prevent drift, skipping, or double ticks
+                val nextSecondDelay = 1000 - (System.currentTimeMillis() % 1000)
+                delay(nextSecondDelay)
             }
         }
     }
 
     private fun calculateNextPrayer() {
         val now = Calendar.getInstance()
+        val dayOfYear = now.get(Calendar.DAY_OF_YEAR)
+        val tzId = TimeZone.getDefault().id
+        
+        // Detect day-change or timezone/DST transitions and trigger live recalculation
+        if ((lastCheckedDayOfYear != -1 && lastCheckedDayOfYear != dayOfYear) ||
+            (lastCheckedTimeZoneId.isNotEmpty() && lastCheckedTimeZoneId != tzId)) {
+            recalculatePrayerTimes()
+        }
+        lastCheckedDayOfYear = dayOfYear
+        lastCheckedTimeZoneId = tzId
+
         val currentHour = now.get(Calendar.HOUR_OF_DAY)
         val currentMinute = now.get(Calendar.MINUTE)
         val currentSecond = now.get(Calendar.SECOND)
