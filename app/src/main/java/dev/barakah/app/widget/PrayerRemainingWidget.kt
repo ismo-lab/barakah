@@ -25,10 +25,13 @@ import java.util.*
 class PrayerRemainingWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val prefs = context.getSharedPreferences("barakah_prefs", Context.MODE_PRIVATE)
+        val isAr = prefs.getString("app_lang", "ar") == "ar"
+        val defaultLabel = if (isAr) "الموقع غير محدد" else "No Location Selected"
         val lat = prefs.getFloat("loc_lat", 21.4225f).toDouble()
         val lng = prefs.getFloat("loc_lng", 39.8262f).toDouble()
-        val label = prefs.getString("loc_label", "Mecca, KSA") ?: "Mecca, KSA"
-        val isAr = prefs.getString("app_lang", "ar") == "ar"
+        val rawLabel = prefs.getString("loc_label", null)
+        val label = if (rawLabel.isNullOrEmpty() || rawLabel == "Mecca, KSA" || rawLabel == "Mecca (GPS Fallback)" || rawLabel == "مكة المكرمة (تلقائي)") defaultLabel else rawLabel
+        val isLocationSet = !(rawLabel.isNullOrEmpty() || rawLabel == "Mecca, KSA" || rawLabel == "Mecca (GPS Fallback)" || rawLabel == "مكة المكرمة (تلقائي)" || rawLabel == "الموقع غير محدد" || rawLabel == "No Location Selected")
         val useWesternNumbersInArabic = prefs.getBoolean("use_western_numbers_in_arabic", false)
         
         val calendar = Calendar.getInstance()
@@ -108,20 +111,28 @@ class PrayerRemainingWidget : GlanceAppWidget() {
         val locale = java.util.Locale.US
         val formattedH = h.toString().localize(isAr, useWesternNumbersInArabic)
         val formattedM = mn.toString().localize(isAr, useWesternNumbersInArabic)
-        val diffStr = if (isAr) "متبقي $formattedH ساعة و $formattedM دقيقة" else "Starts in $formattedH hr $formattedM min"
-
-        val dispName = if (isAr) {
-            when (nextName) {
-                "Fajr" -> "الفجر"
-                "Dhuhr" -> "الظهر"
-                "Asr" -> "العصر"
-                "Maghrib" -> "المغرب"
-                "Isha" -> "العشاء"
-                "Sunrise" -> "الشروق"
-                else -> nextName
-            }
+        val diffStr = if (!isLocationSet) {
+            if (isAr) "متبقي --" else "Starts in --"
         } else {
-            nextName
+            if (isAr) "متبقي $formattedH ساعة و $formattedM دقيقة" else "Starts in $formattedH hr $formattedM min"
+        }
+
+        val dispName = if (!isLocationSet) {
+            "--"
+        } else {
+            if (isAr) {
+                when (nextName) {
+                    "Fajr" -> "الفجر"
+                    "Dhuhr" -> "الظهر"
+                    "Asr" -> "العصر"
+                    "Maghrib" -> "المغرب"
+                    "Isha" -> "العشاء"
+                    "Sunrise" -> "الشروق"
+                    else -> nextName
+                }
+            } else {
+                nextName
+            }
         }
 
         val nextTimeStr = when(nextName) {
@@ -137,6 +148,7 @@ class PrayerRemainingWidget : GlanceAppWidget() {
         val is24Hour = android.text.format.DateFormat.is24HourFormat(context)
 
         fun formatTimeStr(timeStr: String): String {
+            if (!isLocationSet) return "--:--".localize(isAr, useWesternNumbersInArabic)
             return try {
                 val parts = timeStr.trim().split(":")
                 val hh = parts[0].toInt()

@@ -85,6 +85,84 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     fun refreshLocationIfAuto() {
         if (locationMethod.value == "auto" && isLocationEnabled()) {
             requestGPSLocation()
+            startLocationUpdates()
+        }
+    }
+
+    private var locationCallback: com.google.android.gms.location.LocationCallback? = null
+
+    @SuppressLint("MissingPermission")
+    fun startLocationUpdates() {
+        if (locationCallback != null) return // Already running
+
+        try {
+            val context = getApplication<Application>()
+            val fineGranted = androidx.core.content.ContextCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.ACCESS_FINE_LOCATION
+            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+            val coarseGranted = androidx.core.content.ContextCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+
+            if (!fineGranted && !coarseGranted) return
+
+            val locationRequest = com.google.android.gms.location.LocationRequest.Builder(
+                Priority.PRIORITY_BALANCED_POWER_ACCURACY,
+                300000L // 5 minutes
+            ).apply {
+                setMinUpdateIntervalMillis(60000L) // 1 minute
+                setMinUpdateDistanceMeters(200f) // 200 meters
+            }.build()
+
+            val callback = object : com.google.android.gms.location.LocationCallback() {
+                override fun onLocationResult(locationResult: com.google.android.gms.location.LocationResult) {
+                    val loc = locationResult.lastLocation ?: return
+                    val now = System.currentTimeMillis()
+                    val diffLat = abs(loc.latitude - _currentLocation.value.first)
+                    val diffLng = abs(loc.longitude - _currentLocation.value.second)
+
+                    if (diffLat > 0.001 || diffLng > 0.001) {
+                        viewModelScope.launch {
+                            val resolvedName = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                getCityNameFromLocation(loc.latitude, loc.longitude)
+                            }
+                            val defaultLabel = if (_appLanguage.value == "ar") "تلقائي (GPS)" else "GPS (Auto)"
+                            val label = resolvedName ?: defaultLabel
+
+                            updateLocation(loc.latitude, loc.longitude, label)
+
+                            if (now - lastGpsSuccessMsgTime > 60000) {
+                                lastGpsSuccessMsgTime = now
+                                val msg = if (_appLanguage.value == "ar") "تم تحديث موقعك تلقائياً بنجاح ($label)" else "GPS location updated successfully ($label)"
+                                _eventFlow.emit(msg)
+                            }
+                        }
+                    }
+                }
+            }
+
+            locationClient.requestLocationUpdates(
+                locationRequest,
+                callback,
+                android.os.Looper.getMainLooper()
+            ).addOnSuccessListener {
+                locationCallback = callback
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun stopLocationUpdates() {
+        locationCallback?.let { callback ->
+            try {
+                locationClient.removeLocationUpdates(callback)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            locationCallback = null
         }
     }
 
@@ -176,8 +254,25 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     )
     val currentLocation: StateFlow<Pair<Double, Double>> = _currentLocation
 
-    private val _locationLabel = MutableStateFlow(prefs.getString("loc_label", "Mecca, KSA") ?: "Mecca, KSA")
+    private val _locationLabel = MutableStateFlow(
+        run {
+            val label = prefs.getString("loc_label", "")
+            if (label.isNullOrEmpty() || label == "Mecca, KSA" || label == "Mecca (GPS Fallback)" || label == "مكة المكرمة (تلقائي)") {
+                if (prefs.getString("app_lang", "ar") == "ar") "الموقع غير محدد" else "No Location Selected"
+            } else {
+                label
+            }
+        }
+    )
     val locationLabel: StateFlow<String> = _locationLabel
+
+    private val _isLocationSet = MutableStateFlow(
+        run {
+            val label = _locationLabel.value
+            !(label.isNullOrEmpty() || label == "No Location Selected" || label == "الموقع غير محدد" || label == "Mecca, KSA" || label == "Mecca (GPS Fallback)" || label == "مكة المكرمة (تلقائي)")
+        }
+    )
+    val isLocationSet: StateFlow<Boolean> = _isLocationSet
 
     private val _eventFlow = MutableSharedFlow<String>()
     val eventFlow: SharedFlow<String> = _eventFlow.asSharedFlow()
@@ -402,6 +497,9 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             }.collect {}
         }
         updateWidgetsGlobally()
+        if (locationMethod.value == "auto") {
+            startLocationUpdates()
+        }
     }
 
     private var lastGpsOffMsgTime = 0L
@@ -422,10 +520,10 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             ) == android.content.pm.PackageManager.PERMISSION_GRANTED
 
             if (!fineGranted && !coarseGranted) {
-                val label = if (_appLanguage.value == "ar") "مكة المكرمة (تلقائي)" else "Mecca (GPS Fallback)"
+                val label = if (_appLanguage.value == "ar") "الموقع غير محدد" else "No Location Selected"
                 updateLocation(21.4225, 39.8262, label)
                 viewModelScope.launch {
-                    val msg = if (_appLanguage.value == "ar") "لم يتم منح صلاحية تحديد الموقع، تم استخدام مكة المكرمة كافتراضي" else "Location permission not granted, falling back to Mecca"
+                    val msg = if (_appLanguage.value == "ar") "لم يتم منح صلاحية تحديد الموقع، يرجى تحديد موقعك" else "Location permission not granted, please select your location"
                     _eventFlow.emit(msg)
                 }
                 return
@@ -483,48 +581,45 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
                                         _eventFlow.emit(msg)
                                     }
                                 } else {
-                                    // Fallback ONLY to Mecca as requested
-                                    val label = if (_appLanguage.value == "ar") "مكة المكرمة (تلقائي)" else "Mecca (GPS Fallback)"
+                                    val label = if (_appLanguage.value == "ar") "الموقع غير محدد" else "No Location Selected"
                                     updateLocation(21.4225, 39.8262, label)
                                     viewModelScope.launch {
-                                        val msg = if (_appLanguage.value == "ar") "تعذر تحديد الموقع الجغرافي، تم استخدام مكة المكرمة كافتراضي" else "Could not determine GPS location, falling back to Mecca"
+                                        val msg = if (_appLanguage.value == "ar") "تعذر تحديد الموقع الجغرافي، يرجى اختياره يدوياً" else "Could not determine GPS location, please select manually"
                                         _eventFlow.emit(msg)
                                     }
                                 }
                             }.addOnFailureListener {
-                                val label = if (_appLanguage.value == "ar") "مكة المكرمة (تلقائي)" else "Mecca (GPS Fallback)"
+                                val label = if (_appLanguage.value == "ar") "الموقع غير محدد" else "No Location Selected"
                                 updateLocation(21.4225, 39.8262, label)
                                 viewModelScope.launch {
-                                    val msg = if (_appLanguage.value == "ar") "تعذر تحديد الموقع الجغرافي، تم استخدام مكة المكرمة كافتراضي" else "Could not determine GPS location, falling back to Mecca"
+                                    val msg = if (_appLanguage.value == "ar") "تعذر تحديد الموقع الجغرافي، يرجى اختياره يدوياً" else "Could not determine GPS location, please select manually"
                                     _eventFlow.emit(msg)
                                 }
                             }
                         } catch (e: Exception) {
-                            val label = if (_appLanguage.value == "ar") "مكة المكرمة (تلقائي)" else "Mecca (GPS Fallback)"
+                            val label = if (_appLanguage.value == "ar") "الموقع غير محدد" else "No Location Selected"
                             updateLocation(21.4225, 39.8262, label)
                             viewModelScope.launch {
-                                val msg = if (_appLanguage.value == "ar") "تعذر تحديد الموقع الجغرافي، تم استخدام مكة المكرمة كافتراضي" else "Could not determine GPS location, falling back to Mecca"
+                                val msg = if (_appLanguage.value == "ar") "تعذر تحديد الموقع الجغرافي، يرجى اختياره يدوياً" else "Could not determine GPS location, please select manually"
                                 _eventFlow.emit(msg)
                             }
                         }
                     }
                 }
                 .addOnFailureListener {
-                    // Fallback ONLY to Mecca
-                    val label = if (_appLanguage.value == "ar") "مكة المكرمة (تلقائي)" else "Mecca (GPS Fallback)"
+                    val label = if (_appLanguage.value == "ar") "الموقع غير محدد" else "No Location Selected"
                     updateLocation(21.4225, 39.8262, label)
                     viewModelScope.launch {
-                        val msg = if (_appLanguage.value == "ar") "فشل تحديد الموقع الجغرافي، تم استخدام مكة المكرمة كافتراضي" else "GPS location failed, falling back to Mecca"
+                        val msg = if (_appLanguage.value == "ar") "فشل تحديد الموقع الجغرافي، يرجى اختياره يدوياً" else "GPS location failed, please select manually"
                         _eventFlow.emit(msg)
                     }
                 }
         } catch (e: Exception) {
             e.printStackTrace()
-            // Fallback ONLY to Mecca
-            val label = if (_appLanguage.value == "ar") "مكة المكرمة (تلقائي)" else "Mecca (GPS Fallback)"
+            val label = if (_appLanguage.value == "ar") "الموقع غير محدد" else "No Location Selected"
             updateLocation(21.4225, 39.8262, label)
             viewModelScope.launch {
-                val msg = if (_appLanguage.value == "ar") "حدث خطأ أثناء تحديد الموقع، تم استخدام مكة المكرمة كافتراضي" else "GPS error occurred, falling back to Mecca"
+                val msg = if (_appLanguage.value == "ar") "حدث خطأ أثناء تحديد الموقع، يرجى اختياره يدوياً" else "GPS error occurred, please select manually"
                 _eventFlow.emit(msg)
             }
         }
@@ -560,6 +655,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     fun updateLocation(lat: Double, lng: Double, label: String, isSuccessFeedback: Boolean = false) {
         _currentLocation.value = Pair(lat, lng)
         _locationLabel.value = label
+        _isLocationSet.value = !(label.isNullOrEmpty() || label == "No Location Selected" || label == "الموقع غير محدد" || label == "Mecca, KSA" || label == "Mecca (GPS Fallback)" || label == "مكة المكرمة (تلقائي)")
         _qiblaBearing.value = QiblaManager.calculateQiblaBearing(lat, lng)
         prefs.edit().putFloat("loc_lat", lat.toFloat()).putFloat("loc_lng", lng.toFloat()).putString("loc_label", label).commit()
         recalculatePrayerTimes()
@@ -670,6 +766,9 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         if (method == "auto") {
             lastGpsOffMsgTime = 0 // Reset to allow immediate feedback when switching to auto
             requestGPSLocation()
+            startLocationUpdates()
+        } else {
+            stopLocationUpdates()
         }
     }
 
@@ -880,7 +979,8 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         setArabicFontSize(24f)
         setEnglishFontSize(16f)
         setLocationMethod("manual")
-        updateLocation(21.4225, 39.8262, "Mecca, KSA", false)
+        val defaultLabel = if (prefs.getString("app_lang", "ar") == "ar") "الموقع غير محدد" else "No Location Selected"
+        updateLocation(21.4225, 39.8262, defaultLabel, false)
         setAsrMethod("standard")
         setIshaMethod("standard")
         setShowNawafil(false)
@@ -1185,6 +1285,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         super.onCleared()
         sensorManager.stop()
         countdownJob?.cancel()
+        stopLocationUpdates()
         try {
             getApplication<Application>().unregisterReceiver(gpsStatusReceiver)
         } catch (e: Exception) {

@@ -58,6 +58,7 @@ fun HomeScreen(
     val isShortScreen = configuration.screenHeightDp < 600
     val locationLabel by viewModel.locationLabel.collectAsState()
     val times by viewModel.prayerTimes.collectAsState()
+    val isLocationSet by viewModel.isLocationSet.collectAsState()
     val activeHighlight by viewModel.activeHighlightName.collectAsState()
 
     // Persistent Settings states retrieved from viewmodel
@@ -170,47 +171,65 @@ fun HomeScreen(
             .replace("AH", "هـ")
     }
 
-    val schedule = remember(times, showNawafil) {
+    val schedule = remember(times, showNawafil, isLocationSet) {
+        val displayTimes = if (isLocationSet) times else {
+            PrayerCalculator.PrayerTimes(
+                fajr = "--:--",
+                sunrise = "--:--",
+                dhuhr = "--:--",
+                asr = "--:--",
+                maghrib = "--:--",
+                isha = "--:--"
+            )
+        }
         val list = mutableListOf(
-            Triple("Fajr", times.fajr, "Dawn Prayer"),
-            Triple("Sunrise", times.sunrise, "Sunrise Shuruq")
+            Triple("Fajr", displayTimes.fajr, "Dawn Prayer"),
+            Triple("Sunrise", displayTimes.sunrise, "Sunrise Shuruq")
         )
         if (showNawafil) {
-            val duhaTime = TimeUtils.calculateOffsetTime(times.sunrise, 20)
+            val duhaTime = if (isLocationSet) TimeUtils.calculateOffsetTime(displayTimes.sunrise, 20) else "--:--"
             list.add(Triple("Duha (Nafilah)", duhaTime, "Duha Voluntary Prayer"))
         }
-        list.add(Triple("Dhuhr", times.dhuhr, "Midday Prayer"))
-        list.add(Triple("Asr", times.asr, "Afternoon Prayer"))
-        list.add(Triple("Maghrib", times.maghrib, "Sunset Prayer"))
-        list.add(Triple("Isha", times.isha, "Night Prayer"))
+        list.add(Triple("Dhuhr", displayTimes.dhuhr, "Midday Prayer"))
+        list.add(Triple("Asr", displayTimes.asr, "Afternoon Prayer"))
+        list.add(Triple("Maghrib", displayTimes.maghrib, "Sunset Prayer"))
+        list.add(Triple("Isha", displayTimes.isha, "Night Prayer"))
         
         if (showNawafil) {
             try {
-                val mParts = times.maghrib.split(":")
-                val mMin = mParts[0].toInt() * 60 + mParts[1].toInt()
-                val fParts = times.fajr.split(":")
-                var fMin = fParts[0].toInt() * 60 + fParts[1].toInt()
-                if (fMin < mMin) fMin += 24 * 60
-                val diff = fMin - mMin
-                
-                val firstThirdMin = mMin + diff / 3
-                val midMin = mMin + diff / 2
-                val lastThirdMin = mMin + (diff * 2) / 3
-                
-                fun formatMins(min: Int): String {
-                    val h = (min / 60) % 24
-                    val m = min % 60
-                    return String.format(Locale.US, "%02d:%02d", h, m)
+                if (isLocationSet) {
+                    val mParts = displayTimes.maghrib.split(":")
+                    val mMin = mParts[0].toInt() * 60 + mParts[1].toInt()
+                    val fParts = displayTimes.fajr.split(":")
+                    var fMin = fParts[0].toInt() * 60 + fParts[1].toInt()
+                    if (fMin < mMin) fMin += 24 * 60
+                    val diff = fMin - mMin
+                    
+                    val firstThirdMin = mMin + diff / 3
+                    val midMin = mMin + diff / 2
+                    val lastThirdMin = mMin + (diff * 2) / 3
+                    
+                    fun formatMins(min: Int): String {
+                        val h = (min / 60) % 24
+                        val m = min % 60
+                        return String.format(Locale.US, "%02d:%02d", h, m)
+                    }
+                    
+                    val witrStart = TimeUtils.calculateOffsetTime(displayTimes.isha, 45)
+                    list.add(Triple("First Third (Nafilah)", formatMins(firstThirdMin), "First Third of the Night"))
+                    list.add(Triple("Midnight (Nafilah)", formatMins(midMin), "Islamic Midnight"))
+                    list.add(Triple("Qiyam Last Third (Nafilah)", formatMins(lastThirdMin), "Late Night Prayer"))
+                    list.add(Triple("Witr (Nafilah)", "$witrStart - ${displayTimes.fajr}", "Witr Voluntary Prayer"))
+                } else {
+                    list.add(Triple("First Third (Nafilah)", "--:--", "First Third of the Night"))
+                    list.add(Triple("Midnight (Nafilah)", "--:--", "Islamic Midnight"))
+                    list.add(Triple("Qiyam Last Third (Nafilah)", "--:--", "Late Night Prayer"))
+                    list.add(Triple("Witr (Nafilah)", "--:--", "Witr Voluntary Prayer"))
                 }
-                
-                list.add(Triple("First Third (Nafilah)", formatMins(firstThirdMin), "First Third of the Night"))
-                list.add(Triple("Midnight (Nafilah)", formatMins(midMin), "Islamic Midnight"))
-                list.add(Triple("Qiyam Last Third (Nafilah)", formatMins(lastThirdMin), "Late Night Prayer"))
-                list.add(Triple("Witr (Nafilah)", "${times.isha} - ${times.fajr}", "Witr Voluntary Prayer"))
             } catch (e: Exception) {
                 // Fallback if parsing fails
-                val witrTime = TimeUtils.calculateOffsetTime(times.isha, 45)
-                list.add(Triple("Witr (Nafilah)", witrTime, "Witr Voluntary Prayer"))
+                val witrTime = if (isLocationSet) TimeUtils.calculateOffsetTime(displayTimes.isha, 45) else "--:--"
+                list.add(Triple("Witr (Nafilah)", if (isLocationSet) "$witrTime - ${displayTimes.fajr}" else "--:--", "Witr Voluntary Prayer"))
             }
         }
         list
@@ -1993,6 +2012,7 @@ fun CountdownCardView(
 ) {
     val countdown by viewModel.nextPrayerCountdown.collectAsState()
     val nextPrayerName by viewModel.nextPrayerName.collectAsState()
+    val isLocationSet by viewModel.isLocationSet.collectAsState()
 
 val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
 
@@ -2031,7 +2051,11 @@ val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsSt
                 horizontalAlignment = androidx.compose.ui.Alignment.Start
             ) {
                 androidx.compose.material3.Text(
-                    text = if (isAr) "الصلاة القادمة: ${translatePrayer(nextPrayerName)}" else "NEXT: $nextPrayerName".uppercase(),
+                    text = if (!isLocationSet) {
+                        if (isAr) "الصلاة القادمة: --" else "NEXT: --"
+                    } else {
+                        if (isAr) "الصلاة القادمة: ${translatePrayer(nextPrayerName)}" else "NEXT: $nextPrayerName".uppercase()
+                    },
                     style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
                     color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f),
                     fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
@@ -2039,22 +2063,26 @@ val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsSt
                     modifier = Modifier.padding(bottom = 2.dp)
                 )
 
-                val formattedCountdown = remember(countdown, isAr, useWesternNumbersInArabic) {
-                    try {
-                        val parts = countdown.replace("-", "").split(":")
-                        if (parts.size == 3) {
-                            val locale = java.util.Locale.US
-                            val h = parts[0].toInt()
-                            val m = parts[1].toInt()
-                            val s = parts[2].toInt()
-                            val base = java.lang.String.format(locale, "%02d:%02d:%02d", h, m, s)
-                            val prefix = if (countdown.startsWith("-")) "-" else ""
-                            (prefix + base).localize(isAr, useWesternNumbersInArabic)
-                        } else {
+                val formattedCountdown = remember(countdown, isAr, useWesternNumbersInArabic, isLocationSet) {
+                    if (!isLocationSet) {
+                        "--:--:--".localize(isAr, useWesternNumbersInArabic)
+                    } else {
+                        try {
+                            val parts = countdown.replace("-", "").split(":")
+                            if (parts.size == 3) {
+                                val locale = java.util.Locale.US
+                                val h = parts[0].toInt()
+                                val m = parts[1].toInt()
+                                val s = parts[2].toInt()
+                                val base = java.lang.String.format(locale, "%02d:%02d:%02d", h, m, s)
+                                val prefix = if (countdown.startsWith("-")) "-" else ""
+                                (prefix + base).localize(isAr, useWesternNumbersInArabic)
+                            } else {
+                                countdown.localize(isAr, useWesternNumbersInArabic)
+                            }
+                        } catch (e: Exception) {
                             countdown.localize(isAr, useWesternNumbersInArabic)
                         }
-                    } catch (e: Exception) {
-                        countdown.localize(isAr, useWesternNumbersInArabic)
                     }
                 }
 

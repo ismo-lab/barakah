@@ -254,16 +254,34 @@ fun LanguageCard(label: String, isSelected: Boolean, onClick: () -> Unit) {
                      onFinish()
                  }
              },
-            modifier = Modifier.fillMaxWidth().height(56.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-        ) {
-            Icon(Icons.Default.GpsFixed, contentDescription = null)
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(text = if (isAr) "استخدام الموقع التلقائي (GPS)" else "Use GPS (Recommended)")
-        }
+             modifier = Modifier.fillMaxWidth().height(56.dp),
+             shape = RoundedCornerShape(16.dp),
+             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+         ) {
+             Icon(Icons.Default.GpsFixed, contentDescription = null)
+             Spacer(modifier = Modifier.width(12.dp))
+             Text(text = if (isAr) "استخدام الموقع التلقائي (GPS)" else "Use GPS (Recommended)")
+         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+         Spacer(modifier = Modifier.height(10.dp))
+
+         // Default / Filler Button
+         OutlinedButton(
+             onClick = {
+                 viewModel.setLocationMethod("manual")
+                 val defaultLabel = if (isAr) "الموقع غير محدد" else "No Location Selected"
+                 viewModel.updateLocation(21.4225, 39.8262, defaultLabel)
+                 onFinish()
+             },
+             modifier = Modifier.fillMaxWidth().height(56.dp),
+             shape = RoundedCornerShape(16.dp)
+         ) {
+             Icon(Icons.Default.LocationOn, contentDescription = null)
+             Spacer(modifier = Modifier.width(12.dp))
+             Text(text = if (isAr) "تحديد الموقع لاحقاً (بدون تحديد)" else "Set Location Later (Not Set)")
+         }
+
+         Spacer(modifier = Modifier.height(16.dp))
         
         Text(text = if (isAr) "أو اختر مدينة يدوياً:" else "Or select a city manually:", style = MaterialTheme.typography.labelMedium)
         

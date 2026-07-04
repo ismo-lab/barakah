@@ -136,6 +136,11 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         activityViewModel?.refreshLocationIfAuto()
     }
+
+    override fun onPause() {
+        activityViewModel?.stopLocationUpdates()
+        super.onPause()
+    }
 }
 
 @Composable

@@ -25,10 +25,13 @@ import java.util.*
 class NawafilWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val prefs = context.getSharedPreferences("barakah_prefs", Context.MODE_PRIVATE)
+        val isAr = prefs.getString("app_lang", "ar") == "ar"
+        val defaultLabel = if (isAr) "الموقع غير محدد" else "No Location Selected"
         val lat = prefs.getFloat("loc_lat", 21.4225f).toDouble()
         val lng = prefs.getFloat("loc_lng", 39.8262f).toDouble()
-        val label = prefs.getString("loc_label", "Mecca, KSA") ?: "Mecca, KSA"
-        val isAr = prefs.getString("app_lang", "ar") == "ar"
+        val rawLabel = prefs.getString("loc_label", null)
+        val label = if (rawLabel.isNullOrEmpty() || rawLabel == "Mecca, KSA" || rawLabel == "Mecca (GPS Fallback)" || rawLabel == "مكة المكرمة (تلقائي)") defaultLabel else rawLabel
+        val isLocationSet = !(rawLabel.isNullOrEmpty() || rawLabel == "Mecca, KSA" || rawLabel == "Mecca (GPS Fallback)" || rawLabel == "مكة المكرمة (تلقائي)" || rawLabel == "الموقع غير محدد" || rawLabel == "No Location Selected")
         val useWesternNumbersInArabic = prefs.getBoolean("use_western_numbers_in_arabic", false)
         
         val calendar = Calendar.getInstance()
@@ -92,6 +95,7 @@ class NawafilWidget : GlanceAppWidget() {
         val is24Hour = android.text.format.DateFormat.is24HourFormat(context)
 
         fun formatTimeStr(timeStr: String): String {
+            if (!isLocationSet) return "--:--".localize(isAr, useWesternNumbersInArabic)
             return try {
                 val parts = timeStr.trim().split(":")
                 val h = parts[0].toInt()
