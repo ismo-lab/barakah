@@ -38,29 +38,32 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import dev.barakah.app.notifications.AdhanSoundManager
 
 class MainActivity : ComponentActivity() {
+    private var activityViewModel: BarakahViewModel? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             val viewModel: BarakahViewModel = viewModel()
+            activityViewModel = viewModel
             val themeMode by viewModel.appTheme.collectAsState()
             val useDynamicColor by viewModel.useDynamicColor.collectAsState()
             val amoledDark by viewModel.amoledDark.collectAsState()
             val appLanguage by viewModel.appLanguage.collectAsState()
-
+ 
             val isSystemDark = androidx.compose.foundation.isSystemInDarkTheme()
             val darkTheme = when (themeMode) {
                 "dark" -> true
                 "light" -> false
                 else -> isSystemDark
             }
-
+ 
             val layoutDirection = if (appLanguage == "ar") {
                 androidx.compose.ui.unit.LayoutDirection.Rtl
             } else {
                 androidx.compose.ui.unit.LayoutDirection.Ltr
             }
-
+ 
             BarakahTheme(
                 darkTheme = darkTheme,
                 amoledDark = amoledDark,
@@ -71,6 +74,53 @@ class MainActivity : ComponentActivity() {
                 ) {
                     val isFirstRun by viewModel.isFirstRun.collectAsState()
                     val navController = rememberNavController()
+
+                    val showGpsPrompt by viewModel.showGpsSettingsPrompt.collectAsState()
+                    val isAr = appLanguage == "ar"
+
+                    if (showGpsPrompt) {
+                        AlertDialog(
+                            onDismissRequest = { viewModel.setShowGpsSettingsPrompt(false) },
+                            title = {
+                                Text(
+                                    text = if (isAr) "تفعيل خدمات الموقع" else "Enable Location Services",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            },
+                            text = {
+                                Text(
+                                    text = if (isAr) 
+                                        "لتحديد موقعك تلقائيًا والحصول على مواقيت صلاة دقيقة، يرجى تفعيل خدمات الموقع (GPS) على جهازك." 
+                                    else 
+                                        "To auto-detect your location and get accurate prayer times, please enable your device's location services (GPS).",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            },
+                            confirmButton = {
+                                Button(
+                                    onClick = {
+                                        viewModel.setShowGpsSettingsPrompt(false)
+                                        try {
+                                            val intent = android.content.Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                                            startActivity(intent)
+                                        } catch (e: Exception) {
+                                            e.printStackTrace()
+                                        }
+                                    }
+                                ) {
+                                    Text(if (isAr) "تفعيل" else "Enable")
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(
+                                    onClick = { viewModel.setShowGpsSettingsPrompt(false) }
+                                ) {
+                                    Text(if (isAr) "إلغاء" else "Cancel")
+                                }
+                            }
+                        )
+                    }
                     
                     if (isFirstRun) {
                         WelcomeScreen(viewModel)
@@ -80,6 +130,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        activityViewModel?.refreshLocationIfAuto()
     }
 }
 

@@ -252,7 +252,9 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
 
         val enableAdhanSound = appPrefs.getBoolean("enable_adhan_sound", false)
         val adhanSoundType = appPrefs.getString("adhan_sound_type", "short") ?: "short"
+        val adhanFajrOnly = appPrefs.getBoolean("adhan_fajr_only", false)
         val playablePrayers = listOf("Fajr", "Dhuhr", "Asr", "Maghrib", "Isha")
+        val shouldPlayAdhan = enableAdhanSound && prayerName in playablePrayers && (!adhanFajrOnly || prayerName == "Fajr")
 
         val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_notification)
@@ -263,7 +265,7 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
 
-        if (enableAdhanSound && prayerName in playablePrayers) {
+        if (shouldPlayAdhan) {
             val stopAdhanIntent = Intent(context, PrayerNotificationReceiver::class.java).apply {
                 this.setAction("dev.barakah.app.ACTION_STOP_ADHAN")
                 this.putExtra("PRAYER_ID", prayerId)
@@ -286,7 +288,7 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
         notificationManager.notify(notifId, builder.build())
 
         // Play local offline Adhan sound if enabled
-        if (enableAdhanSound && prayerName in playablePrayers) {
+        if (shouldPlayAdhan) {
             try {
                 val soundResId = if (prayerName == "Fajr") R.raw.adhan_fajr else R.raw.adhan_regular
                 val isShort = adhanSoundType == "short"

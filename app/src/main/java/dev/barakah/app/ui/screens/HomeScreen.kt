@@ -75,6 +75,7 @@ fun HomeScreen(
     val amoledDark by viewModel.amoledDark.collectAsState()
     val enableAdhanSound by viewModel.enableAdhanSound.collectAsState()
     val adhanSoundType by viewModel.adhanSoundType.collectAsState()
+    val adhanFajrOnly by viewModel.adhanFajrOnly.collectAsState()
     val enableTasbihHaptics by viewModel.enableTasbihHaptics.collectAsState()
     val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
     val fontAr by viewModel.arabicFontSize.collectAsState()
@@ -1250,6 +1251,32 @@ fun HomeScreen(
                                                     color = if (adhanSoundType == "full") MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
                                                 )
                                             }
+                                        }
+
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = if (isAr) "أذان صلاة الفجر فقط" else "Adhan for Fajr Only",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MaterialTheme.colorScheme.onSurface
+                                                )
+                                                Text(
+                                                    text = if (isAr) "تشغيل صوت الأذان لصلاة الفجر فقط دون بقية الصلوات" else "Play the adhan sound only for Fajr prayer",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Switch(
+                                                checked = adhanFajrOnly,
+                                                onCheckedChange = { viewModel.setAdhanFajrOnly(it) }
+                                            )
                                         }
                                     }
 

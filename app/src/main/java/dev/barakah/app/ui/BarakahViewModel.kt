@@ -2,7 +2,10 @@ package dev.barakah.app.ui
 
 import android.annotation.SuppressLint
 import android.app.Application
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.location.Location
 import android.os.Build
 import android.os.VibrationEffect
@@ -72,12 +75,28 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     private val _locationMethod = MutableStateFlow(prefs.getString("location_method", "manual") ?: "manual")
     val locationMethod: StateFlow<String> = _locationMethod
 
+    private val _showGpsSettingsPrompt = MutableStateFlow(false)
+    val showGpsSettingsPrompt: StateFlow<Boolean> = _showGpsSettingsPrompt
+
+    fun setShowGpsSettingsPrompt(show: Boolean) {
+        _showGpsSettingsPrompt.value = show
+    }
+
+    fun refreshLocationIfAuto() {
+        if (locationMethod.value == "auto" && isLocationEnabled()) {
+            requestGPSLocation()
+        }
+    }
+
     // Adhan settings states
     private val _enableAdhanSound = MutableStateFlow(prefs.getBoolean("enable_adhan_sound", false))
     val enableAdhanSound: StateFlow<Boolean> = _enableAdhanSound
 
     private val _adhanSoundType = MutableStateFlow(prefs.getString("adhan_sound_type", "short") ?: "short")
     val adhanSoundType: StateFlow<String> = _adhanSoundType
+
+    private val _adhanFajrOnly = MutableStateFlow(prefs.getBoolean("adhan_fajr_only", false))
+    val adhanFajrOnly: StateFlow<Boolean> = _adhanFajrOnly
 
     // Nawafil state flow
     private val _showNawafil = MutableStateFlow(prefs.getBoolean("show_nawafil", false))
@@ -294,7 +313,22 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     private var lastCheckedDayOfYear = -1
     private var lastCheckedTimeZoneId = ""
 
+    private val gpsStatusReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == android.location.LocationManager.PROVIDERS_CHANGED_ACTION) {
+                refreshLocationIfAuto()
+            }
+        }
+    }
+
     init {
+        try {
+            val filter = IntentFilter(android.location.LocationManager.PROVIDERS_CHANGED_ACTION)
+            application.registerReceiver(gpsStatusReceiver, filter)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
         // Guarantee app default language is arabic when first open
         if (!prefs.contains("app_lang")) {
             prefs.edit().putString("app_lang", "ar").apply()
@@ -399,6 +433,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
             val isGpsEnabled = isLocationEnabled()
             if (!isGpsEnabled) {
+                _showGpsSettingsPrompt.value = true
                 val now = System.currentTimeMillis()
                 if (now - lastGpsOffMsgTime > 30000) { // Only once every 30 seconds
                     lastGpsOffMsgTime = now
@@ -411,17 +446,23 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             locationClient.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, null)
                 .addOnSuccessListener { loc: Location? ->
                     if (loc != null) {
-                        val now = System.currentTimeMillis()
-                        val diffLat = abs(loc.latitude - _currentLocation.value.first)
-                        val diffLng = abs(loc.longitude - _currentLocation.value.second)
-                        
-                        updateLocation(loc.latitude, loc.longitude, "GPS (Auto)")
-                        
-                        // Show success message only if it's a significant change or once in a while
-                        if (now - lastGpsSuccessMsgTime > 60000 || diffLat > 0.001 || diffLng > 0.001) {
-                            lastGpsSuccessMsgTime = now
-                            viewModelScope.launch {
-                                val msg = if (_appLanguage.value == "ar") "تم تحديد موقعك تلقائياً بنجاح" else "GPS location detected successfully"
+                        viewModelScope.launch {
+                            val resolvedName = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                getCityNameFromLocation(loc.latitude, loc.longitude)
+                            }
+                            val defaultLabel = if (_appLanguage.value == "ar") "تلقائي (GPS)" else "GPS (Auto)"
+                            val label = resolvedName ?: defaultLabel
+                            
+                            updateLocation(loc.latitude, loc.longitude, label)
+                            
+                            val now = System.currentTimeMillis()
+                            val diffLat = abs(loc.latitude - _currentLocation.value.first)
+                            val diffLng = abs(loc.longitude - _currentLocation.value.second)
+                            
+                            // Show success message only if it's a significant change or once in a while
+                            if (now - lastGpsSuccessMsgTime > 60000 || diffLat > 0.001 || diffLng > 0.001) {
+                                lastGpsSuccessMsgTime = now
+                                val msg = if (_appLanguage.value == "ar") "تم تحديد موقعك تلقائياً بنجاح ($label)" else "GPS location detected successfully ($label)"
                                 _eventFlow.emit(msg)
                             }
                         }
@@ -430,9 +471,15 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
                         try {
                             locationClient.lastLocation.addOnSuccessListener { lastLoc: Location? ->
                                 if (lastLoc != null) {
-                                    updateLocation(lastLoc.latitude, lastLoc.longitude, "GPS (Auto)")
                                     viewModelScope.launch {
-                                        val msg = if (_appLanguage.value == "ar") "تم تحديد موقعك تلقائياً بنجاح" else "GPS location detected successfully"
+                                        val resolvedName = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                            getCityNameFromLocation(lastLoc.latitude, lastLoc.longitude)
+                                        }
+                                        val defaultLabel = if (_appLanguage.value == "ar") "تلقائي (GPS)" else "GPS (Auto)"
+                                        val label = resolvedName ?: defaultLabel
+                                        
+                                        updateLocation(lastLoc.latitude, lastLoc.longitude, label)
+                                        val msg = if (_appLanguage.value == "ar") "تم تحديد موقعك تلقائياً بنجاح ($label)" else "GPS location detected successfully ($label)"
                                         _eventFlow.emit(msg)
                                     }
                                 } else {
@@ -490,6 +537,23 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
                     locationManager?.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER) == true
         } catch (e: Exception) {
             false
+        }
+    }
+
+    private fun getCityNameFromLocation(lat: Double, lng: Double): String? {
+        return try {
+            val context = getApplication<Application>()
+            val geocoder = android.location.Geocoder(context, java.util.Locale.getDefault())
+            val addresses = geocoder.getFromLocation(lat, lng, 1)
+            if (!addresses.isNullOrEmpty()) {
+                val address = addresses[0]
+                address.locality ?: address.subAdminArea ?: address.adminArea ?: address.countryName
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
     }
 
@@ -617,6 +681,11 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     fun setAdhanSoundType(type: String) {
         _adhanSoundType.value = type
         prefs.edit().putString("adhan_sound_type", type).apply()
+    }
+
+    fun setAdhanFajrOnly(enable: Boolean) {
+        _adhanFajrOnly.value = enable
+        prefs.edit().putBoolean("adhan_fajr_only", enable).apply()
     }
 
     fun setEnableTasbihHaptics(enable: Boolean) {
@@ -817,6 +886,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         setShowNawafil(false)
         setEnableAdhanSound(false)
         setAdhanSoundType("short")
+        setAdhanFajrOnly(false)
         setEnableTasbihHaptics(true)
         setAdjFajr(0)
         setAdjSunrise(0)
@@ -1115,5 +1185,10 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         super.onCleared()
         sensorManager.stop()
         countdownJob?.cancel()
+        try {
+            getApplication<Application>().unregisterReceiver(gpsStatusReceiver)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 }
