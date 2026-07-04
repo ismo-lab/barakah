@@ -143,12 +143,15 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
                 }
             }
 
+            locationCallback = callback
             locationClient.requestLocationUpdates(
                 locationRequest,
                 callback,
                 android.os.Looper.getMainLooper()
-            ).addOnSuccessListener {
-                locationCallback = callback
+            ).addOnFailureListener {
+                if (locationCallback == callback) {
+                    locationCallback = null
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()
