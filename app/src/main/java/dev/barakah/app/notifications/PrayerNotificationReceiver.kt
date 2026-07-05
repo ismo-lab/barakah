@@ -19,20 +19,6 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
-        if (action == "dev.barakah.app.ACTION_STOP_ADHAN") {
-            try {
-                AdhanSoundManager.stop()
-                val notifId = intent.getIntExtra("PRAYER_ID", -1)
-                val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                if (notifId != -1) {
-                    notificationManager.cancel(notifId)
-                }
-                notificationManager.cancel(ID_PRAYER)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-            return
-        }
 
         val prayerName = intent.getStringExtra("PRAYER_NAME") ?: "Prayer"
         val prayerId = intent.getIntExtra("PRAYER_ID", prayerName.hashCode())
@@ -250,12 +236,6 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
             text = bidi.unicodeWrap(text)
         }
 
-        val enableAdhanSound = appPrefs.getBoolean("enable_adhan_sound", false)
-        val adhanSoundType = appPrefs.getString("adhan_sound_type", "short") ?: "short"
-        val adhanFajrOnly = appPrefs.getBoolean("adhan_fajr_only", false)
-        val playablePrayers = listOf("Fajr", "Dhuhr", "Asr", "Maghrib", "Isha")
-        val shouldPlayAdhan = enableAdhanSound && prayerName in playablePrayers && (!adhanFajrOnly || prayerName == "Fajr")
-
         val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
@@ -264,21 +244,6 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
-
-        if (shouldPlayAdhan) {
-            val stopAdhanIntent = Intent(context, PrayerNotificationReceiver::class.java).apply {
-                this.setAction("dev.barakah.app.ACTION_STOP_ADHAN")
-                this.putExtra("PRAYER_ID", prayerId)
-            }
-            val stopPendingIntent = PendingIntent.getBroadcast(
-                context,
-                prayerId + 20000,
-                stopAdhanIntent,
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            )
-            val stopText = if (isAr) "إيقاف الأذان" else "Stop Adhan"
-            builder.addAction(R.drawable.ic_notification, stopText, stopPendingIntent)
-        }
             
         val notifId = when (prayerName) {
             "Morning Adhkar", "Evening Adhkar", "Friday Jumuah" -> ID_ADHKAR
@@ -287,17 +252,6 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
             
         notificationManager.notify(notifId, builder.build())
 
-        // Play local offline Adhan sound if enabled
-        if (shouldPlayAdhan) {
-            try {
-                val soundResId = if (prayerName == "Fajr") R.raw.adhan_fajr else R.raw.adhan_regular
-                val isShort = adhanSoundType == "short"
-                AdhanSoundManager.play(context, soundResId, isShort)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-        
         // Reschedule for next days
         PrayerScheduler.scheduleNextPrayers(context)
     }

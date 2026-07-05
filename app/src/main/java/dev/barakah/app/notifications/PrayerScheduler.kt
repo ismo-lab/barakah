@@ -19,6 +19,26 @@ object PrayerScheduler {
     fun scheduleNextPrayers(context: Context) {
         CoroutineScope(Dispatchers.IO).launch {
             val prefs = context.getSharedPreferences("barakah_prefs", Context.MODE_PRIVATE)
+            val rawLabel = prefs.getString("loc_label", null)
+            val isLocationSet = !(rawLabel.isNullOrEmpty() || rawLabel == "Mecca, KSA" || rawLabel == "Mecca (GPS Fallback)" || rawLabel == "مكة المكرمة (تلقائي)" || rawLabel == "الموقع غير محدد" || rawLabel == "No Location Selected")
+
+            if (!isLocationSet) {
+                val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+                if (alarmManager != null) {
+                    val ids = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 1011, 1012, 1013, 1014, 1015)
+                    for (id in ids) {
+                        val intent = Intent(context, PrayerNotificationReceiver::class.java).apply {
+                            action = "dev.barakah.app.ACTION_PRAYER_NOTIFICATION"
+                        }
+                        val pendingIntent = PendingIntent.getBroadcast(
+                            context, id, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                        )
+                        alarmManager.cancel(pendingIntent)
+                    }
+                }
+                return@launch
+            }
+
             val lat = prefs.getFloat("loc_lat", 21.4225f).toDouble()
             val lng = prefs.getFloat("loc_lng", 39.8262f).toDouble()
             

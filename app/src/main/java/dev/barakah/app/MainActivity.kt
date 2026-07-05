@@ -35,7 +35,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
-import dev.barakah.app.notifications.AdhanSoundManager
 
 class MainActivity : ComponentActivity() {
     private var activityViewModel: BarakahViewModel? = null
@@ -239,7 +238,6 @@ fun MainNavigationContainer(
             }
         }
     ) { innerPadding ->
-        val isAdhanSoundPlaying by AdhanSoundManager.isPlayingState.collectAsState()
 
         Row(
             modifier = Modifier
@@ -331,69 +329,6 @@ fun MainNavigationContainer(
                         androidx.compose.runtime.key(screenKeys["others"]) {
                             OthersScreen(viewModel = viewModel, navController = navController)
                         } 
-                    }
-                }
-
-                androidx.compose.animation.AnimatedVisibility(
-                    visible = isAdhanSoundPlaying,
-                    enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                    exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 8.dp, start = 16.dp, end = 16.dp)
-                ) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth().testTag("floating_adhan_player_bar"),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                        shape = RoundedCornerShape(16.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.VolumeUp,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Column {
-                                    Text(
-                                        text = if (isAr) "صوت الأذان يشتغل الآن" else "Adhan is Playing",
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
-                                    Text(
-                                        text = if (isAr) "انقر لإيقاف الصوت" else "Tap to stop the playback",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                                    )
-                                }
-                            }
-                            
-                            IconButton(
-                                onClick = { AdhanSoundManager.stop() },
-                                colors = IconButtonDefaults.iconButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                                    contentColor = MaterialTheme.colorScheme.onErrorContainer
-                                ),
-                                modifier = Modifier.size(36.dp).testTag("stop_adhan_floating_button")
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Stop,
-                                    contentDescription = if (isAr) "إيقاف" else "Stop",
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        }
                     }
                 }
             }

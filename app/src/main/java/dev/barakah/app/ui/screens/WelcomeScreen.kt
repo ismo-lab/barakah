@@ -357,9 +357,6 @@ fun NotificationsStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
     val notifyJumuah by viewModel.notifyJumuah.collectAsState()
     val notifySuhur by viewModel.notifySuhur.collectAsState()
     val notifyIftar by viewModel.notifyIftar.collectAsState()
-    val enableAdhanSound by viewModel.enableAdhanSound.collectAsState()
-    val adhanSoundType by viewModel.adhanSoundType.collectAsState()
-    val adhanFajrOnly by viewModel.adhanFajrOnly.collectAsState()
     val showNawafil by viewModel.showNawafil.collectAsState()
 
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
@@ -425,101 +422,7 @@ fun NotificationsStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
                     onCheckedChange = { viewModel.setNotifyEveningAdhkar(it) }
                 )
             }
-            item {
-                NotificationToggleCard(
-                    title = if (isAr) "صوت الأذان عند دخول الصلاة" else "Adhan Call to Prayer",
-                    desc = if (isAr) "تشغيل الأذان عند دخول وقت الفريضة" else "Play Adhan when a fard prayer starts",
-                    checked = enableAdhanSound,
-                    onCheckedChange = { viewModel.setEnableAdhanSound(it) }
-                ) {
-                    if (enableAdhanSound) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(start = 12.dp, end = 12.dp, bottom = 12.dp)
-                        ) {
-                            Text(
-                                text = if (isAr) "طول صوت الأذان" else "Adhan Sound Duration",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                OutlinedButton(
-                                    onClick = { viewModel.setAdhanSoundType("short") },
-                                    modifier = Modifier.weight(1f),
-                                    colors = ButtonDefaults.outlinedButtonColors(
-                                        containerColor = if (adhanSoundType == "short") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
-                                    ),
-                                    border = androidx.compose.foundation.BorderStroke(
-                                        width = if (adhanSoundType == "short") 2.dp else 1.dp,
-                                        color = if (adhanSoundType == "short") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                                    )
-                                ) {
-                                    Text(
-                                        text = if (isAr) "قصير (٢٠ ثانية)" else "Short (20s)", 
-                                        fontWeight = FontWeight.Bold, 
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = if (adhanSoundType == "short") MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
-                                
-                                OutlinedButton(
-                                    onClick = { viewModel.setAdhanSoundType("full") },
-                                    modifier = Modifier.weight(1f),
-                                    colors = ButtonDefaults.outlinedButtonColors(
-                                        containerColor = if (adhanSoundType == "full") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
-                                    ),
-                                    border = androidx.compose.foundation.BorderStroke(
-                                        width = if (adhanSoundType == "full") 2.dp else 1.dp,
-                                        color = if (adhanSoundType == "full") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                                    )
-                                ) {
-                                    Text(
-                                        text = if (isAr) "كامل" else "Full", 
-                                        fontWeight = FontWeight.Bold, 
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = if (adhanSoundType == "full") MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
-                            }
 
-                            Spacer(modifier = Modifier.height(12.dp))
-                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = if (isAr) "أذان صلاة الفجر فقط" else "Adhan for Fajr Only",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                    Text(
-                                        text = if (isAr) "تشغيل صوت الأذان لصلاة الفجر فقط دون بقية الصلوات" else "Play the adhan sound only for Fajr prayer",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Switch(
-                                    checked = adhanFajrOnly,
-                                    onCheckedChange = { viewModel.setAdhanFajrOnly(it) }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
             item {
                 NotificationToggleCard(
                     title = if (isAr) "عرض النوافل وقيام الليل" else "Show Voluntary Prayers",
