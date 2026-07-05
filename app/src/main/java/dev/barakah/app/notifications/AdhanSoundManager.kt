@@ -25,24 +25,29 @@ object AdhanSoundManager {
 
         try {
             val audioAttributes = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                .setUsage(AudioAttributes.USAGE_ALARM)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                 .build()
 
-            val mp = MediaPlayer.create(context.applicationContext, resId, audioAttributes, 0)
-            if (mp != null) {
-                mediaPlayer = mp
-                _isPlayingState.value = true
-                _playingResId.value = resId
-                mp.start()
+            val mp = MediaPlayer().apply {
+                setAudioAttributes(audioAttributes)
+                val afd = context.resources.openRawResourceFd(resId)
+                setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+                afd.close()
+                prepare()
+            }
 
-                mp.setOnCompletionListener {
-                    stop()
-                }
+            mediaPlayer = mp
+            _isPlayingState.value = true
+            _playingResId.value = resId
+            mp.start()
 
-                if (isShort) {
-                    handler.postDelayed(stopRunnable, 20000)
-                }
+            mp.setOnCompletionListener {
+                stop()
+            }
+
+            if (isShort) {
+                handler.postDelayed(stopRunnable, 20000)
             }
         } catch (e: Exception) {
             e.printStackTrace()
