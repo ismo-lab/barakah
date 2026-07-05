@@ -1259,14 +1259,61 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
         // Compute exact timeline active item (consistent across show_nawafil state to keep highlighting active)
         val highlight: String
-        when {
-            currentTimeInSec < fajrSec -> highlight = "Isha"
-            currentTimeInSec < sunriseSec -> highlight = "Fajr"
-            currentTimeInSec < dhuhrSec -> highlight = "Sunrise"
-            currentTimeInSec < asrSec -> highlight = "Dhuhr"
-            currentTimeInSec < maghribSec -> highlight = "Asr"
-            currentTimeInSec < ishaSec -> highlight = "Maghrib"
-            else -> highlight = "Isha"
+        if (_showNawafil.value) {
+            fun relativeSec(s: Int): Int {
+                val normalized = (s % 86400 + 86400) % 86400
+                return if (normalized < fajrSec) normalized + 86400 else normalized
+            }
+
+            val t = if (currentTimeInSec < fajrSec) currentTimeInSec + 24 * 3600 else currentTimeInSec
+
+            val rSunrise = sunriseSec
+            val rDuha = sunriseSec + 20 * 60
+            val rDhuhr = dhuhrSec
+            val rAsr = asrSec
+            val rMaghrib = maghribSec
+            val rIsha = ishaSec
+
+            var adjustedFajr = fajrSec
+            if (adjustedFajr < maghribSec) {
+                adjustedFajr += 24 * 3600
+            }
+            val nightDuration = adjustedFajr - maghribSec
+            val firstThirdSec = maghribSec + nightDuration / 3
+            val midnightSec = maghribSec + nightDuration / 2
+            val lastThirdSec = maghribSec + (nightDuration * 2) / 3
+            val witrSec = ishaSec + 45 * 60
+
+            val rWitr = relativeSec(witrSec)
+            val rFirstThird = relativeSec(firstThirdSec)
+            val rMidnight = relativeSec(midnightSec)
+            val rLastThird = relativeSec(lastThirdSec)
+            val rNextFajr = fajrSec + 24 * 3600
+
+            when {
+                t < rSunrise -> highlight = "Fajr"
+                t < rDuha -> highlight = "Sunrise"
+                t < rDhuhr -> highlight = "Duha (Nafilah)"
+                t < rAsr -> highlight = "Dhuhr"
+                t < rMaghrib -> highlight = "Asr"
+                t < rIsha -> highlight = "Maghrib"
+                t < rWitr -> highlight = "Isha"
+                t < rFirstThird -> highlight = "Witr (Nafilah)"
+                t < rMidnight -> highlight = "First Third (Nafilah)"
+                t < rLastThird -> highlight = "Midnight (Nafilah)"
+                t < rNextFajr -> highlight = "Qiyam Last Third (Nafilah)"
+                else -> highlight = "Fajr"
+            }
+        } else {
+            when {
+                currentTimeInSec < fajrSec -> highlight = "Isha"
+                currentTimeInSec < sunriseSec -> highlight = "Fajr"
+                currentTimeInSec < dhuhrSec -> highlight = "Sunrise"
+                currentTimeInSec < asrSec -> highlight = "Dhuhr"
+                currentTimeInSec < maghribSec -> highlight = "Asr"
+                currentTimeInSec < ishaSec -> highlight = "Maghrib"
+                else -> highlight = "Isha"
+            }
         }
         _activeHighlightName.value = highlight
 

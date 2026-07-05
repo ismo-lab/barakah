@@ -216,20 +216,23 @@ fun HomeScreen(
                     }
                     
                     val witrStart = TimeUtils.calculateOffsetTime(displayTimes.isha, 45)
+                    list.add(Triple("Witr (Nafilah)", "$witrStart - ${displayTimes.fajr}", "Witr Voluntary Prayer"))
                     list.add(Triple("First Third (Nafilah)", formatMins(firstThirdMin), "First Third of the Night"))
                     list.add(Triple("Midnight (Nafilah)", formatMins(midMin), "Islamic Midnight"))
                     list.add(Triple("Qiyam Last Third (Nafilah)", formatMins(lastThirdMin), "Late Night Prayer"))
-                    list.add(Triple("Witr (Nafilah)", "$witrStart - ${displayTimes.fajr}", "Witr Voluntary Prayer"))
                 } else {
+                    list.add(Triple("Witr (Nafilah)", "--:--", "Witr Voluntary Prayer"))
                     list.add(Triple("First Third (Nafilah)", "--:--", "First Third of the Night"))
                     list.add(Triple("Midnight (Nafilah)", "--:--", "Islamic Midnight"))
                     list.add(Triple("Qiyam Last Third (Nafilah)", "--:--", "Late Night Prayer"))
-                    list.add(Triple("Witr (Nafilah)", "--:--", "Witr Voluntary Prayer"))
                 }
             } catch (e: Exception) {
                 // Fallback if parsing fails
                 val witrTime = if (isLocationSet) TimeUtils.calculateOffsetTime(displayTimes.isha, 45) else "--:--"
                 list.add(Triple("Witr (Nafilah)", if (isLocationSet) "$witrTime - ${displayTimes.fajr}" else "--:--", "Witr Voluntary Prayer"))
+                list.add(Triple("First Third (Nafilah)", "--:--", "First Third of the Night"))
+                list.add(Triple("Midnight (Nafilah)", "--:--", "Islamic Midnight"))
+                list.add(Triple("Qiyam Last Third (Nafilah)", "--:--", "Late Night Prayer"))
             }
         }
         list
