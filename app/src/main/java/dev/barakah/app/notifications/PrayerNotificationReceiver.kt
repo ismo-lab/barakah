@@ -15,48 +15,10 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
         const val ID_PRAYER = 1000
         const val ID_ADHKAR = 1001
         const val ID_DAILY = 1002
-        
-        private var activeAdhanPlayer: android.media.MediaPlayer? = null
-        
-        fun stopActiveAdhan() {
-            try {
-                activeAdhanPlayer?.let {
-                    if (it.isPlaying) {
-                        it.stop()
-                    }
-                    it.release()
-                }
-                activeAdhanPlayer = null
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-        
-        private fun playAdhanSound(context: Context, isFajr: Boolean) {
-            try {
-                stopActiveAdhan()
-                val resId = if (isFajr) R.raw.adhan_fajr else R.raw.adhan_regular
-                val player = android.media.MediaPlayer.create(context, resId)
-                if (player != null) {
-                    player.setAudioStreamType(android.media.AudioManager.STREAM_MUSIC)
-                    player.start()
-                    activeAdhanPlayer = player
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
     }
 
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
-
-        if (action == "ACTION_STOP_ADHAN") {
-            stopActiveAdhan()
-            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.cancel(ID_PRAYER)
-            return
-        }
 
         val prayerName = intent.getStringExtra("PRAYER_NAME") ?: "Prayer"
         val prayerId = intent.getIntExtra("PRAYER_ID", prayerName.hashCode())
@@ -274,20 +236,6 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
             text = bidi.unicodeWrap(text)
         }
 
-        val isFardPrayer = prayerName == "Fajr" || prayerName == "Dhuhr" || prayerName == "Asr" || prayerName == "Maghrib" || prayerName == "Isha"
-        var isPlayingAdhan = false
-        if (isFardPrayer) {
-            val enableAdhan = appPrefs.getBoolean("enable_adhan_sound", false)
-            if (enableAdhan) {
-                val adhanFajrOnly = appPrefs.getBoolean("adhan_fajr_only", false)
-                val isFajr = prayerName == "Fajr"
-                if (!adhanFajrOnly || isFajr) {
-                    playAdhanSound(context, isFajr)
-                    isPlayingAdhan = true
-                }
-            }
-        }
-
         val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
@@ -296,17 +244,6 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
-
-        if (isPlayingAdhan) {
-            val stopIntent = Intent(context, PrayerNotificationReceiver::class.java).apply {
-                setAction("ACTION_STOP_ADHAN")
-            }
-            val stopPendingIntent = PendingIntent.getBroadcast(
-                context, 1, stopIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            )
-            val btnTitle = if (isAr) "إيقاف الأذان" else "Stop Adhan"
-            builder.addAction(R.drawable.ic_notification, btnTitle, stopPendingIntent)
-        }
             
         val notifId = when (prayerName) {
             "Morning Adhkar", "Evening Adhkar", "Friday Jumuah" -> ID_ADHKAR

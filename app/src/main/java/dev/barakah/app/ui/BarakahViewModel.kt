@@ -171,16 +171,6 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // Adhan settings states
-    private val _enableAdhanSound = MutableStateFlow(prefs.getBoolean("enable_adhan_sound", false))
-    val enableAdhanSound: StateFlow<Boolean> = _enableAdhanSound
-
-    private val _adhanSoundType = MutableStateFlow(prefs.getString("adhan_sound_type", "short") ?: "short")
-    val adhanSoundType: StateFlow<String> = _adhanSoundType
-
-    private val _adhanFajrOnly = MutableStateFlow(prefs.getBoolean("adhan_fajr_only", false))
-    val adhanFajrOnly: StateFlow<Boolean> = _adhanFajrOnly
-
     // Nawafil state flow
     private val _showNawafil = MutableStateFlow(prefs.getBoolean("show_nawafil", false))
     val showNawafil: StateFlow<Boolean> = _showNawafil
@@ -787,21 +777,6 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun setEnableAdhanSound(enable: Boolean) {
-        _enableAdhanSound.value = enable
-        prefs.edit().putBoolean("enable_adhan_sound", enable).apply()
-    }
-
-    fun setAdhanSoundType(type: String) {
-        _adhanSoundType.value = type
-        prefs.edit().putString("adhan_sound_type", type).apply()
-    }
-
-    fun setAdhanFajrOnly(enable: Boolean) {
-        _adhanFajrOnly.value = enable
-        prefs.edit().putBoolean("adhan_fajr_only", enable).apply()
-    }
-
     fun setEnableTasbihHaptics(enable: Boolean) {
         _enableTasbihHaptics.value = enable
         prefs.edit().putBoolean("enable_tasbih_haptics", enable).apply()
@@ -1017,9 +992,6 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         setAsrMethod("standard")
         setIshaMethod("standard")
         setShowNawafil(false)
-        setEnableAdhanSound(false)
-        setAdhanSoundType("short")
-        setAdhanFajrOnly(false)
         setEnableTasbihHaptics(true)
         setAdjFajr(0)
         setAdjSunrise(0)
@@ -1361,69 +1333,8 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         _nextPrayerCountdown.value = java.lang.String.format(java.util.Locale.US, "%02d:%02d:%02d", h, m, s)
     }
 
-    private var mediaPlayer: MediaPlayer? = null
-    
-    private val _isPlayingFajrTest = MutableStateFlow(false)
-    val isPlayingFajrTest: StateFlow<Boolean> = _isPlayingFajrTest
-
-    private val _isPlayingRegularTest = MutableStateFlow(false)
-    val isPlayingRegularTest: StateFlow<Boolean> = _isPlayingRegularTest
-
-    fun playTestAdhan(isFajr: Boolean) {
-        stopTestAdhan()
-        try {
-            val resId = if (isFajr) R.raw.adhan_fajr else R.raw.adhan_regular
-            var player = MediaPlayer.create(getApplication<Application>(), resId)
-            
-            if (player == null) {
-                android.util.Log.w("BarakahViewModel", "MediaPlayer.create returned null. Falling back to openRawResourceFd")
-                player = MediaPlayer().apply {
-                    setAudioStreamType(android.media.AudioManager.STREAM_MUSIC)
-                    val afd = getApplication<Application>().resources.openRawResourceFd(resId)
-                    setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
-                    afd.close()
-                    prepare()
-                }
-            }
-            
-            mediaPlayer = player.apply {
-                setOnCompletionListener {
-                    stopTestAdhan()
-                }
-                setVolume(1.0f, 1.0f)
-                start()
-            }
-            
-            if (isFajr) {
-                _isPlayingFajrTest.value = true
-            } else {
-                _isPlayingRegularTest.value = true
-            }
-        } catch (e: Exception) {
-            android.util.Log.e("BarakahViewModel", "Error playing test adhan", e)
-        }
-    }
-
-    fun stopTestAdhan() {
-        try {
-            mediaPlayer?.let {
-                if (it.isPlaying) {
-                    it.stop()
-                }
-                it.release()
-            }
-        } catch (e: Exception) {
-            android.util.Log.e("BarakahViewModel", "Error stopping test adhan", e)
-        } finally {
-            mediaPlayer = null
-            _isPlayingFajrTest.value = false
-            _isPlayingRegularTest.value = false
-        }
-    }
-
     override fun onCleared() {
         super.onCleared()
-        stopTestAdhan()
         sensorManager.stop()
         countdownJob?.cancel()
         stopLocationUpdates()

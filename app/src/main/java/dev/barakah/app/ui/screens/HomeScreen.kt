@@ -87,8 +87,6 @@ fun HomeScreen(
 
     val showNawafil by viewModel.showNawafil.collectAsState()
     val notifyNawafil by viewModel.notifyNawafil.collectAsState()
-    val isPlayingFajrTest by viewModel.isPlayingFajrTest.collectAsState()
-    val isPlayingRegularTest by viewModel.isPlayingRegularTest.collectAsState()
     val asrMethod by viewModel.asrMethod.collectAsState()
     val ishaMethod by viewModel.ishaMethod.collectAsState()
     val adjFajr by viewModel.adjFajr.collectAsState()
@@ -1268,92 +1266,7 @@ fun HomeScreen(
                                         )
                                     }
 
-                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
 
-                                    Column(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        Column {
-                                            Text(
-                                                text = if (isAr) "تجربة صوت الأذان" else "Adhan Audio Test",
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                fontWeight = FontWeight.Bold,
-                                                color = MaterialTheme.colorScheme.onSurface
-                                            )
-                                            Text(
-                                                text = if (isAr) "اختبر صوت أذان الفجر والصلوات المفروضة الأخرى" else "Test the audio files for Fajr and other daily prayer alerts",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                        }
-
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            // Fajr Test Button
-                                            Button(
-                                                onClick = {
-                                                    if (isPlayingFajrTest) {
-                                                        viewModel.stopTestAdhan()
-                                                    } else {
-                                                        viewModel.playTestAdhan(isFajr = true)
-                                                    }
-                                                },
-                                                modifier = Modifier.weight(1f).testTag("test_fajr_adhan_button"),
-                                                colors = ButtonDefaults.buttonColors(
-                                                    containerColor = if (isPlayingFajrTest) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                                                    contentColor = if (isPlayingFajrTest) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.primary
-                                                ),
-                                                shape = RoundedCornerShape(12.dp),
-                                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)
-                                            ) {
-                                                Icon(
-                                                    imageVector = if (isPlayingFajrTest) Icons.Default.Stop else Icons.Default.PlayArrow,
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(16.dp)
-                                                )
-                                                Spacer(modifier = Modifier.width(4.dp))
-                                                Text(
-                                                    text = if (isAr) "أذان الفجر" else "Fajr Adhan",
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    fontWeight = FontWeight.SemiBold
-                                                )
-                                            }
-
-                                            // Regular Test Button
-                                            Button(
-                                                onClick = {
-                                                    if (isPlayingRegularTest) {
-                                                        viewModel.stopTestAdhan()
-                                                    } else {
-                                                        viewModel.playTestAdhan(isFajr = false)
-                                                    }
-                                                },
-                                                modifier = Modifier.weight(1f).testTag("test_regular_adhan_button"),
-                                                colors = ButtonDefaults.buttonColors(
-                                                    containerColor = if (isPlayingRegularTest) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                                                    contentColor = if (isPlayingRegularTest) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.primary
-                                                ),
-                                                shape = RoundedCornerShape(12.dp),
-                                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)
-                                            ) {
-                                                Icon(
-                                                    imageVector = if (isPlayingRegularTest) Icons.Default.Stop else Icons.Default.PlayArrow,
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(16.dp)
-                                                )
-                                                Spacer(modifier = Modifier.width(4.dp))
-                                                Text(
-                                                    text = if (isAr) "أذان الصلوات" else "Daily Adhan",
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    fontWeight = FontWeight.SemiBold
-                                                )
-                                            }
-                                        }
-                                    }
                                 }
                             }
                         }
