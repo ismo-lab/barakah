@@ -1373,12 +1373,29 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         stopTestAdhan()
         try {
             val resId = if (isFajr) R.raw.adhan_fajr else R.raw.adhan_regular
-            mediaPlayer = MediaPlayer.create(getApplication<Application>(), resId)?.apply {
+            var player = MediaPlayer.create(getApplication<Application>(), resId)
+            
+            if (player == null) {
+                android.util.Log.w("BarakahViewModel", "MediaPlayer.create returned null. Falling back to openRawResourceFd")
+                player = MediaPlayer().apply {
+                    val afd = getApplication<Application>().resources.openRawResourceFd(resId)
+                    setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+                    afd.close()
+                    setAudioStreamType(android.media.AudioManager.STREAM_MUSIC)
+                    prepare()
+                }
+            } else {
+                player.setAudioStreamType(android.media.AudioManager.STREAM_MUSIC)
+            }
+            
+            mediaPlayer = player.apply {
                 setOnCompletionListener {
                     stopTestAdhan()
                 }
+                setVolume(1.0f, 1.0f)
                 start()
             }
+            
             if (isFajr) {
                 _isPlayingFajrTest.value = true
             } else {

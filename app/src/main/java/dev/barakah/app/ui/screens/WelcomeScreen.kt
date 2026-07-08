@@ -358,6 +358,8 @@ fun NotificationsStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
     val notifySuhur by viewModel.notifySuhur.collectAsState()
     val notifyIftar by viewModel.notifyIftar.collectAsState()
     val showNawafil by viewModel.showNawafil.collectAsState()
+    val notifyNawafil by viewModel.notifyNawafil.collectAsState()
+    val enableTasbihHaptics by viewModel.enableTasbihHaptics.collectAsState()
 
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
     val isShortScreen = configuration.screenHeightDp < 600
@@ -431,6 +433,16 @@ fun NotificationsStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
                     onCheckedChange = { viewModel.setShowNawafil(it) }
                 )
             }
+            if (showNawafil) {
+                item {
+                    NotificationToggleCard(
+                        title = if (isAr) "تنبيهات صلوات النوافل" else "Nawafil Notifications",
+                        desc = if (isAr) "تنبيهات للضحى والوتر والتهجد وقيام الليل" else "Notifications for Duha, Witr, Tahajjud & Qiyam-ul-Layl",
+                        checked = notifyNawafil,
+                        onCheckedChange = { viewModel.setNotifyNawafil(it) }
+                    )
+                }
+            }
             item {
                 NotificationToggleCard(
                     title = if (isAr) "تنبيه يوم الجمعة المبارك" else "Friday Jumu'ah Reminder",
@@ -469,6 +481,14 @@ fun NotificationsStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
                     desc = if (isAr) "تنبيه مخصص وقت الإفطار المبارك عند أذان المغرب" else "Special notification for Iftar at Maghrib time",
                     checked = notifyIftar,
                     onCheckedChange = { viewModel.setNotifyIftar(it) }
+                )
+            }
+            item {
+                NotificationToggleCard(
+                    title = if (isAr) "الاهتزاز والتفاعل اللمسي" else "Global Haptic Feedback",
+                    desc = if (isAr) "تشغيل الاهتزاز والتفاعل اللمسي في السبحة والأدعية والقبلة" else "Enable vibrations in Tasbih subhah, Dua counters, and Qiblah alignment",
+                    checked = enableTasbihHaptics,
+                    onCheckedChange = { viewModel.setEnableTasbihHaptics(it) }
                 )
             }
         }

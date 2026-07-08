@@ -2176,7 +2176,7 @@ fun AdhkarOffsetSelector(
                 val chipText = if (offset == 0) {
                     if (isAr) "عند الأذان" else "At Adhan"
                 } else if (offset == 30) {
-                    if (isAr) "٣٠ د (افتراضي)" else "30m (Default)"
+                    if (isAr) "${30.localize(true, useWesternNumbersInArabic)} د (افتراضي)" else "30m (Default)"
                 } else {
                     if (isAr) "${offset.toString().localize(true, useWesternNumbersInArabic)} د" else "${offset}m"
                 }
