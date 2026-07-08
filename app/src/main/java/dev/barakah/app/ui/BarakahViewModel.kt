@@ -1378,14 +1378,12 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             if (player == null) {
                 android.util.Log.w("BarakahViewModel", "MediaPlayer.create returned null. Falling back to openRawResourceFd")
                 player = MediaPlayer().apply {
+                    setAudioStreamType(android.media.AudioManager.STREAM_MUSIC)
                     val afd = getApplication<Application>().resources.openRawResourceFd(resId)
                     setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
                     afd.close()
-                    setAudioStreamType(android.media.AudioManager.STREAM_MUSIC)
                     prepare()
                 }
-            } else {
-                player.setAudioStreamType(android.media.AudioManager.STREAM_MUSIC)
             }
             
             mediaPlayer = player.apply {

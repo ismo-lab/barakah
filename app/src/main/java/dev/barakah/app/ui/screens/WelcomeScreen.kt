@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.barakah.app.data.CityData
 import dev.barakah.app.ui.BarakahViewModel
+import dev.barakah.app.util.localize
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.isGranted
@@ -360,6 +361,9 @@ fun NotificationsStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
     val showNawafil by viewModel.showNawafil.collectAsState()
     val notifyNawafil by viewModel.notifyNawafil.collectAsState()
     val enableTasbihHaptics by viewModel.enableTasbihHaptics.collectAsState()
+    val morningAdhkarOffset by viewModel.morningAdhkarOffset.collectAsState()
+    val eveningAdhkarOffset by viewModel.eveningAdhkarOffset.collectAsState()
+    val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
 
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
     val isShortScreen = configuration.screenHeightDp < 600
@@ -402,8 +406,8 @@ fun NotificationsStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
         ) {
             item {
                 NotificationToggleCard(
-                    title = if (isAr) "تنبيه قبل الأذان بـ ١٥ دقيقة" else "Pre-Adhan Reminders",
-                    desc = if (isAr) "تنبيه تمهيدي قبل أذان كل صلاة مفروضة بـ ١٥ دقيقة" else "Notify 15 mins before every fard prayer time",
+                    title = (if (isAr) "تنبيه قبل الأذان بـ ١٥ دقيقة" else "Pre-Adhan Reminders").localize(isAr, useWesternNumbersInArabic),
+                    desc = (if (isAr) "تنبيه تمهيدي قبل أذان كل صلاة مفروضة بـ ١٥ دقيقة" else "Notify 15 mins before every fard prayer time").localize(isAr, useWesternNumbersInArabic),
                     checked = notifyBeforeAdhan,
                     onCheckedChange = { viewModel.setNotifyBeforeAdhan(it) }
                 )
@@ -416,6 +420,17 @@ fun NotificationsStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
                     onCheckedChange = { viewModel.setNotifyMorningAdhkar(it) }
                 )
             }
+            if (notifyMorningAdhkar) {
+                item {
+                    dev.barakah.app.ui.screens.AdhkarOffsetSelector(
+                        currentOffset = morningAdhkarOffset,
+                        onOffsetSelected = { viewModel.setMorningAdhkarOffset(it) },
+                        isAr = isAr,
+                        isMorning = true,
+                        useWesternNumbersInArabic = useWesternNumbersInArabic
+                    )
+                }
+            }
             item {
                 NotificationToggleCard(
                     title = if (isAr) "تنبيهات أذكار المساء" else "Evening Adhkar Notifications",
@@ -423,6 +438,17 @@ fun NotificationsStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
                     checked = notifyEveningAdhkar,
                     onCheckedChange = { viewModel.setNotifyEveningAdhkar(it) }
                 )
+            }
+            if (notifyEveningAdhkar) {
+                item {
+                    dev.barakah.app.ui.screens.AdhkarOffsetSelector(
+                        currentOffset = eveningAdhkarOffset,
+                        onOffsetSelected = { viewModel.setEveningAdhkarOffset(it) },
+                        isAr = isAr,
+                        isMorning = false,
+                        useWesternNumbersInArabic = useWesternNumbersInArabic
+                    )
+                }
             }
 
             item {

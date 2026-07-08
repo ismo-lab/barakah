@@ -41,6 +41,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        dev.barakah.app.notifications.PrayerNotificationReceiver.stopActiveAdhan()
         enableEdgeToEdge()
         setContent {
             val viewModel: BarakahViewModel = viewModel()
@@ -139,6 +140,11 @@ class MainActivity : ComponentActivity() {
     override fun onPause() {
         activityViewModel?.stopLocationUpdates()
         super.onPause()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        dev.barakah.app.notifications.PrayerNotificationReceiver.stopActiveAdhan()
     }
 }
 

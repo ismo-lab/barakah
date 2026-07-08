@@ -31,6 +31,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextDirection
@@ -1087,13 +1088,13 @@ fun HomeScreen(
                                     ) {
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(
-                                                text = if (isAr) "تنبيه قبل الأذان بـ ١٥ دقيقة" else "Pre-Adhan Reminders",
+                                                text = (if (isAr) "تنبيه قبل الأذان بـ ١٥ دقيقة" else "Pre-Adhan Reminders").localize(isAr, useWesternNumbersInArabic),
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 fontWeight = FontWeight.Bold,
                                                 color = MaterialTheme.colorScheme.onSurface
                                             )
                                             Text(
-                                                text = if (isAr) "تنبيه تمهيدي قبل أذان كل صلاة مفروضة بـ ١٥ دقيقة للاستعداد" else "Notify 15 minutes before every fard prayer time to prepare",
+                                                text = (if (isAr) "تنبيه تمهيدي قبل أذان كل صلاة مفروضة بـ ١٥ دقيقة للاستعداد" else "Notify 15 minutes before every fard prayer time to prepare").localize(isAr, useWesternNumbersInArabic),
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -1623,7 +1624,6 @@ fun HomeScreen(
 
                                     val adjList = listOf(
                                         Quadruple("Fajr", if (isAr) "الفجر" else "Fajr", adjFajr) { v: Int -> viewModel.setAdjFajr(v) },
-                                        Quadruple("Sunrise", if (isAr) "الشروق" else "Sunrise", adjSunrise) { v: Int -> viewModel.setAdjSunrise(v) },
                                         Quadruple("Dhuhr", if (isAr) "الظهر" else "Dhuhr", adjDhuhr) { v: Int -> viewModel.setAdjDhuhr(v) },
                                         Quadruple("Asr", if (isAr) "العصر" else "Asr", adjAsr) { v: Int -> viewModel.setAdjAsr(v) },
                                         Quadruple("Maghrib", if (isAr) "المغرب" else "Maghrib", adjMaghrib) { v: Int -> viewModel.setAdjMaghrib(v) },
@@ -1655,21 +1655,23 @@ fun HomeScreen(
                                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                                                 ) {
                                                     IconButton(
-                                                        onClick = { adjItem.fourth(adjItem.third - 1) },
+                                                        onClick = { if (adjItem.third > -99) adjItem.fourth(adjItem.third - 1) },
+                                                        enabled = adjItem.third > -99,
                                                         modifier = Modifier.size(32.dp)
                                                     ) {
                                                         Icon(Icons.Default.Remove, contentDescription = "Deduct minute", modifier = Modifier.size(16.dp))
                                                     }
                                                     val prefix = if (adjItem.third > 0) "+" else ""
                                                     Text(
-                                                        text = "$prefix${adjItem.third} m",
+                                                        text = ("$prefix${adjItem.third} " + (if (isAr) "د" else "m")).localize(isAr, useWesternNumbersInArabic),
                                                         style = MaterialTheme.typography.bodySmall,
                                                         fontWeight = FontWeight.Bold,
                                                         textAlign = TextAlign.Center,
                                                         modifier = Modifier.width(50.dp)
                                                     )
                                                     IconButton(
-                                                        onClick = { adjItem.fourth(adjItem.third + 1) },
+                                                        onClick = { if (adjItem.third < 99) adjItem.fourth(adjItem.third + 1) },
+                                                        enabled = adjItem.third < 99,
                                                         modifier = Modifier.size(32.dp)
                                                     ) {
                                                         Icon(Icons.Default.Add, contentDescription = "Add minute", modifier = Modifier.size(16.dp))
@@ -1735,11 +1737,6 @@ fun HomeScreen(
                                     }
 
                                     Spacer(modifier = Modifier.height(8.dp))
-                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                                    Spacer(modifier = Modifier.height(8.dp))
-
-                                    // Real-time Text Size Preview Layout
-                                    val previewFontFamily = FontFamily.Default
                                     Box(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -1769,7 +1766,6 @@ fun HomeScreen(
                                             Text(
                                                 text = "بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ",
                                                 fontSize = fontAr.sp,
-                                                fontFamily = previewFontFamily,
                                                 fontWeight = FontWeight.Bold,
                                                 color = MaterialTheme.colorScheme.onSurface,
                                                 textAlign = TextAlign.Center,

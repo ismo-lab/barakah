@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.barakah.app.data.QuranData
+import dev.barakah.app.R
 import dev.barakah.app.util.PrayerCalculator
 import dev.barakah.app.data.Surah
 import dev.barakah.app.ui.BarakahViewModel
@@ -68,6 +69,7 @@ fun QuranScreen(
     
     // Resume state
     val lastReadingState by viewModel.lastReadingState.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
     
     // Fonts collected directly from centralized viewModel
     val arabicFontSize by viewModel.arabicFontSize.collectAsState()
@@ -76,7 +78,6 @@ fun QuranScreen(
     val appLanguage by viewModel.appLanguage.collectAsState()
     val isAr = appLanguage == "ar"
     val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
-    val context = androidx.compose.ui.platform.LocalContext.current
 
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     
