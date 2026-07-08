@@ -59,7 +59,7 @@ android {
       val major = 1
       val minor = next / 100
       val patch = next % 100
-      val formattedVersionName = "$major.$minor.${patch.toString().padStart(2, '0')}"
+      val formattedVersionName = "$major.${minor.toString().padStart(2, '0')}.${patch.toString().padStart(2, '0')}"
       versionProps.setProperty("VERSION_CODE", next.toString())
       versionProps.setProperty("VERSION_NAME", formattedVersionName)
       val fos = FileOutputStream(versionFile)
@@ -76,8 +76,8 @@ android {
     val major = 1
     val minor = finalVersionCode / 100
     val patch = finalVersionCode % 100
-    versionCode = finalVersionCode
-    versionName = "$major.$minor.${patch.toString().padStart(2, '0')}"
+    versionCode = major * 10000 + minor * 100 + patch
+    versionName = "$major.${minor.toString().padStart(2, '0')}.${patch.toString().padStart(2, '0')}"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
