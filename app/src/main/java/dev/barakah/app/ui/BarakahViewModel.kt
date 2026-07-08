@@ -190,6 +190,13 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     private val _notifyEveningAdhkar = MutableStateFlow(prefs.getBoolean("notify_evening_adhkar", true))
     val notifyEveningAdhkar: StateFlow<Boolean> = _notifyEveningAdhkar
 
+    // Custom offsets (in minutes) for Morning and Evening Adhkar reminders
+    private val _morningAdhkarOffset = MutableStateFlow(prefs.getInt("morning_adhkar_offset", 30))
+    val morningAdhkarOffset: StateFlow<Int> = _morningAdhkarOffset
+
+    private val _eveningAdhkarOffset = MutableStateFlow(prefs.getInt("evening_adhkar_offset", 30))
+    val eveningAdhkarOffset: StateFlow<Int> = _eveningAdhkarOffset
+
     // Pre-Adhan notifications (15-min before), Occasions, and Fasting notifications state flows
     private val _notifyBeforeAdhan = MutableStateFlow(prefs.getBoolean("notify_before_adhan", true))
     val notifyBeforeAdhan: StateFlow<Boolean> = _notifyBeforeAdhan
@@ -883,9 +890,21 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
     }
 
+    fun setMorningAdhkarOffset(value: Int) {
+        _morningAdhkarOffset.value = value
+        prefs.edit().putInt("morning_adhkar_offset", value).apply()
+        try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
+    }
+
     fun setNotifyEveningAdhkar(value: Boolean) {
         _notifyEveningAdhkar.value = value
         prefs.edit().putBoolean("notify_evening_adhkar", value).apply()
+        try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
+    }
+
+    fun setEveningAdhkarOffset(value: Int) {
+        _eveningAdhkarOffset.value = value
+        prefs.edit().putInt("evening_adhkar_offset", value).apply()
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
     }
 
@@ -1282,7 +1301,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             val firstThirdSec = maghribSec + nightDuration / 3
             val midnightSec = maghribSec + nightDuration / 2
             val lastThirdSec = maghribSec + (nightDuration * 2) / 3
-            val witrSec = ishaSec + 45 * 60
+            val witrSec = ishaSec + 30 * 60
 
             val rWitr = relativeSec(witrSec)
             val rFirstThird = relativeSec(firstThirdSec)

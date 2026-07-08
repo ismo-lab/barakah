@@ -83,7 +83,7 @@ object PrayerScheduler {
             if (showNawafil) {
                 // Secondary / Nawafil
                 val duhaTime = calculateOffsetTime(times.sunrise, 20)
-                val witrTime = calculateOffsetTime(times.isha, 45)
+                val witrTime = calculateOffsetTime(times.isha, 30)
                 val tahajjudTime = calculateOffsetTime(times.fajr, -90)
                 val qiyamTime = calculateOffsetTime(times.fajr, -150)
                 
@@ -97,8 +97,11 @@ object PrayerScheduler {
             val notifyMorning = prefs.getBoolean("notify_morning_adhkar", true)
             val notifyEvening = prefs.getBoolean("notify_evening_adhkar", true)
 
-            val morningAdhkarTime = calculateOffsetTime(times.fajr, 30)
-            val eveningAdhkarTime = calculateOffsetTime(times.asr, 30)
+            val morningOffset = prefs.getInt("morning_adhkar_offset", 30)
+            val eveningOffset = prefs.getInt("evening_adhkar_offset", 30)
+
+            val morningAdhkarTime = calculateOffsetTime(times.fajr, morningOffset)
+            val eveningAdhkarTime = calculateOffsetTime(times.asr, eveningOffset)
 
             scheduleAlarm(context, "Morning Adhkar", morningAdhkarTime, 10, notifyMorning)
             scheduleAlarm(context, "Evening Adhkar", eveningAdhkarTime, 11, notifyEvening)

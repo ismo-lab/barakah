@@ -409,7 +409,7 @@ fun NotificationsStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
             item {
                 NotificationToggleCard(
                     title = if (isAr) "تنبيهات أذكار الصباح" else "Morning Adhkar Notifications",
-                    desc = if (isAr) "تنبيه بعد الفجر بـ ٣٠ دقيقة لقراءة الأذكار" else "Remind to recite Morning Adhkar 30 mins after Fajr",
+                    desc = if (isAr) "تنبيه يومي لقراءة الأذكار (وقت قابل للتخصيص)" else "Daily reminder to recite Adhkar (customizable timing)",
                     checked = notifyMorningAdhkar,
                     onCheckedChange = { viewModel.setNotifyMorningAdhkar(it) }
                 )
@@ -417,7 +417,7 @@ fun NotificationsStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
             item {
                 NotificationToggleCard(
                     title = if (isAr) "تنبيهات أذكار المساء" else "Evening Adhkar Notifications",
-                    desc = if (isAr) "تنبيه بعد العصر بـ ٣٠ دقيقة لقراءة الأذكار" else "Remind to recite Evening Adhkar 30 mins after Asr",
+                    desc = if (isAr) "تنبيه يومي لقراءة الأذكار (وقت قابل للتخصيص)" else "Daily reminder to recite Adhkar (customizable timing)",
                     checked = notifyEveningAdhkar,
                     onCheckedChange = { viewModel.setNotifyEveningAdhkar(it) }
                 )

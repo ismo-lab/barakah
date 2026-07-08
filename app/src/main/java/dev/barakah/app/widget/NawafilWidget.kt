@@ -90,7 +90,7 @@ class NawafilWidget : GlanceAppWidget() {
         val duhaRaw = calculateOffsetTime(times.sunrise, 20)
         val qiyamRaw = calculateOffsetTime(times.fajr, -150)
         val tahajjudRaw = calculateOffsetTime(times.fajr, -90)
-        val witrRaw = calculateOffsetTime(times.isha, 45)
+        val witrRaw = calculateOffsetTime(times.isha, 30)
 
         val is24Hour = android.text.format.DateFormat.is24HourFormat(context)
 

@@ -7,6 +7,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -63,6 +66,8 @@ fun HomeScreen(
     // Persistent Settings states retrieved from viewmodel
     val notifyMorningAdhkar by viewModel.notifyMorningAdhkar.collectAsState()
     val notifyEveningAdhkar by viewModel.notifyEveningAdhkar.collectAsState()
+    val morningAdhkarOffset by viewModel.morningAdhkarOffset.collectAsState()
+    val eveningAdhkarOffset by viewModel.eveningAdhkarOffset.collectAsState()
     val notifyBeforeAdhan by viewModel.notifyBeforeAdhan.collectAsState()
     val notifyOccasions by viewModel.notifyOccasions.collectAsState()
     val notifyFasting by viewModel.notifyFasting.collectAsState()
@@ -211,7 +216,7 @@ fun HomeScreen(
                         return String.format(Locale.US, "%02d:%02d", h, m)
                     }
                     
-                    val witrStart = TimeUtils.calculateOffsetTime(displayTimes.isha, 45)
+                    val witrStart = TimeUtils.calculateOffsetTime(displayTimes.isha, 30)
                     list.add(Triple("Witr (Nafilah)", "$witrStart - ${displayTimes.fajr}", "Witr Voluntary Prayer"))
                     list.add(Triple("First Third (Nafilah)", formatMins(firstThirdMin), "First Third of the Night"))
                     list.add(Triple("Midnight (Nafilah)", formatMins(midMin), "Islamic Midnight"))
@@ -224,7 +229,7 @@ fun HomeScreen(
                 }
             } catch (e: Exception) {
                 // Fallback if parsing fails
-                val witrTime = if (isLocationSet) TimeUtils.calculateOffsetTime(displayTimes.isha, 45) else "--:--"
+                val witrTime = if (isLocationSet) TimeUtils.calculateOffsetTime(displayTimes.isha, 30) else "--:--"
                 list.add(Triple("Witr (Nafilah)", if (isLocationSet) "$witrTime - ${displayTimes.fajr}" else "--:--", "Witr Voluntary Prayer"))
                 list.add(Triple("First Third (Nafilah)", "--:--", "First Third of the Night"))
                 list.add(Triple("Midnight (Nafilah)", "--:--", "Islamic Midnight"))
@@ -981,7 +986,7 @@ fun HomeScreen(
                                                 color = MaterialTheme.colorScheme.onSurface
                                             )
                                             Text(
-                                                text = if (isAr) "تنبيه يومي لقراءة أذكار الصباح (بعد صلاة الفجر بـ ٣٠ دقيقة)" else "Daily reminder to recite Morning Adhkar (30 mins after Fajr)",
+                                                text = if (isAr) "تنبيه يومي لقراءة أذكار الصباح" else "Daily reminder to recite Morning Adhkar",
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -990,6 +995,17 @@ fun HomeScreen(
                                         Switch(
                                             checked = notifyMorningAdhkar,
                                             onCheckedChange = { viewModel.setNotifyMorningAdhkar(it) }
+                                        )
+                                    }
+
+                                    if (notifyMorningAdhkar) {
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        AdhkarOffsetSelector(
+                                            currentOffset = morningAdhkarOffset,
+                                            onOffsetSelected = { viewModel.setMorningAdhkarOffset(it) },
+                                            isAr = isAr,
+                                            isMorning = true,
+                                            useWesternNumbersInArabic = useWesternNumbersInArabic
                                         )
                                     }
 
@@ -1008,7 +1024,7 @@ fun HomeScreen(
                                                 color = MaterialTheme.colorScheme.onSurface
                                             )
                                             Text(
-                                                text = if (isAr) "تنبيه يومي لقراءة أذكار المساء (بعد صلاة العصر بـ ٣٠ دقيقة)" else "Daily reminder to recite Evening Adhkar (30 mins after Asr)",
+                                                text = if (isAr) "تنبيه يومي لقراءة أذكار المساء" else "Daily reminder to recite Evening Adhkar",
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -1017,6 +1033,17 @@ fun HomeScreen(
                                         Switch(
                                             checked = notifyEveningAdhkar,
                                             onCheckedChange = { viewModel.setNotifyEveningAdhkar(it) }
+                                        )
+                                    }
+
+                                    if (notifyEveningAdhkar) {
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        AdhkarOffsetSelector(
+                                            currentOffset = eveningAdhkarOffset,
+                                            onOffsetSelected = { viewModel.setEveningAdhkarOffset(it) },
+                                            isAr = isAr,
+                                            isMorning = false,
+                                            useWesternNumbersInArabic = useWesternNumbersInArabic
                                         )
                                     }
 
@@ -1982,6 +2009,80 @@ val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsSt
                     maxLines = 1,
                     softWrap = false
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun AdhkarOffsetSelector(
+    currentOffset: Int,
+    onOffsetSelected: (Int) -> Unit,
+    isAr: Boolean,
+    isMorning: Boolean,
+    useWesternNumbersInArabic: Boolean
+) {
+    val offsets = listOf(0, 15, 30, 45, 60, 90, 120)
+    val labelBase = if (isMorning) {
+        if (isAr) "بعد الفجر بـ" else "after Fajr"
+    } else {
+        if (isAr) "بعد العصر بـ" else "after Asr"
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+    ) {
+        Text(
+            text = if (isAr) {
+                if (currentOffset == 0) "وقت التنبيه: عند الأذان مباشرة" else "وقت التنبيه: $labelBase ${currentOffset.toString().localize(true, useWesternNumbersInArabic)} دقيقة"
+            } else {
+                if (currentOffset == 0) "Reminder Time: Exactly at Adhan" else "Reminder Time: $currentOffset mins $labelBase"
+            },
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(horizontal = 4.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            items(offsets) { offset ->
+                val isSelected = currentOffset == offset
+                val chipText = if (offset == 0) {
+                    if (isAr) "عند الأذان" else "At Adhan"
+                } else if (offset == 30) {
+                    if (isAr) "٣٠ د (افتراضي)" else "30m (Default)"
+                } else {
+                    if (isAr) "${offset.toString().localize(true, useWesternNumbersInArabic)} د" else "${offset}m"
+                }
+
+                Surface(
+                    onClick = { onOffsetSelected(offset) },
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                    ),
+                    modifier = Modifier.height(36.dp)
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.padding(horizontal = 12.dp)
+                    ) {
+                        Text(
+                            text = chipText,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                            color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             }
         }
     }
