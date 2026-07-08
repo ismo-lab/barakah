@@ -539,7 +539,7 @@ fun HomeScreen(
             val name = item.first
             val time = item.second
             val subtitle = item.third
-            val isNawafil = name.endsWith("(Nafilah)")
+            val isNawafil = name.endsWith("(Nafilah)") || name == "Sunrise"
             val isCurrent = name == activeHighlight
 
             // Elegant high contrast timeline cards as requested
@@ -587,7 +587,7 @@ fun HomeScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = if (isCurrent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
                             )
-                            if (isNawafil) {
+                            if (isNawafil && name != "Sunrise") {
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Box(
                                     modifier = Modifier
