@@ -26,6 +26,8 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.abs
+import dev.barakah.app.R
+import android.media.MediaPlayer
 
 class BarakahViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -182,6 +184,9 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     // Nawafil state flow
     private val _showNawafil = MutableStateFlow(prefs.getBoolean("show_nawafil", false))
     val showNawafil: StateFlow<Boolean> = _showNawafil
+
+    private val _notifyNawafil = MutableStateFlow(prefs.getBoolean("notify_nawafil", true))
+    val notifyNawafil: StateFlow<Boolean> = _notifyNawafil
 
     // Morning and Evening Adhkar Notifications state flow
     private val _notifyMorningAdhkar = MutableStateFlow(prefs.getBoolean("notify_morning_adhkar", true))
@@ -884,6 +889,12 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         recalculatePrayerTimes()
     }
 
+    fun setNotifyNawafil(value: Boolean) {
+        _notifyNawafil.value = value
+        prefs.edit().putBoolean("notify_nawafil", value).apply()
+        try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
+    }
+
     fun setNotifyMorningAdhkar(value: Boolean) {
         _notifyMorningAdhkar.value = value
         prefs.edit().putBoolean("notify_morning_adhkar", value).apply()
@@ -1350,8 +1361,54 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         _nextPrayerCountdown.value = java.lang.String.format(java.util.Locale.US, "%02d:%02d:%02d", h, m, s)
     }
 
+    private var mediaPlayer: MediaPlayer? = null
+    
+    private val _isPlayingFajrTest = MutableStateFlow(false)
+    val isPlayingFajrTest: StateFlow<Boolean> = _isPlayingFajrTest
+
+    private val _isPlayingRegularTest = MutableStateFlow(false)
+    val isPlayingRegularTest: StateFlow<Boolean> = _isPlayingRegularTest
+
+    fun playTestAdhan(isFajr: Boolean) {
+        stopTestAdhan()
+        try {
+            val resId = if (isFajr) R.raw.adhan_fajr else R.raw.adhan_regular
+            mediaPlayer = MediaPlayer.create(getApplication<Application>(), resId)?.apply {
+                setOnCompletionListener {
+                    stopTestAdhan()
+                }
+                start()
+            }
+            if (isFajr) {
+                _isPlayingFajrTest.value = true
+            } else {
+                _isPlayingRegularTest.value = true
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("BarakahViewModel", "Error playing test adhan", e)
+        }
+    }
+
+    fun stopTestAdhan() {
+        try {
+            mediaPlayer?.let {
+                if (it.isPlaying) {
+                    it.stop()
+                }
+                it.release()
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("BarakahViewModel", "Error stopping test adhan", e)
+        } finally {
+            mediaPlayer = null
+            _isPlayingFajrTest.value = false
+            _isPlayingRegularTest.value = false
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
+        stopTestAdhan()
         sensorManager.stop()
         countdownJob?.cancel()
         stopLocationUpdates()

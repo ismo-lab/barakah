@@ -64,6 +64,7 @@ object PrayerScheduler {
             val settings = db.prayerAlertDao().getAllAlertSettings().first()
             val isEnabled = { name: String -> settings.find { it.prayerName == name }?.isEnabled != false }
             val showNawafil = prefs.getBoolean("show_nawafil", false)
+            val notifyNawafil = prefs.getBoolean("notify_nawafil", true)
             
             // Primary Prayers
             scheduleAlarm(context, "Fajr", times.fajr, 1, isEnabled("Fajr"))
@@ -87,10 +88,10 @@ object PrayerScheduler {
                 val tahajjudTime = calculateOffsetTime(times.fajr, -90)
                 val qiyamTime = calculateOffsetTime(times.fajr, -150)
                 
-                scheduleAlarm(context, "Duha (Nafilah)", duhaTime, 6, isEnabled("Duha (Nafilah)"))
-                scheduleAlarm(context, "Witr (Nafilah)", witrTime, 7, isEnabled("Witr (Nafilah)"))
-                scheduleAlarm(context, "Tahajjud (Nafilah)", tahajjudTime, 8, isEnabled("Tahajjud (Nafilah)"))
-                scheduleAlarm(context, "Qiyam-ul-Layl (Nafilah)", qiyamTime, 9, isEnabled("Qiyam-ul-Layl (Nafilah)"))
+                scheduleAlarm(context, "Duha (Nafilah)", duhaTime, 6, notifyNawafil && isEnabled("Duha (Nafilah)"))
+                scheduleAlarm(context, "Witr (Nafilah)", witrTime, 7, notifyNawafil && isEnabled("Witr (Nafilah)"))
+                scheduleAlarm(context, "Tahajjud (Nafilah)", tahajjudTime, 8, notifyNawafil && isEnabled("Tahajjud (Nafilah)"))
+                scheduleAlarm(context, "Qiyam-ul-Layl (Nafilah)", qiyamTime, 9, notifyNawafil && isEnabled("Qiyam-ul-Layl (Nafilah)"))
             }
 
             // Morning and Evening Adhkar Notifications
