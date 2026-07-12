@@ -587,7 +587,11 @@ fun HomeScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = if (isCurrent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
                             )
-                            if (isNawafil && name != "Sunrise") {
+                            val showNafilahBadge = isNawafil && 
+                                    name != "Sunrise" && 
+                                    !name.contains("First Third") && 
+                                    !name.contains("Midnight")
+                            if (showNafilahBadge) {
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Box(
                                     modifier = Modifier
