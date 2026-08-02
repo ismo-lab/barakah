@@ -74,9 +74,10 @@ android {
     }
 
     val major = 1
-    val minor = finalVersionCode / 100
+    val minor = (finalVersionCode / 100) % 100
     val patch = finalVersionCode % 100
-    versionCode = major * 10000 + minor * 100 + patch
+    // Guarantee monotonically increasing integer versionCode higher than any legacy build
+    versionCode = 100000 + finalVersionCode
     versionName = "$major.${minor.toString().padStart(2, '0')}.${patch.toString().padStart(2, '0')}"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

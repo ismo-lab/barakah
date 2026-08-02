@@ -27,20 +27,29 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
         // Prevent duplicate firing by checking if we already notified for this exact scheduled time
         val prefs = context.getSharedPreferences("notif_history", Context.MODE_PRIVATE)
         val lastNotifiedTime = prefs.getLong("last_notified_$prayerId", 0L)
+        val lastNotifiedTs = prefs.getLong("last_notified_ts_$prayerId", 0L)
+        val now = System.currentTimeMillis()
         
         // If scheduledTime is provided and matches last notified, skip to avoid duplicates
         if (scheduledTime != 0L && scheduledTime == lastNotifiedTime) {
             return
         }
+
+        // Prevent rapid duplicate notifications for the same prayer ID within 2 minutes
+        if (now - lastNotifiedTs < 2 * 60 * 1000L) {
+            return
+        }
         
         // Also skip if current time is way off from scheduled time (e.g. system re-running old alarms)
-        val now = System.currentTimeMillis()
-        if (scheduledTime != 0L && kotlin.math.abs(now - scheduledTime) > 30 * 60 * 1000) { // 30 minutes threshold
+        if (scheduledTime != 0L && kotlin.math.abs(now - scheduledTime) > 30 * 60 * 1000L) { // 30 minutes threshold
             return
         }
 
-        // Persist notified time
-        prefs.edit().putLong("last_notified_$prayerId", scheduledTime).apply()
+        // Persist notified time and timestamp
+        prefs.edit()
+            .putLong("last_notified_$prayerId", scheduledTime)
+            .putLong("last_notified_ts_$prayerId", now)
+            .apply()
         
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         

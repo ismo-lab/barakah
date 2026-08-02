@@ -155,8 +155,8 @@ object PrayerScheduler {
             set(Calendar.MILLISECOND, 0)
         }
         
-        // Ensure alarm is in the future
-        if (cal.timeInMillis <= now) {
+        // Ensure alarm is in the future (add 60s buffer to prevent duplicate firing when alarm triggers)
+        if (cal.timeInMillis <= now + 60_000L) {
             cal.add(Calendar.DAY_OF_YEAR, 1)
         }
         
