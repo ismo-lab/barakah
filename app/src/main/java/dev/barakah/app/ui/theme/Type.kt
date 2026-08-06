@@ -9,6 +9,11 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import dev.barakah.app.R
+
+val OthmaniFontFamily = FontFamily(
+    Font(R.font.othmani)
+)
 
 val Typography = Typography(
     displayLarge = TextStyle(
