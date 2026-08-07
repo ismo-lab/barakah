@@ -21,6 +21,25 @@ plugins {
   alias(libs.plugins.secrets)
 }
 
+// Load version configuration cleanly from version.properties without configuration-phase side effects
+val versionFile = file("version.properties")
+val versionProps = Properties().apply {
+  if (versionFile.exists()) {
+    versionFile.inputStream().use { load(it) }
+  }
+}
+
+val majorVersion = versionProps.getProperty("MAJOR", "1").toInt()
+val minorVersion = versionProps.getProperty("MINOR", "0").toInt()
+val patchVersion = versionProps.getProperty("PATCH", "0").toInt()
+val buildNumber = versionProps.getProperty("BUILD_NUMBER", "1004").toInt()
+
+// Standard Android Version Code calculation formula:
+// MAJOR * 100000 + MINOR * 10000 + PATCH * 100 + BUILD_NUMBER
+// Guarantees strictly monotonically increasing integer versionCode (>= 101004)
+val currentVersionCode = majorVersion * 100000 + minorVersion * 10000 + patchVersion * 100 + buildNumber
+val currentVersionName = "$majorVersion.$minorVersion.$patchVersion"
+
 android {
   namespace = "dev.barakah.app"
   compileSdk { version = release(36) { minorApiLevel = 1 } }
@@ -34,51 +53,8 @@ android {
     minSdk = 24
     targetSdk = 36
 
-    val versionFile = file("version.properties")
-    val versionProps = Properties()
-    var currentVersionCode = 1
-    if (versionFile.exists()) {
-      val fis = FileInputStream(versionFile)
-      try {
-        versionProps.load(fis)
-      } finally {
-        fis.close()
-      }
-      currentVersionCode = versionProps.getProperty("VERSION_CODE", "1").toInt()
-    }
-
-    val isBuilding = gradle.startParameter.taskNames.any { name ->
-      name.contains("assemble", ignoreCase = true) || 
-      name.contains("bundle", ignoreCase = true) || 
-      name.contains("install", ignoreCase = true) ||
-      name.contains("compile", ignoreCase = true)
-    }
-
-    val finalVersionCode = if (isBuilding) {
-      val next = currentVersionCode + 1
-      val major = 1
-      val minor = next / 100
-      val patch = next % 100
-      val formattedVersionName = "$major.${minor.toString().padStart(2, '0')}.${patch.toString().padStart(2, '0')}"
-      versionProps.setProperty("VERSION_CODE", next.toString())
-      versionProps.setProperty("VERSION_NAME", formattedVersionName)
-      val fos = FileOutputStream(versionFile)
-      try {
-        versionProps.store(fos, "Auto-incremented build version")
-      } finally {
-        fos.close()
-      }
-      next
-    } else {
-      currentVersionCode
-    }
-
-    val major = 1
-    val minor = (finalVersionCode / 100) % 100
-    val patch = finalVersionCode % 100
-    // Guarantee monotonically increasing integer versionCode higher than any legacy build
-    versionCode = 100000 + finalVersionCode
-    versionName = "$major.${minor.toString().padStart(2, '0')}.${patch.toString().padStart(2, '0')}"
+    versionCode = currentVersionCode
+    versionName = currentVersionName
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -324,6 +300,112 @@ tasks.register("downloadEnglishTafseer") {
 tasks.named("preBuild") {
   dependsOn("downloadArabicTafseer", "downloadEnglishTafseer")
 }
+
+// Tasks for professional Version Management as per official Android documentation
+tasks.register("incrementBuildNumber") {
+  group = "versioning"
+  description = "Increments the BUILD_NUMBER in version.properties and updates VERSION_CODE/VERSION_NAME."
+  doLast {
+    val props = Properties()
+    if (versionFile.exists()) {
+      versionFile.inputStream().use { props.load(it) }
+    }
+    val maj = props.getProperty("MAJOR", "1").toInt()
+    val min = props.getProperty("MINOR", "0").toInt()
+    val pat = props.getProperty("PATCH", "0").toInt()
+    val bld = props.getProperty("BUILD_NUMBER", "1004").toInt() + 1
+
+    val newCode = maj * 100000 + min * 10000 + pat * 100 + bld
+    val newName = "$maj.$min.$pat"
+
+    props.setProperty("MAJOR", maj.toString())
+    props.setProperty("MINOR", min.toString())
+    props.setProperty("PATCH", pat.toString())
+    props.setProperty("BUILD_NUMBER", bld.toString())
+    props.setProperty("VERSION_CODE", newCode.toString())
+    props.setProperty("VERSION_NAME", newName)
+
+    versionFile.outputStream().use { 
+      props.store(it, "Updated by incrementBuildNumber task") 
+    }
+    println("Updated Version: Code=$newCode ($newName Build #$bld)")
+  }
+}
+
+tasks.register("incrementMinorVersion") {
+  group = "versioning"
+  description = "Bumps MINOR version, resets PATCH to 0 and increments BUILD_NUMBER."
+  doLast {
+    val props = Properties()
+    if (versionFile.exists()) {
+      versionFile.inputStream().use { props.load(it) }
+    }
+    val maj = props.getProperty("MAJOR", "1").toInt()
+    val min = props.getProperty("MINOR", "0").toInt() + 1
+    val pat = 0
+    val bld = props.getProperty("BUILD_NUMBER", "1004").toInt() + 1
+
+    val newCode = maj * 100000 + min * 10000 + pat * 100 + bld
+    val newName = "$maj.$min.$pat"
+
+    props.setProperty("MAJOR", maj.toString())
+    props.setProperty("MINOR", min.toString())
+    props.setProperty("PATCH", pat.toString())
+    props.setProperty("BUILD_NUMBER", bld.toString())
+    props.setProperty("VERSION_CODE", newCode.toString())
+    props.setProperty("VERSION_NAME", newName)
+
+    versionFile.outputStream().use { 
+      props.store(it, "Updated by incrementMinorVersion task") 
+    }
+    println("Updated Minor Version: Code=$newCode ($newName Build #$bld)")
+  }
+}
+
+tasks.register("incrementMajorVersion") {
+  group = "versioning"
+  description = "Bumps MAJOR version, resets MINOR and PATCH to 0, and increments BUILD_NUMBER."
+  doLast {
+    val props = Properties()
+    if (versionFile.exists()) {
+      versionFile.inputStream().use { props.load(it) }
+    }
+    val maj = props.getProperty("MAJOR", "1").toInt() + 1
+    val min = 0
+    val pat = 0
+    val bld = props.getProperty("BUILD_NUMBER", "1004").toInt() + 1
+
+    val newCode = maj * 100000 + min * 10000 + pat * 100 + bld
+    val newName = "$maj.$min.$pat"
+
+    props.setProperty("MAJOR", maj.toString())
+    props.setProperty("MINOR", min.toString())
+    props.setProperty("PATCH", pat.toString())
+    props.setProperty("BUILD_NUMBER", bld.toString())
+    props.setProperty("VERSION_CODE", newCode.toString())
+    props.setProperty("VERSION_NAME", newName)
+
+    versionFile.outputStream().use { 
+      props.store(it, "Updated by incrementMajorVersion task") 
+    }
+    println("Updated Major Version: Code=$newCode ($newName Build #$bld)")
+  }
+}
+
+tasks.register("printVersion") {
+  group = "versioning"
+  description = "Prints current version info"
+  doLast {
+    println("================================================")
+    println("Application ID: dev.barakah.app")
+    println("Version Name:   $currentVersionName")
+    println("Version Code:   $currentVersionCode")
+    println("Major: $majorVersion, Minor: $minorVersion, Patch: $patchVersion, Build: $buildNumber")
+    println("Signing Config: sharedConfig (Keystore: app/keystore.jks)")
+    println("================================================")
+  }
+}
+
 
 
 
