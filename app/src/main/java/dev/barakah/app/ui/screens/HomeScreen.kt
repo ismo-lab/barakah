@@ -84,7 +84,7 @@ fun HomeScreen(
     val fontAr by viewModel.arabicFontSize.collectAsState()
     val fontEn by viewModel.englishFontSize.collectAsState()
     val quranFontOption by viewModel.quranFontOption.collectAsState()
-    val quranFontFamily = dev.barakah.app.ui.theme.rememberQuranFontFamily(quranFontOption)
+    val quranFontFamily = dev.barakah.app.ui.theme.getQuranFontFamily(quranFontOption)
     val locationMethod by viewModel.locationMethod.collectAsState()
 
     val showNawafil by viewModel.showNawafil.collectAsState()

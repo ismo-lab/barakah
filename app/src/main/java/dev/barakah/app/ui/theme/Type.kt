@@ -11,18 +11,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import dev.barakah.app.R
 
-@Composable
-fun rememberQuranFontFamily(quranFontOption: String): FontFamily {
-    if (quranFontOption != "othmani") return FontFamily.Default
-    val context = LocalContext.current
-    return remember(context) {
-        try {
-            val typeface = android.graphics.Typeface.createFromAsset(context.assets, "fonts/othmani.ttf")
-            FontFamily(typeface)
-        } catch (e: Throwable) {
-            FontFamily.Default
-        }
-    }
+val OthmaniFontFamily = FontFamily(
+    Font(R.font.othmani, weight = FontWeight.W100),
+    Font(R.font.othmani, weight = FontWeight.W200),
+    Font(R.font.othmani, weight = FontWeight.W300),
+    Font(R.font.othmani, weight = FontWeight.W400),
+    Font(R.font.othmani, weight = FontWeight.W500),
+    Font(R.font.othmani, weight = FontWeight.W600),
+    Font(R.font.othmani, weight = FontWeight.W700),
+    Font(R.font.othmani, weight = FontWeight.W800),
+    Font(R.font.othmani, weight = FontWeight.W900)
+)
+
+fun getQuranFontFamily(quranFontOption: String): FontFamily {
+    return if (quranFontOption == "othmani") OthmaniFontFamily else FontFamily.Default
 }
 
 val Typography = Typography(
