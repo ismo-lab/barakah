@@ -84,9 +84,7 @@ fun HomeScreen(
     val fontAr by viewModel.arabicFontSize.collectAsState()
     val fontEn by viewModel.englishFontSize.collectAsState()
     val quranFontOption by viewModel.quranFontOption.collectAsState()
-    val quranFontFamily = remember(quranFontOption) {
-        if (quranFontOption == "othmani") dev.barakah.app.ui.theme.OthmaniFontFamily else androidx.compose.ui.text.font.FontFamily.Default
-    }
+    val quranFontFamily = dev.barakah.app.ui.theme.rememberQuranFontFamily(quranFontOption)
     val locationMethod by viewModel.locationMethod.collectAsState()
 
     val showNawafil by viewModel.showNawafil.collectAsState()
