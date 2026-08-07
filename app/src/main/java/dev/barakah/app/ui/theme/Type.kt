@@ -12,7 +12,10 @@ import androidx.compose.ui.unit.sp
 import dev.barakah.app.R
 
 val OthmaniFontFamily = FontFamily(
-    Font(R.font.othmani)
+    Font(resId = R.font.othmani, weight = FontWeight.Normal),
+    Font(resId = R.font.othmani, weight = FontWeight.Medium),
+    Font(resId = R.font.othmani, weight = FontWeight.SemiBold),
+    Font(resId = R.font.othmani, weight = FontWeight.Bold)
 )
 
 val Typography = Typography(

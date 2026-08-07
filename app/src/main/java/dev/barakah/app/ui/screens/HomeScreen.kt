@@ -1702,7 +1702,6 @@ fun HomeScreen(
                                                 if (isAr) "خط عثماني" else "Othmani Font",
                                                 fontWeight = FontWeight.Bold,
                                                 style = MaterialTheme.typography.labelMedium,
-                                                fontFamily = dev.barakah.app.ui.theme.OthmaniFontFamily,
                                                 color = if (quranFontOption == "othmani") MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
                                             )
                                         }
