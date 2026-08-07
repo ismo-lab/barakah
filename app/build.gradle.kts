@@ -36,49 +36,14 @@ android {
 
     val versionFile = file("version.properties")
     val versionProps = Properties()
-    var currentVersionCode = 1
     if (versionFile.exists()) {
-      val fis = FileInputStream(versionFile)
-      try {
-        versionProps.load(fis)
-      } finally {
-        fis.close()
-      }
-      currentVersionCode = versionProps.getProperty("VERSION_CODE", "1").toInt()
+      versionFile.inputStream().use { versionProps.load(it) }
     }
+    val code = versionProps.getProperty("VERSION_CODE", "200000").toIntOrNull() ?: 200000
+    val name = versionProps.getProperty("VERSION_NAME", "2.0.0") ?: "2.0.0"
 
-    val isBuilding = gradle.startParameter.taskNames.any { name ->
-      name.contains("assemble", ignoreCase = true) || 
-      name.contains("bundle", ignoreCase = true) || 
-      name.contains("install", ignoreCase = true) ||
-      name.contains("compile", ignoreCase = true)
-    }
-
-    val finalVersionCode = if (isBuilding) {
-      val next = currentVersionCode + 1
-      val major = 1
-      val minor = next / 100
-      val patch = next % 100
-      val formattedVersionName = "$major.${minor.toString().padStart(2, '0')}.${patch.toString().padStart(2, '0')}"
-      versionProps.setProperty("VERSION_CODE", next.toString())
-      versionProps.setProperty("VERSION_NAME", formattedVersionName)
-      val fos = FileOutputStream(versionFile)
-      try {
-        versionProps.store(fos, "Auto-incremented build version")
-      } finally {
-        fos.close()
-      }
-      next
-    } else {
-      currentVersionCode
-    }
-
-    val major = 1
-    val minor = (finalVersionCode / 100) % 100
-    val patch = finalVersionCode % 100
-    // Guarantee monotonically increasing integer versionCode higher than any legacy build
-    versionCode = 100000 + finalVersionCode
-    versionName = "$major.${minor.toString().padStart(2, '0')}.${patch.toString().padStart(2, '0')}"
+    versionCode = code
+    versionName = name
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }

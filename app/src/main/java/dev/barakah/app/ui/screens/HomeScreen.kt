@@ -424,7 +424,7 @@ fun HomeScreen(
                             fontFamily = quranFontFamily,
                             lineHeight = 28.sp
                         ),
-                        fontWeight = FontWeight.Medium,
+                        fontWeight = if (quranFontOption == "othmani") FontWeight.Normal else FontWeight.Medium,
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -1735,7 +1735,7 @@ fun HomeScreen(
                                             Text(
                                                 text = "بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ",
                                                 fontSize = fontAr.sp,
-                                                fontWeight = FontWeight.Bold,
+                                                fontWeight = if (quranFontOption == "othmani") FontWeight.Normal else FontWeight.Bold,
                                                 fontFamily = quranFontFamily,
                                                 color = MaterialTheme.colorScheme.onSurface,
                                                 textAlign = TextAlign.Center,

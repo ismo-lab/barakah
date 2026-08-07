@@ -474,7 +474,7 @@ fun QuranScreen(
                                         Text(
                                             text = surah.arabic,
                                             style = MaterialTheme.typography.titleLarge,
-                                            fontWeight = FontWeight.Bold,
+                                            fontWeight = if (quranFontOption == "othmani") FontWeight.Normal else FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.primary,
                                             fontFamily = quranFontFamily
                                         )
@@ -610,7 +610,7 @@ fun QuranScreen(
                                     text = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
                                     style = androidx.compose.ui.text.TextStyle(
                                         fontSize = (arabicFontSize + 2).sp,
-                                        fontWeight = FontWeight.Bold,
+                                        fontWeight = if (quranFontOption == "othmani") FontWeight.Normal else FontWeight.Bold,
                                         textAlign = TextAlign.Center,
                                         fontFamily = quranFontFamily,
                                         color = MaterialTheme.colorScheme.primary
@@ -746,7 +746,7 @@ fun QuranScreen(
                             fontFamily = quranFontFamily,
                             textDirection = TextDirection.Rtl,
                             textAlign = TextAlign.Right,
-                            fontWeight = FontWeight.Medium,
+                            fontWeight = if (quranFontOption == "othmani") FontWeight.Normal else FontWeight.Medium,
                             color = MaterialTheme.colorScheme.primary
                         ),
                         modifier = Modifier

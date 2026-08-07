@@ -12,15 +12,7 @@ import androidx.compose.ui.unit.sp
 import dev.barakah.app.R
 
 val OthmaniFontFamily = FontFamily(
-    Font(R.font.othmani, weight = FontWeight.W100),
-    Font(R.font.othmani, weight = FontWeight.W200),
-    Font(R.font.othmani, weight = FontWeight.W300),
-    Font(R.font.othmani, weight = FontWeight.W400),
-    Font(R.font.othmani, weight = FontWeight.W500),
-    Font(R.font.othmani, weight = FontWeight.W600),
-    Font(R.font.othmani, weight = FontWeight.W700),
-    Font(R.font.othmani, weight = FontWeight.W800),
-    Font(R.font.othmani, weight = FontWeight.W900)
+    Font(resId = R.font.othmani, weight = FontWeight.Normal)
 )
 
 fun getQuranFontFamily(quranFontOption: String): FontFamily {
