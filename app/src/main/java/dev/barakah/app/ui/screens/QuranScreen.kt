@@ -38,7 +38,6 @@ import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.barakah.app.data.QuranData
-import dev.barakah.app.ui.theme.getQuranFontFamily
 import dev.barakah.app.R
 import dev.barakah.app.util.PrayerCalculator
 import dev.barakah.app.data.Surah
@@ -75,8 +74,7 @@ fun QuranScreen(
     // Fonts collected directly from centralized viewModel
     val arabicFontSize by viewModel.arabicFontSize.collectAsState()
     val englishFontSize by viewModel.englishFontSize.collectAsState()
-    val quranFontOption by viewModel.quranFontOption.collectAsState()
-    val quranFontFamily = getQuranFontFamily(quranFontOption)
+    val quranFontFamily = FontFamily.Default
     val appLanguage by viewModel.appLanguage.collectAsState()
     val isAr = appLanguage == "ar"
     val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
@@ -474,7 +472,7 @@ fun QuranScreen(
                                         Text(
                                             text = surah.arabic,
                                             style = MaterialTheme.typography.titleLarge,
-                                            fontWeight = if (quranFontOption == "othmani") FontWeight.Normal else FontWeight.Bold,
+                                            fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.primary,
                                             fontFamily = quranFontFamily
                                         )
@@ -610,7 +608,7 @@ fun QuranScreen(
                                     text = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
                                     style = androidx.compose.ui.text.TextStyle(
                                         fontSize = (arabicFontSize + 2).sp,
-                                        fontWeight = if (quranFontOption == "othmani") FontWeight.Normal else FontWeight.Bold,
+                                        fontWeight = FontWeight.Bold,
                                         textAlign = TextAlign.Center,
                                         fontFamily = quranFontFamily,
                                         color = MaterialTheme.colorScheme.primary
@@ -746,7 +744,7 @@ fun QuranScreen(
                             fontFamily = quranFontFamily,
                             textDirection = TextDirection.Rtl,
                             textAlign = TextAlign.Right,
-                            fontWeight = if (quranFontOption == "othmani") FontWeight.Normal else FontWeight.Medium,
+                            fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.primary
                         ),
                         modifier = Modifier

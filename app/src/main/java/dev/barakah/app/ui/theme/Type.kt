@@ -9,15 +9,6 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import dev.barakah.app.R
-
-val OthmaniFontFamily = FontFamily(
-    Font(resId = R.font.othmani, weight = FontWeight.Normal)
-)
-
-fun getQuranFontFamily(quranFontOption: String): FontFamily {
-    return if (quranFontOption == "othmani") OthmaniFontFamily else FontFamily.Default
-}
 
 val Typography = Typography(
     displayLarge = TextStyle(

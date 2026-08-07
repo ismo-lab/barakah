@@ -83,8 +83,6 @@ fun HomeScreen(
     val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
     val fontAr by viewModel.arabicFontSize.collectAsState()
     val fontEn by viewModel.englishFontSize.collectAsState()
-    val quranFontOption by viewModel.quranFontOption.collectAsState()
-    val quranFontFamily = dev.barakah.app.ui.theme.getQuranFontFamily(quranFontOption)
     val locationMethod by viewModel.locationMethod.collectAsState()
 
     val showNawafil by viewModel.showNawafil.collectAsState()
@@ -421,10 +419,10 @@ fun HomeScreen(
                     Text(
                         text = quote.first,
                         style = MaterialTheme.typography.bodyLarge.copy(
-                            fontFamily = quranFontFamily,
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Serif,
                             lineHeight = 28.sp
                         ),
-                        fontWeight = if (quranFontOption == "othmani") FontWeight.Normal else FontWeight.Medium,
+                        fontWeight = FontWeight.Medium,
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -1655,56 +1653,6 @@ fun HomeScreen(
                                         Text(text = "${fontEn.toInt()}sp", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, modifier = Modifier.width(40.dp), textAlign = TextAlign.End)
                                     }
 
-                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-
-                                    Text(
-                                        text = if (isAr) "نوع خط المصحف الشريف" else "Quran Script Font Family",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        OutlinedButton(
-                                            onClick = { viewModel.setQuranFontOption("normal") },
-                                            modifier = Modifier.weight(1f),
-                                            colors = ButtonDefaults.outlinedButtonColors(
-                                                containerColor = if (quranFontOption == "normal") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
-                                            ),
-                                            border = androidx.compose.foundation.BorderStroke(
-                                                width = if (quranFontOption == "normal") 2.dp else 1.dp,
-                                                color = if (quranFontOption == "normal") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                                            )
-                                        ) {
-                                            Text(
-                                                if (isAr) "خط عادي (افتراضي)" else "Standard Font",
-                                                fontWeight = FontWeight.Bold,
-                                                style = MaterialTheme.typography.labelMedium,
-                                                color = if (quranFontOption == "normal") MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
-                                            )
-                                        }
-
-                                        OutlinedButton(
-                                            onClick = { viewModel.setQuranFontOption("othmani") },
-                                            modifier = Modifier.weight(1f),
-                                            colors = ButtonDefaults.outlinedButtonColors(
-                                                containerColor = if (quranFontOption == "othmani") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
-                                            ),
-                                            border = androidx.compose.foundation.BorderStroke(
-                                                width = if (quranFontOption == "othmani") 2.dp else 1.dp,
-                                                color = if (quranFontOption == "othmani") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                                            )
-                                        ) {
-                                            Text(
-                                                if (isAr) "خط عثماني" else "Othmani Font",
-                                                fontWeight = FontWeight.Bold,
-                                                style = MaterialTheme.typography.labelMedium,
-                                                color = if (quranFontOption == "othmani") MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
-                                            )
-                                        }
-                                    }
-
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Box(
                                         modifier = Modifier
@@ -1735,8 +1683,7 @@ fun HomeScreen(
                                             Text(
                                                 text = "بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ",
                                                 fontSize = fontAr.sp,
-                                                fontWeight = if (quranFontOption == "othmani") FontWeight.Normal else FontWeight.Bold,
-                                                fontFamily = quranFontFamily,
+                                                fontWeight = FontWeight.Bold,
                                                 color = MaterialTheme.colorScheme.onSurface,
                                                 textAlign = TextAlign.Center,
                                                 modifier = Modifier.fillMaxWidth()
