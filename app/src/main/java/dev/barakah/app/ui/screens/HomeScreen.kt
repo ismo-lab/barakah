@@ -91,6 +91,8 @@ fun HomeScreen(
 
     val showNawafil by viewModel.showNawafil.collectAsState()
     val notifyNawafil by viewModel.notifyNawafil.collectAsState()
+    val adhanAudioEnabled by viewModel.adhanAudioEnabled.collectAsState()
+    val adhanAudioMode by viewModel.adhanAudioMode.collectAsState()
     val asrMethod by viewModel.asrMethod.collectAsState()
     val ishaMethod by viewModel.ishaMethod.collectAsState()
     val adjFajr by viewModel.adjFajr.collectAsState()
@@ -973,6 +975,65 @@ fun HomeScreen(
                                             color = MaterialTheme.colorScheme.primary
                                         )
                                     }
+
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = if (isAr) "صوت الأذان" else "Adhan Sound",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = if (isAr) "تشغيل الأذان عند دخول وقت الصلاة" else "Play the Adhan when a prayer time begins",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Switch(
+                                            checked = adhanAudioEnabled,
+                                            onCheckedChange = { viewModel.setAdhanAudioEnabled(it) }
+                                        )
+                                    }
+
+                                    if (adhanAudioEnabled) {
+                                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth().clickable { viewModel.setAdhanAudioMode("full") },
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                RadioButton(
+                                                    selected = adhanAudioMode == "full",
+                                                    onClick = { viewModel.setAdhanAudioMode("full") }
+                                                )
+                                                Text(
+                                                    text = if (isAr) "الأذان كاملًا" else "Full Adhan",
+                                                    style = MaterialTheme.typography.bodyMedium
+                                                )
+                                            }
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth().clickable { viewModel.setAdhanAudioMode("short") },
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                RadioButton(
+                                                    selected = adhanAudioMode == "short",
+                                                    onClick = { viewModel.setAdhanAudioMode("short") }
+                                                )
+                                                Text(
+                                                    text = if (isAr) "أول ١٥ ثانية فقط" else "First 15 seconds",
+                                                    style = MaterialTheme.typography.bodyMedium
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
 
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),

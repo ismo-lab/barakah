@@ -188,6 +188,12 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     private val _notifyNawafil = MutableStateFlow(prefs.getBoolean("notify_nawafil", true))
     val notifyNawafil: StateFlow<Boolean> = _notifyNawafil
 
+    private val _adhanAudioEnabled = MutableStateFlow(prefs.getBoolean("adhan_audio_enabled", false))
+    val adhanAudioEnabled: StateFlow<Boolean> = _adhanAudioEnabled
+
+    private val _adhanAudioMode = MutableStateFlow(prefs.getString("adhan_audio_mode", "short") ?: "short")
+    val adhanAudioMode: StateFlow<String> = _adhanAudioMode
+
     // Morning and Evening Adhkar Notifications state flow
     private val _notifyMorningAdhkar = MutableStateFlow(prefs.getBoolean("notify_morning_adhkar", true))
     val notifyMorningAdhkar: StateFlow<Boolean> = _notifyMorningAdhkar
@@ -902,6 +908,17 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         _notifyNawafil.value = value
         prefs.edit().putBoolean("notify_nawafil", value).apply()
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
+    }
+
+    fun setAdhanAudioEnabled(value: Boolean) {
+        _adhanAudioEnabled.value = value
+        prefs.edit().putBoolean("adhan_audio_enabled", value).apply()
+    }
+
+    fun setAdhanAudioMode(value: String) {
+        if (value != "full" && value != "short") return
+        _adhanAudioMode.value = value
+        prefs.edit().putString("adhan_audio_mode", value).apply()
     }
 
     fun setNotifyMorningAdhkar(value: Boolean) {
