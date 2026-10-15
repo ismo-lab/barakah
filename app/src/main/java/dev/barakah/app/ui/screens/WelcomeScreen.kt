@@ -207,7 +207,9 @@ fun LanguageCard(label: String, isSelected: Boolean, onClick: () -> Unit) {
 
      LaunchedEffect(query) {
          kotlinx.coroutines.delay(250)
-         filteredCities = CityData.search(context, query)
+         filteredCities = CityData.search(context, query, languageTag = currentLang)
+             .filter { it.name.isNotBlank() && it.displayName(currentLang).isNotBlank() }
+             .distinctBy { it.id }
      }
      
      val locationPermissionState = rememberPermissionState(
@@ -316,19 +318,19 @@ fun LanguageCard(label: String, isSelected: Boolean, onClick: () -> Unit) {
             contentPadding = PaddingValues(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(filteredCities) { city ->
+            items(filteredCities, key = { it.id }) { city ->
                 ElevatedCard(
                     onClick = {
                         viewModel.setLocationMethod("manual")
-                        viewModel.updateLocation(city.lat, city.lng, if (isAr) city.nameAr else city.name, timeZoneId = city.timeZoneId)
+                        viewModel.updateLocation(city.lat, city.lng, city.displayName(currentLang), timeZoneId = city.timeZoneId)
                         onFinish()
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     ListItem(
-                        headlineContent = { Text(if (isAr) city.nameAr else city.name, fontWeight = FontWeight.Bold) },
-                        supportingContent = { Text(if (isAr) city.countryAr else city.country) },
+                        headlineContent = { Text(city.displayName(currentLang), fontWeight = FontWeight.Bold) },
+                        supportingContent = { Text(city.countryName) },
                         leadingContent = { Icon(Icons.Default.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                         trailingContent = { Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp)) },
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent)
