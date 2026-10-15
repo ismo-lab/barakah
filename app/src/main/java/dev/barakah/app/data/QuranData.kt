@@ -95,42 +95,48 @@ object QuranData {
         }
     }
 
+    private val versesCache = java.util.concurrent.ConcurrentHashMap<Int, List<Verse>>()
+
     fun loadVersesForSurah(context: Context, surahId: Int): List<Verse> {
+        versesCache[surahId]?.let { return it }
         try {
-            val surahJson = context.assets.open("quran/surah_$surahId.json").bufferedReader().use { it.readText() }
-            val reader = android.util.JsonReader(surahJson.reader())
-            val verses = mutableListOf<Verse>()
-            
-            reader.beginObject()
-            while (reader.hasNext()) {
-                val name = reader.nextName()
-                if (name == "verses") {
-                    reader.beginArray()
-                    while (reader.hasNext()) {
-                        var index = 0
-                        var arabic = ""
-                        var english = ""
-                        
-                        reader.beginObject()
+            context.assets.open("quran/surah_$surahId.json").use { inputStream ->
+                val reader = android.util.JsonReader(inputStream.bufferedReader())
+                val verses = mutableListOf<Verse>()
+                
+                reader.beginObject()
+                while (reader.hasNext()) {
+                    val name = reader.nextName()
+                    if (name == "verses") {
+                        reader.beginArray()
                         while (reader.hasNext()) {
-                            when (reader.nextName()) {
-                                "index" -> index = reader.nextInt()
-                                "arabic" -> arabic = reader.nextString()
-                                "english" -> english = reader.nextString()
-                                else -> reader.skipValue()
+                            var index = 0
+                            var arabic = ""
+                            var english = ""
+                            
+                            reader.beginObject()
+                            while (reader.hasNext()) {
+                                when (reader.nextName()) {
+                                    "index" -> index = reader.nextInt()
+                                    "arabic" -> arabic = reader.nextString()
+                                    "english" -> english = reader.nextString()
+                                    else -> reader.skipValue()
+                                }
                             }
+                            reader.endObject()
+                            verses.add(Verse(index, arabic, english))
                         }
-                        reader.endObject()
-                        verses.add(Verse(index, arabic, english))
+                        reader.endArray()
+                    } else {
+                        reader.skipValue()
                     }
-                    reader.endArray()
-                } else {
-                    reader.skipValue()
                 }
+                reader.endObject()
+                reader.close()
+                val sorted = verses.sortedBy { it.index }
+                versesCache[surahId] = sorted
+                return sorted
             }
-            reader.endObject()
-            reader.close()
-            return verses.sortedBy { it.index }
         } catch (e: Exception) {
             android.util.Log.e("QuranData", "Error loading verses for Surah $surahId: ${e.message}")
             return emptyList()
@@ -198,33 +204,40 @@ object QuranData {
             }
         }
 
-        var jsonText = ""
+        val enMap = mutableMapOf<Int, String>()
         try {
             context.assets.open("quran/en_tafseer/$surahId.json").use { inputStream ->
-                jsonText = inputStream.bufferedReader().use { it.readText() }
+                val reader = android.util.JsonReader(inputStream.bufferedReader())
+                reader.beginObject()
+                while (reader.hasNext()) {
+                    if (reader.nextName() == "ayahs") {
+                        reader.beginArray()
+                        while (reader.hasNext()) {
+                            var aId = -1
+                            var text = ""
+                            reader.beginObject()
+                            while (reader.hasNext()) {
+                                when (reader.nextName()) {
+                                    "ayah" -> aId = reader.nextInt()
+                                    "text" -> text = reader.nextString()
+                                    else -> reader.skipValue()
+                                }
+                            }
+                            reader.endObject()
+                            if (aId != -1 && text.isNotEmpty()) {
+                                enMap[aId] = text
+                            }
+                        }
+                        reader.endArray()
+                    } else {
+                        reader.skipValue()
+                    }
+                }
+                reader.endObject()
+                reader.close()
             }
         } catch (e: Exception) {
             android.util.Log.e("QuranData", "Error opening local English tafseer asset for Surah $surahId: ${e.message}")
-        }
-
-        val enMap = mutableMapOf<Int, String>()
-        if (jsonText.isNotEmpty()) {
-            try {
-                val obj = org.json.JSONObject(jsonText)
-                if (obj.has("ayahs")) {
-                    val ayahsArr = obj.getJSONArray("ayahs")
-                    for (i in 0 until ayahsArr.length()) {
-                        val item = ayahsArr.getJSONObject(i)
-                        val aId = item.optInt("ayah", -1)
-                        val text = item.optString("text", "")
-                        if (aId != -1 && text.isNotEmpty()) {
-                            enMap[aId] = text
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                android.util.Log.e("QuranData", "Error parsing en tafseer json: ${e.message}", e)
-            }
         }
 
         synchronized(this) {

@@ -20,6 +20,9 @@ class QiblaManager(context: Context) : SensorEventListener {
 
     private val gravityValues = FloatArray(3)
     private val geomagneticValues = FloatArray(3)
+    private val rMatrix = FloatArray(9)
+    private val iMatrix = FloatArray(9)
+    private val orientationAngles = FloatArray(3)
     private var hasGravity = false
     private var hasGeomagnetic = false
 
@@ -59,16 +62,12 @@ class QiblaManager(context: Context) : SensorEventListener {
         }
 
         if (hasGravity && hasGeomagnetic) {
-            val r = FloatArray(9)
-            val i = FloatArray(9)
-            if (SensorManager.getRotationMatrix(r, i, gravityValues, geomagneticValues)) {
-                val orientation = FloatArray(3)
-                SensorManager.getOrientation(r, orientation)
-                // azimuth is orientation[0] in radians. Convert to degrees.
-                var azimuthDegrees = Math.toDegrees(orientation[0].toDouble()).toFloat()
+            if (SensorManager.getRotationMatrix(rMatrix, iMatrix, gravityValues, geomagneticValues)) {
+                SensorManager.getOrientation(rMatrix, orientationAngles)
+                // azimuth is orientationAngles[0] in radians. Convert to degrees.
+                var azimuthDegrees = Math.toDegrees(orientationAngles[0].toDouble()).toFloat()
                 azimuthDegrees = (azimuthDegrees + 360) % 360
                 
-                // Let's also do a subtle low-pass or immediate value with a small deadband / check to avoid noise
                 _compassHeading.value = azimuthDegrees
             }
         }

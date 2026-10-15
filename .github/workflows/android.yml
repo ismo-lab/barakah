@@ -32,36 +32,43 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
-    - name: Build with Gradle
-      run: ./gradlew assembleDebug --stacktrace
-
-    - name: Get Version Name
+    - name: Determine Dynamic Version
       id: get_version
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        VERSION_NAME=$(grep VERSION_NAME app/version.properties | cut -d'=' -f2 | tr -d '\r')
-        echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
-        echo "Extracted App Version: $VERSION_NAME"
+        MAJOR=$(grep MAJOR app/version.properties | cut -d'=' -f2 | tr -d '\r')
+        MINOR=$(grep MINOR app/version.properties | cut -d'=' -f2 | tr -d '\r')
+        PATCH=$(grep PATCH app/version.properties | cut -d'=' -f2 | tr -d '\r')
+        BASE_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+        
+        # Check if a release for the base version already exists on GitHub
+        if gh release view "v${BASE_VERSION}" >/dev/null 2>&1; then
+          DYNAMIC_VERSION="${BASE_VERSION}.${{ github.run_number }}"
+        else
+          DYNAMIC_VERSION="${BASE_VERSION}"
+        fi
+        
+        echo "VERSION_NAME=${DYNAMIC_VERSION}" >> $GITHUB_ENV
+        echo "DYNAMIC_VERSION=${DYNAMIC_VERSION}" >> $GITHUB_ENV
+        echo "Extracted App Version: ${DYNAMIC_VERSION}"
+
+    - name: Build with Gradle
+      env:
+        DYNAMIC_VERSION: ${{ env.DYNAMIC_VERSION }}
+      run: ./gradlew assembleDebug --stacktrace
 
     - name: Rename compiled APK
       run: |
         cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Barakah-v${{ env.VERSION_NAME }}.apk
         echo "Renamed app-debug.apk to Barakah-v${{ env.VERSION_NAME }}.apk"
 
-    - name: Delete old releases
-      if: github.event_name == 'push'
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        gh release list --json tagName -q ".[].tagName" | while read -r tag; do
-          gh release delete "$tag" --cleanup-tag -y || true
-        done
-
     - name: Create Release
       uses: softprops/action-gh-release@v2
       if: github.event_name == 'push'
       with:
         tag_name: "v${{ env.VERSION_NAME }}"
-        name: "Barakah v${{ env.VERSION_NAME }}"
+        name: "${{ env.VERSION_NAME }}"
         body: |
           ${{ github.event.head_commit.message }}
         files: app/build/outputs/apk/debug/Barakah-v${{ env.VERSION_NAME }}.apk

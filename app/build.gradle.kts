@@ -35,11 +35,9 @@ val patchVersion = versionProps.getProperty("PATCH", "0").toInt()
 val buildNumber = versionProps.getProperty("BUILD_NUMBER", "1006").toInt()
 val ciRunOffset = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 0
 
-// Standard Android Version Code calculation formula:
-// MAJOR * 100000 + MINOR * 10000 + PATCH * 100 + BUILD_NUMBER + ciRunOffset
-// Guarantees strictly monotonically increasing integer versionCode for updates
 val currentVersionCode = majorVersion * 100000 + minorVersion * 10000 + patchVersion * 100 + buildNumber + ciRunOffset
-val currentVersionName = "$majorVersion.$minorVersion.$patchVersion"
+val currentVersionName = System.getenv("DYNAMIC_VERSION")?.takeIf { it.isNotEmpty() }
+  ?: "$majorVersion.$minorVersion.$patchVersion"
 
 android {
   namespace = "dev.barakah.app"
