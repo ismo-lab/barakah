@@ -521,6 +521,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             }.collect {}
         }
         updateWidgetsGlobally()
+        dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(application)
         if (locationMethod.value == "auto") {
             startLocationUpdates()
         }
