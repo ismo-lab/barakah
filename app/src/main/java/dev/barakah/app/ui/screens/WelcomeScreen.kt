@@ -205,7 +205,7 @@ fun LanguageCard(label: String, isSelected: Boolean, onClick: () -> Unit) {
      var gpsPermissionRequested by remember { mutableStateOf(false) }
      val context = androidx.compose.ui.platform.LocalContext.current
 
-     LaunchedEffect(query) {
+     LaunchedEffect(query, currentLang) {
          kotlinx.coroutines.delay(250)
          filteredCities = CityData.search(context, query, languageTag = currentLang)
              .filter { it.name.isNotBlank() && it.displayName(currentLang).isNotBlank() }
