@@ -16,9 +16,40 @@ class PrayerWidgetReceiver : GlanceAppWidgetReceiver() {
             action == android.content.Intent.ACTION_TIME_CHANGED ||
             action == android.content.Intent.ACTION_TIMEZONE_CHANGED ||
             action == android.content.Intent.ACTION_DATE_CHANGED) {
-            
+
             MainScope().launch {
                 glanceAppWidget.updateAll(context)
+            }
+        }
+    }
+}
+
+class PrayerWidgetRefreshReceiver : android.content.BroadcastReceiver() {
+    override fun onReceive(context: android.content.Context, intent: android.content.Intent) {
+        val pendingResult = goAsync()
+        val appContext = context.applicationContext
+        kotlinx.coroutines.CoroutineScope(
+            kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO
+        ).launch {
+            try {
+                try {
+                    PrayerWidget().updateAll(appContext)
+                } catch (error: Exception) {
+                    android.util.Log.e("PrayerWidgetRefresh", "Unable to refresh PrayerWidget", error)
+                }
+                try {
+                    PrayerRemainingWidget().updateAll(appContext)
+                } catch (error: Exception) {
+                    android.util.Log.e("PrayerWidgetRefresh", "Unable to refresh PrayerRemainingWidget", error)
+                }
+                try {
+                    NawafilWidget().updateAll(appContext)
+                } catch (error: Exception) {
+                    android.util.Log.e("PrayerWidgetRefresh", "Unable to refresh NawafilWidget", error)
+                }
+                dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(appContext)
+            } finally {
+                pendingResult.finish()
             }
         }
     }

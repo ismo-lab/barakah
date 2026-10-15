@@ -2,6 +2,8 @@ package dev.barakah.app.notifications
 
 import android.app.AlarmManager
 import android.app.PendingIntent
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import dev.barakah.app.util.PrayerCalculator
@@ -16,6 +18,9 @@ import dev.barakah.app.data.AppDatabase
 import dev.barakah.app.data.AppRepository
 
 object PrayerScheduler {
+    private const val ACTION_REFRESH_WIDGETS = "dev.barakah.app.ACTION_REFRESH_WIDGETS"
+    private const val WIDGET_REFRESH_REQUEST_CODE = 2001
+
     fun scheduleNextPrayers(context: Context) {
         CoroutineScope(Dispatchers.IO).launch {
             val prefs = context.getSharedPreferences("barakah_prefs", Context.MODE_PRIVATE)
@@ -23,6 +28,7 @@ object PrayerScheduler {
             val isLocationSet = !(rawLabel.isNullOrEmpty() || rawLabel == "Mecca, KSA" || rawLabel == "Mecca (GPS Fallback)" || rawLabel == "مكة المكرمة (تلقائي)" || rawLabel == "الموقع غير محدد" || rawLabel == "No Location Selected")
 
             if (!isLocationSet) {
+                cancelWidgetRefresh(context)
                 val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
                 if (alarmManager != null) {
                     val ids = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 1011, 1012, 1013, 1014, 1015)
@@ -77,6 +83,12 @@ object PrayerScheduler {
                 adjIsha = adjIsha
             )
             
+            scheduleWidgetRefresh(
+                context,
+                listOf(times.fajr, times.sunrise, times.dhuhr, times.asr, times.maghrib, times.isha),
+                timeZone
+            )
+
             val db = AppDatabase.getDatabase(context)
             val settings = db.prayerAlertDao().getAllAlertSettings().first()
             val isEnabled = { name: String -> settings.find { it.prayerName == name }?.isEnabled != false }
@@ -138,6 +150,64 @@ object PrayerScheduler {
 
             val notifyIftar = prefs.getBoolean("notify_iftar", false)
             scheduleAlarm(context, "Iftar Reminder", times.maghrib, 15, notifyIftar, timeZone)
+        }
+    }
+
+    private fun widgetRefreshPendingIntent(context: Context): PendingIntent {
+        val intent = Intent(context, dev.barakah.app.widget.PrayerWidgetRefreshReceiver::class.java).apply {
+            action = ACTION_REFRESH_WIDGETS
+        }
+        return PendingIntent.getBroadcast(
+            context,
+            WIDGET_REFRESH_REQUEST_CODE,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+
+    private fun cancelWidgetRefresh(context: Context) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+        alarmManager.cancel(widgetRefreshPendingIntent(context))
+    }
+
+    private fun scheduleWidgetRefresh(context: Context, prayerTimes: List<String>, timeZone: TimeZone) {
+        val remainingWidget = ComponentName(
+            context,
+            dev.barakah.app.widget.PrayerRemainingWidgetReceiver::class.java
+        )
+        if (AppWidgetManager.getInstance(context).getAppWidgetIds(remainingWidget).isEmpty()) {
+            cancelWidgetRefresh(context)
+            return
+        }
+
+        val now = System.currentTimeMillis()
+        val nextRefreshAt = prayerTimes.mapNotNull { timeString ->
+            val parts = timeString.trim().split(":")
+            val hour = parts.getOrNull(0)?.toIntOrNull() ?: return@mapNotNull null
+            val minute = parts.getOrNull(1)?.substringBefore(" ")?.toIntOrNull() ?: return@mapNotNull null
+            Calendar.getInstance(timeZone).apply {
+                set(Calendar.HOUR_OF_DAY, hour)
+                set(Calendar.MINUTE, minute)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+                if (timeInMillis <= now) add(Calendar.DAY_OF_YEAR, 1)
+            }.timeInMillis
+        }.minOrNull() ?: return
+
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+        val pendingIntent = widgetRefreshPendingIntent(context)
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S &&
+                !alarmManager.canScheduleExactAlarms()
+            ) {
+                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextRefreshAt, pendingIntent)
+            } else {
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextRefreshAt, pendingIntent)
+            }
+        } catch (error: SecurityException) {
+            alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextRefreshAt, pendingIntent)
+        } catch (error: Exception) {
+            android.util.Log.e("PrayerScheduler", "Failed to schedule widget refresh", error)
         }
     }
 

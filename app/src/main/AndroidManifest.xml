@@ -81,6 +81,7 @@
                 android:resource="@xml/nawafil_widget_info" />
         </receiver>
 
+        <receiver android:name=".widget.PrayerWidgetRefreshReceiver" android:exported="false" />
         <receiver android:name=".notifications.PrayerNotificationReceiver" android:exported="false" />
         <receiver android:name=".notifications.BootReceiver" android:exported="true">
             <intent-filter>
