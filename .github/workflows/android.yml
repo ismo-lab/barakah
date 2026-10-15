@@ -53,9 +53,23 @@ jobs:
         echo "DYNAMIC_VERSION=${DYNAMIC_VERSION}" >> $GITHUB_ENV
         echo "Extracted App Version: ${DYNAMIC_VERSION}"
 
+    - name: Restore Signing Keystore
+      run: |
+        if [ -f "debug.keystore.base64" ]; then
+          base64 -d debug.keystore.base64 > debug.keystore
+          mkdir -p app
+          cp debug.keystore app/keystore.jks
+          echo "Keystore successfully restored from debug.keystore.base64"
+          keytool -list -v -keystore debug.keystore -storepass android | grep -E "SHA1:|SHA256:"
+        else
+          echo "ERROR: debug.keystore.base64 not found!"
+          exit 1
+        fi
+
     - name: Build with Gradle
       env:
         DYNAMIC_VERSION: ${{ env.DYNAMIC_VERSION }}
+        GITHUB_RUN_NUMBER: ${{ github.run_number }}
       run: ./gradlew assembleDebug --stacktrace
 
     - name: Rename compiled APK
