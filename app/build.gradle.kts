@@ -34,6 +34,9 @@ val minorVersion = versionProps.getProperty("MINOR", "0").toInt()
 val patchVersion = versionProps.getProperty("PATCH", "0").toInt()
 val buildNumber = versionProps.getProperty("BUILD_NUMBER", "1006").toInt()
 val ciRunOffset = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 0
+val signingStorePassword = System.getenv("BARAKAH_KEYSTORE_PASSWORD") ?: "android"
+val signingKeyAlias = System.getenv("BARAKAH_KEY_ALIAS") ?: "androiddebugkey"
+val signingKeyPassword = System.getenv("BARAKAH_KEY_PASSWORD") ?: "android"
 
 val currentVersionCode = majorVersion * 100000 + minorVersion * 10000 + patchVersion * 100 + buildNumber + ciRunOffset
 val currentVersionName = System.getenv("DYNAMIC_VERSION")?.takeIf { it.isNotEmpty() }
@@ -121,9 +124,9 @@ android {
       }
       
       storeFile = keystoreFile
-      storePassword = "android"
-      keyAlias = "androiddebugkey"
-      keyPassword = "android"
+      storePassword = signingStorePassword
+      keyAlias = signingKeyAlias
+      keyPassword = signingKeyPassword
       enableV1Signing = true
       enableV2Signing = true
       enableV3Signing = true
