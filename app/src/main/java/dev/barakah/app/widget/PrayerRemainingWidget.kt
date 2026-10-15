@@ -24,167 +24,169 @@ import java.util.*
 
 class PrayerRemainingWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val prefs = context.getSharedPreferences("barakah_prefs", Context.MODE_PRIVATE)
-        val isAr = prefs.getString("app_lang", "ar") == "ar"
-        val defaultLabel = if (isAr) "الموقع غير محدد" else "No Location Selected"
-        val lat = prefs.getFloat("loc_lat", 21.4225f).toDouble()
-        val lng = prefs.getFloat("loc_lng", 39.8262f).toDouble()
-        val rawLabel = prefs.getString("loc_label", null)
-        val label = if (rawLabel.isNullOrEmpty() || rawLabel == "Mecca, KSA" || rawLabel == "Mecca (GPS Fallback)" || rawLabel == "مكة المكرمة (تلقائي)") defaultLabel else rawLabel
-        val isLocationSet = !(rawLabel.isNullOrEmpty() || rawLabel == "Mecca, KSA" || rawLabel == "Mecca (GPS Fallback)" || rawLabel == "مكة المكرمة (تلقائي)" || rawLabel == "الموقع غير محدد" || rawLabel == "No Location Selected")
-        val useWesternNumbersInArabic = prefs.getBoolean("use_western_numbers_in_arabic", false)
-        
-        val isAutoLocation = prefs.getString("location_method", "manual") == "auto"
-        val selectedTimeZoneId = if (isAutoLocation) TimeZone.getDefault().id else prefs.getString("loc_timezone", null)
-        val timeZoneId = PrayerCalculator.resolveTimeZoneId(selectedTimeZoneId)
-        val calendar = Calendar.getInstance(TimeZone.getTimeZone(timeZoneId))
-        val offsetHours = PrayerCalculator.getTimeZoneOffset(timeZoneId, calendar)
-        
-        val asrMethod = prefs.getString("asr_method", "standard") ?: "standard"
-        val ishaMethod = prefs.getString("isha_method", "standard") ?: "standard"
-        val m = try {
-            PrayerCalculator.CalculationMethod.valueOf(prefs.getString("calc_method", "MWL") ?: "MWL")
-        } catch(e: Exception) {
-            PrayerCalculator.CalculationMethod.MWL
-        }
-
-        val adjFajr = prefs.getInt("adj_fajr", 0)
-        val adjSunrise = prefs.getInt("adj_sunrise", 0)
-        val adjDhuhr = prefs.getInt("adj_dhuhr", 0)
-        val adjAsr = prefs.getInt("adj_asr", 0)
-        val adjMaghrib = prefs.getInt("adj_maghrib", 0)
-        val adjIsha = prefs.getInt("adj_isha", 0)
-        
-        val times = PrayerCalculator.calculate(
-            lat, lng, offsetHours, calendar,
-            method = m, asrMethod = asrMethod, ishaMethod = ishaMethod,
-            adjFajr = adjFajr, adjSunrise = adjSunrise, adjDhuhr = adjDhuhr,
-            adjAsr = adjAsr, adjMaghrib = adjMaghrib, adjIsha = adjIsha
-        )
-        
-        val currentTimeInSec = calendar.get(Calendar.HOUR_OF_DAY) * 3600 + calendar.get(Calendar.MINUTE) * 60 + calendar.get(Calendar.SECOND)
-        
-        fun parseTimeToSec(timeStr: String): Int {
-            return try {
-                val parts = timeStr.split(":")
-                val h = parts[0].trim().toInt()
-                val mPart = parts[1].split(" ")[0].trim().toInt()
-                h * 3600 + mPart * 60
-            } catch (e: Exception) {
-                0
-            }
-        }
-        
-        val fajrSec = parseTimeToSec(times.fajr)
-        val sunriseSec = parseTimeToSec(times.sunrise)
-        val dhuhrSec = parseTimeToSec(times.dhuhr)
-        val asrSec = parseTimeToSec(times.asr)
-        val maghribSec = parseTimeToSec(times.maghrib)
-        val ishaSec = parseTimeToSec(times.isha)
-
-        val nextName: String
-        val nextSec: Int
-        var isNextDay = false
-
-        if (currentTimeInSec < fajrSec) {
-            nextName = "Fajr"
-            nextSec = fajrSec
-        } else if (currentTimeInSec < sunriseSec) {
-            nextName = "Sunrise"
-            nextSec = sunriseSec
-        } else if (currentTimeInSec < dhuhrSec) {
-            nextName = "Dhuhr"
-            nextSec = dhuhrSec
-        } else if (currentTimeInSec < asrSec) {
-            nextName = "Asr"
-            nextSec = asrSec
-        } else if (currentTimeInSec < maghribSec) {
-            nextName = "Maghrib"
-            nextSec = maghribSec
-        } else if (currentTimeInSec < ishaSec) {
-            nextName = "Isha"
-            nextSec = ishaSec
-        } else {
-            nextName = "Fajr"
-            nextSec = fajrSec
-            isNextDay = true
-        }
-
-        var diff = if (isNextDay) {
-            (24 * 3600 - currentTimeInSec) + nextSec
-        } else {
-            nextSec - currentTimeInSec
-        }
-        if (diff < 0) diff = 0
-
-        val h = diff / 3600
-        val mn = (diff % 3600) / 60
-
-        val locale = java.util.Locale.US
-        val formattedH = h.toString().localize(isAr, useWesternNumbersInArabic)
-        val formattedM = mn.toString().localize(isAr, useWesternNumbersInArabic)
-        val diffStr = if (!isLocationSet) {
-            if (isAr) "متبقي --" else "Starts in --"
-        } else {
-            if (isAr) "متبقي $formattedH ساعة و $formattedM دقيقة" else "Starts in $formattedH hr $formattedM min"
-        }
-
-        val dispName = if (!isLocationSet) {
-            "--"
-        } else {
-            if (isAr) {
-                when (nextName) {
-                    "Fajr" -> "الفجر"
-                    "Dhuhr" -> "الظهر"
-                    "Asr" -> "العصر"
-                    "Maghrib" -> "المغرب"
-                    "Isha" -> "العشاء"
-                    "Sunrise" -> "الشروق"
-                    else -> nextName
-                }
-            } else {
-                nextName
-            }
-        }
-
-        val nextTimeStr = when(nextName) {
-            "Fajr" -> times.fajr
-            "Sunrise" -> times.sunrise
-            "Dhuhr" -> times.dhuhr
-            "Asr" -> times.asr
-            "Maghrib", "المغرب" -> times.maghrib
-            "Isha", "العشاء" -> times.isha
-            else -> ""
-        }
-
-        val is24Hour = android.text.format.DateFormat.is24HourFormat(context)
-
-        fun formatTimeStr(timeStr: String): String {
-            if (!isLocationSet) return "--:--".localize(isAr, useWesternNumbersInArabic)
-            return try {
-                val parts = timeStr.trim().split(":")
-                val hh = parts[0].toInt()
-                val min = parts[1].split(" ")[0].trim().toInt()
-                
-                val locale = java.util.Locale.US
-                val formatted = if (is24Hour) {
-                    java.lang.String.format(locale, "%02d:%02d", hh, min)
-                } else {
-                    val hour12 = if (hh % 12 == 0) 12 else hh % 12
-                    val amPm = if (hh < 12) {
-                        if (isAr) "ص" else "AM"
-                    } else {
-                        if (isAr) "م" else "PM"
-                    }
-                    java.lang.String.format(locale, "%02d:%02d %s", hour12, min, amPm)
-                }
-                formatted.localize(isAr, useWesternNumbersInArabic)
-            } catch (e: Exception) {
-                timeStr.localize(isAr, useWesternNumbersInArabic)
-            }
-        }
-
         provideContent {
+            // Glance can reuse an active session and recompose this block without rerunning provideGlance.
+            val prefs = context.getSharedPreferences("barakah_prefs", Context.MODE_PRIVATE)
+            val isAr = prefs.getString("app_lang", "ar") == "ar"
+            val defaultLabel = if (isAr) "الموقع غير محدد" else "No Location Selected"
+            val lat = prefs.getFloat("loc_lat", 21.4225f).toDouble()
+            val lng = prefs.getFloat("loc_lng", 39.8262f).toDouble()
+            val rawLabel = prefs.getString("loc_label", null)
+            val label = if (rawLabel.isNullOrEmpty() || rawLabel == "Mecca, KSA" || rawLabel == "Mecca (GPS Fallback)" || rawLabel == "مكة المكرمة (تلقائي)") defaultLabel else rawLabel
+            val isLocationSet = !(rawLabel.isNullOrEmpty() || rawLabel == "Mecca, KSA" || rawLabel == "Mecca (GPS Fallback)" || rawLabel == "مكة المكرمة (تلقائي)" || rawLabel == "الموقع غير محدد" || rawLabel == "No Location Selected")
+            val useWesternNumbersInArabic = prefs.getBoolean("use_western_numbers_in_arabic", false)
+        
+            val isAutoLocation = prefs.getString("location_method", "manual") == "auto"
+            val selectedTimeZoneId = if (isAutoLocation) TimeZone.getDefault().id else prefs.getString("loc_timezone", null)
+            val timeZoneId = PrayerCalculator.resolveTimeZoneId(selectedTimeZoneId)
+            val calendar = Calendar.getInstance(TimeZone.getTimeZone(timeZoneId))
+            val offsetHours = PrayerCalculator.getTimeZoneOffset(timeZoneId, calendar)
+        
+            val asrMethod = prefs.getString("asr_method", "standard") ?: "standard"
+            val ishaMethod = prefs.getString("isha_method", "standard") ?: "standard"
+            val m = try {
+                PrayerCalculator.CalculationMethod.valueOf(prefs.getString("calc_method", "MWL") ?: "MWL")
+            } catch(e: Exception) {
+                PrayerCalculator.CalculationMethod.MWL
+            }
+
+            val adjFajr = prefs.getInt("adj_fajr", 0)
+            val adjSunrise = prefs.getInt("adj_sunrise", 0)
+            val adjDhuhr = prefs.getInt("adj_dhuhr", 0)
+            val adjAsr = prefs.getInt("adj_asr", 0)
+            val adjMaghrib = prefs.getInt("adj_maghrib", 0)
+            val adjIsha = prefs.getInt("adj_isha", 0)
+        
+            val times = PrayerCalculator.calculate(
+                lat, lng, offsetHours, calendar,
+                method = m, asrMethod = asrMethod, ishaMethod = ishaMethod,
+                adjFajr = adjFajr, adjSunrise = adjSunrise, adjDhuhr = adjDhuhr,
+                adjAsr = adjAsr, adjMaghrib = adjMaghrib, adjIsha = adjIsha
+            )
+        
+            val currentTimeInSec = calendar.get(Calendar.HOUR_OF_DAY) * 3600 + calendar.get(Calendar.MINUTE) * 60 + calendar.get(Calendar.SECOND)
+        
+            fun parseTimeToSec(timeStr: String): Int {
+                return try {
+                    val parts = timeStr.split(":")
+                    val h = parts[0].trim().toInt()
+                    val mPart = parts[1].split(" ")[0].trim().toInt()
+                    h * 3600 + mPart * 60
+                } catch (e: Exception) {
+                    0
+                }
+            }
+        
+            val fajrSec = parseTimeToSec(times.fajr)
+            val sunriseSec = parseTimeToSec(times.sunrise)
+            val dhuhrSec = parseTimeToSec(times.dhuhr)
+            val asrSec = parseTimeToSec(times.asr)
+            val maghribSec = parseTimeToSec(times.maghrib)
+            val ishaSec = parseTimeToSec(times.isha)
+
+            val nextName: String
+            val nextSec: Int
+            var isNextDay = false
+
+            if (currentTimeInSec < fajrSec) {
+                nextName = "Fajr"
+                nextSec = fajrSec
+            } else if (currentTimeInSec < sunriseSec) {
+                nextName = "Sunrise"
+                nextSec = sunriseSec
+            } else if (currentTimeInSec < dhuhrSec) {
+                nextName = "Dhuhr"
+                nextSec = dhuhrSec
+            } else if (currentTimeInSec < asrSec) {
+                nextName = "Asr"
+                nextSec = asrSec
+            } else if (currentTimeInSec < maghribSec) {
+                nextName = "Maghrib"
+                nextSec = maghribSec
+            } else if (currentTimeInSec < ishaSec) {
+                nextName = "Isha"
+                nextSec = ishaSec
+            } else {
+                nextName = "Fajr"
+                nextSec = fajrSec
+                isNextDay = true
+            }
+
+            var diff = if (isNextDay) {
+                (24 * 3600 - currentTimeInSec) + nextSec
+            } else {
+                nextSec - currentTimeInSec
+            }
+            if (diff < 0) diff = 0
+
+            val h = diff / 3600
+            val mn = (diff % 3600) / 60
+
+            val locale = java.util.Locale.US
+            val formattedH = h.toString().localize(isAr, useWesternNumbersInArabic)
+            val formattedM = mn.toString().localize(isAr, useWesternNumbersInArabic)
+            val diffStr = if (!isLocationSet) {
+                if (isAr) "متبقي --" else "Starts in --"
+            } else {
+                if (isAr) "متبقي $formattedH ساعة و $formattedM دقيقة" else "Starts in $formattedH hr $formattedM min"
+            }
+
+            val dispName = if (!isLocationSet) {
+                "--"
+            } else {
+                if (isAr) {
+                    when (nextName) {
+                        "Fajr" -> "الفجر"
+                        "Dhuhr" -> "الظهر"
+                        "Asr" -> "العصر"
+                        "Maghrib" -> "المغرب"
+                        "Isha" -> "العشاء"
+                        "Sunrise" -> "الشروق"
+                        else -> nextName
+                    }
+                } else {
+                    nextName
+                }
+            }
+
+            val nextTimeStr = when(nextName) {
+                "Fajr" -> times.fajr
+                "Sunrise" -> times.sunrise
+                "Dhuhr" -> times.dhuhr
+                "Asr" -> times.asr
+                "Maghrib", "المغرب" -> times.maghrib
+                "Isha", "العشاء" -> times.isha
+                else -> ""
+            }
+
+            val is24Hour = android.text.format.DateFormat.is24HourFormat(context)
+
+            fun formatTimeStr(timeStr: String): String {
+                if (!isLocationSet) return "--:--".localize(isAr, useWesternNumbersInArabic)
+                return try {
+                    val parts = timeStr.trim().split(":")
+                    val hh = parts[0].toInt()
+                    val min = parts[1].split(" ")[0].trim().toInt()
+                
+                    val locale = java.util.Locale.US
+                    val formatted = if (is24Hour) {
+                        java.lang.String.format(locale, "%02d:%02d", hh, min)
+                    } else {
+                        val hour12 = if (hh % 12 == 0) 12 else hh % 12
+                        val amPm = if (hh < 12) {
+                            if (isAr) "ص" else "AM"
+                        } else {
+                            if (isAr) "م" else "PM"
+                        }
+                        java.lang.String.format(locale, "%02d:%02d %s", hour12, min, amPm)
+                    }
+                    formatted.localize(isAr, useWesternNumbersInArabic)
+                } catch (e: Exception) {
+                    timeStr.localize(isAr, useWesternNumbersInArabic)
+                }
+            }
+
+        
             PrayerRemainingWidgetContent(dispName, formatTimeStr(nextTimeStr), diffStr, isAr, is24Hour)
         }
     }
