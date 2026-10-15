@@ -712,6 +712,14 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         updateWidgetsGlobally()
     }
 
+    /**
+     * Retry widget delivery after the activity leaves the foreground. Some launchers
+     * do not visibly apply a RemoteViews update until they become the active host again.
+     */
+    fun refreshWidgetsWhenAppStops() {
+        updateWidgetsGlobally()
+    }
+
     private fun updateWidgetsGlobally() {
         val context = getApplication<Application>().applicationContext
         widgetRefreshScope.launch {
