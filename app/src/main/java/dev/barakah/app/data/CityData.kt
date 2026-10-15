@@ -36,9 +36,10 @@ object CityData {
 
             try {
                 val db = openDatabase(context.applicationContext)
-                val prefixResults = queryDatabase(db, "${escapeLike(term)}%", limit)
+                val countryCodes = matchingCountryCodes(term)
+                val prefixResults = queryDatabase(db, "${escapeLike(term)}%", limit, countryCodes)
                 if (prefixResults.isNotEmpty()) prefixResults
-                else queryDatabase(db, "%${escapeLike(term)}%", limit)
+                else queryDatabase(db, "%${escapeLike(term)}%", limit, countryCodes)
             } catch (error: Exception) {
                 Log.e(TAG, "Unable to search the offline city catalog", error)
                 emptyList()
@@ -104,7 +105,24 @@ object CityData {
         openedDatabase.also { database = it }
     }
 
-    private fun queryDatabase(db: SQLiteDatabase, pattern: String, limit: Int): List<CitySuggestion> {
+    private fun matchingCountryCodes(query: String): List<String> {
+        val displayLocales = listOf(Locale.ENGLISH, Locale.forLanguageTag("ar"))
+        return Locale.getISOCountries().filter { countryCode ->
+            countryCode.equals(query, ignoreCase = true) ||
+                displayLocales.any { locale ->
+                    Locale("", countryCode).getDisplayCountry(locale).contains(query, ignoreCase = true)
+                }
+        }
+    }
+
+    private fun queryDatabase(
+        db: SQLiteDatabase,
+        pattern: String,
+        limit: Int,
+        countryCodes: List<String>
+    ): List<CitySuggestion> {
+        val countryClause = if (countryCodes.isEmpty()) "" else
+            "OR c.country_code IN (${countryCodes.joinToString(",") { "?" }})"
         val sql = """
             SELECT c.name, c.country_code, c.arabic_name, c.latitude, c.longitude, c.timezone_id
             FROM city AS c
@@ -115,10 +133,11 @@ object CityData {
                     SELECT a.city_id FROM city_alias AS a
                     WHERE a.name LIKE ? ESCAPE char(92) COLLATE NOCASE
                )
+               $countryClause
             ORDER BY c.population DESC, c.name COLLATE NOCASE ASC
             LIMIT ?
         """.trimIndent()
-        val args = arrayOf(pattern, pattern, pattern, pattern, limit.toString())
+        val args = (listOf(pattern, pattern, pattern, pattern) + countryCodes + limit.toString()).toTypedArray()
         return db.rawQuery(sql, args).use { cursor ->
             buildList {
                 while (cursor.moveToNext()) {
