@@ -201,7 +201,14 @@ fun LanguageCard(label: String, isSelected: Boolean, onClick: () -> Unit) {
      val currentLang by viewModel.appLanguage.collectAsState()
      val isAr = currentLang == "ar"
      var query by remember { mutableStateOf("") }
+     var filteredCities by remember { mutableStateOf(emptyList<dev.barakah.app.data.CitySuggestion>()) }
      var gpsPermissionRequested by remember { mutableStateOf(false) }
+     val context = androidx.compose.ui.platform.LocalContext.current
+
+     LaunchedEffect(query) {
+         kotlinx.coroutines.delay(250)
+         filteredCities = CityData.search(context, query)
+     }
      
      val locationPermissionState = rememberPermissionState(
          android.Manifest.permission.ACCESS_FINE_LOCATION
@@ -213,10 +220,6 @@ fun LanguageCard(label: String, isSelected: Boolean, onClick: () -> Unit) {
              onFinish()
          }
      }
-
-     val filteredCities = if (query.isEmpty()) emptyList() else CityData.cities.filter {
-         it.name.contains(query, ignoreCase = true) || it.nameAr.contains(query)
-     }.take(5)
 
      val configuration = androidx.compose.ui.platform.LocalConfiguration.current
      val isShortScreen = configuration.screenHeightDp < 600
@@ -316,8 +319,8 @@ fun LanguageCard(label: String, isSelected: Boolean, onClick: () -> Unit) {
             items(filteredCities) { city ->
                 ElevatedCard(
                     onClick = {
-                        viewModel.updateLocation(city.lat, city.lng, if (isAr) city.nameAr else city.name)
                         viewModel.setLocationMethod("manual")
+                        viewModel.updateLocation(city.lat, city.lng, if (isAr) city.nameAr else city.name, timeZoneId = city.timeZoneId)
                         onFinish()
                     },
                     modifier = Modifier.fillMaxWidth(),

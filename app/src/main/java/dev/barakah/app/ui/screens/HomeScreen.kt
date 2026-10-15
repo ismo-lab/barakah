@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.barakah.app.ui.BarakahViewModel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import dev.barakah.app.util.PrayerCalculator
 import dev.barakah.app.util.TimeUtils
 import dev.barakah.app.util.localize
@@ -764,6 +765,11 @@ fun HomeScreen(
         androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides layoutDirection) {
             // Location states
             var locationQuery by remember { mutableStateOf("") }
+            var citySuggestions by remember { mutableStateOf(emptyList<dev.barakah.app.data.CitySuggestion>()) }
+            LaunchedEffect(locationQuery) {
+                delay(250)
+                citySuggestions = dev.barakah.app.data.CityData.search(context, locationQuery)
+            }
             val keyboardController = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
             val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
 
@@ -1363,16 +1369,7 @@ fun HomeScreen(
                                             shape = RoundedCornerShape(12.dp)
                                         )
 
-                                        val suggestions = if (locationQuery.isBlank()) {
-                                            emptyList()
-                                        } else {
-                                            dev.barakah.app.data.CityData.cities.filter { city ->
-                                                city.name.contains(locationQuery, ignoreCase = true) ||
-                                                city.nameAr.contains(locationQuery, ignoreCase = true) ||
-                                                city.country.contains(locationQuery, ignoreCase = true) ||
-                                                city.countryAr.contains(locationQuery, ignoreCase = true)
-                                            }.take(5)
-                                        }
+                                        val suggestions = citySuggestions
 
                                         if (suggestions.isNotEmpty()) {
                                             Column(
@@ -1387,7 +1384,7 @@ fun HomeScreen(
                                                             .clip(RoundedCornerShape(8.dp))
                                                             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
                                                             .clickable {
-                                                                viewModel.updateLocation(city.lat, city.lng, if (isAr) city.nameAr else city.name, isSuccessFeedback = true)
+                                                                viewModel.updateLocation(city.lat, city.lng, if (isAr) city.nameAr else city.name, isSuccessFeedback = true, timeZoneId = city.timeZoneId)
                                                                 locationQuery = ""
                                                                 keyboardController?.hide()
                                                                 focusManager.clearFocus()
@@ -1751,6 +1748,12 @@ fun HomeScreen(
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         lineHeight = 18.sp
+                                    )
+
+                                    Text(
+                                        text = if (isAr) "بيانات المدن: GeoNames cities500، بترخيص CC BY 4.0." else "City data: GeoNames cities500, licensed under CC BY 4.0.",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
 
                                     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current

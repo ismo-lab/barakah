@@ -91,6 +91,8 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private var locationCallback: com.google.android.gms.location.LocationCallback? = null
+    private var widgetRefreshJob: Job? = null
+    private var widgetRefreshRequested = false
 
     @SuppressLint("MissingPermission")
     fun startLocationUpdates() {
@@ -325,8 +327,12 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             val adjA = prefs.getInt("adj_asr", 0)
             val adjM = prefs.getInt("adj_maghrib", 0)
             val adjI = prefs.getInt("adj_isha", 0)
-            val cal = Calendar.getInstance()
-            val offsetHours = PrayerCalculator.getEffectiveTimezoneOffset(lat, lng)
+            val isAutoLocation = prefs.getString("location_method", "manual") == "auto"
+            val timeZoneId = PrayerCalculator.resolveTimeZoneId(
+                if (isAutoLocation) TimeZone.getDefault().id else prefs.getString("loc_timezone", null)
+            )
+            val cal = Calendar.getInstance(TimeZone.getTimeZone(timeZoneId))
+            val offsetHours = PrayerCalculator.getTimeZoneOffset(timeZoneId, cal)
             PrayerCalculator.calculate(
                 latitude = lat,
                 longitude = lng,
@@ -431,6 +437,17 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         // Guarantee app default language is arabic when first open
         if (!prefs.contains("app_lang")) {
             prefs.edit().putString("app_lang", "ar").apply()
+        }
+
+        if (!_isFirstRun.value && _locationMethod.value != "auto" && _isLocationSet.value && !prefs.contains("loc_timezone")) {
+            viewModelScope.launch {
+                val latitude = _currentLocation.value.first
+                val longitude = _currentLocation.value.second
+                val migratedTimeZone = CityData.nearestTimeZoneId(application, latitude, longitude)
+                if (migratedTimeZone != null && !prefs.contains("loc_timezone")) {
+                    updateLocation(latitude, longitude, _locationLabel.value, timeZoneId = migratedTimeZone)
+                }
+            }
         }
 
         // Initialize parsed seconds and observe for subsequent dynamic updates
@@ -656,12 +673,23 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun updateLocation(lat: Double, lng: Double, label: String, isSuccessFeedback: Boolean = false) {
+    fun updateLocation(lat: Double, lng: Double, label: String, isSuccessFeedback: Boolean = false, timeZoneId: String? = null) {
         _currentLocation.value = Pair(lat, lng)
         _locationLabel.value = label
         _isLocationSet.value = !(label.isNullOrEmpty() || label == "No Location Selected" || label == "الموقع غير محدد" || label == "Mecca, KSA" || label == "Mecca (GPS Fallback)" || label == "مكة المكرمة (تلقائي)")
         _qiblaBearing.value = QiblaManager.calculateQiblaBearing(lat, lng)
-        prefs.edit().putFloat("loc_lat", lat.toFloat()).putFloat("loc_lng", lng.toFloat()).putString("loc_label", label).commit()
+        val selectedTimeZoneId = timeZoneId ?: if (_locationMethod.value == "auto") {
+            TimeZone.getDefault().id
+        } else {
+            prefs.getString("loc_timezone", null)
+        }
+        val resolvedTimeZoneId = PrayerCalculator.resolveTimeZoneId(selectedTimeZoneId)
+        prefs.edit()
+            .putFloat("loc_lat", lat.toFloat())
+            .putFloat("loc_lng", lng.toFloat())
+            .putString("loc_label", label)
+            .putString("loc_timezone", resolvedTimeZoneId)
+            .commit()
         recalculatePrayerTimes()
         if (isSuccessFeedback) {
             viewModelScope.launch {
@@ -680,62 +708,29 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
     private fun updateWidgetsGlobally() {
         val context = getApplication<Application>()
-        viewModelScope.launch {
-            try {
-                dev.barakah.app.widget.PrayerWidget().updateAll(context)
-            } catch (e: Exception) {
-                android.util.Log.e("BarakahViewModel", "Error updating PrayerWidget", e)
-            }
-            try {
-                dev.barakah.app.widget.PrayerRemainingWidget().updateAll(context)
-            } catch (e: Exception) {
-                android.util.Log.e("BarakahViewModel", "Error updating PrayerRemainingWidget", e)
-            }
-            try {
-                dev.barakah.app.widget.NawafilWidget().updateAll(context)
-            } catch (e: Exception) {
-                android.util.Log.e("BarakahViewModel", "Error updating NawafilWidget", e)
-            }
+        widgetRefreshRequested = true
+        if (widgetRefreshJob?.isActive == true) return
 
-            // Send system broadcasts to immediately force Android's widget framework to invalidate cache and refresh layout
-            try {
-                val appWidgetManager = android.appwidget.AppWidgetManager.getInstance(context)
-                
-                val prayerIds = appWidgetManager.getAppWidgetIds(
-                    android.content.ComponentName(context, dev.barakah.app.widget.PrayerWidgetReceiver::class.java)
-                )
-                if (prayerIds != null && prayerIds.isNotEmpty()) {
-                    val intent = android.content.Intent(context, dev.barakah.app.widget.PrayerWidgetReceiver::class.java).apply {
-                        action = android.appwidget.AppWidgetManager.ACTION_APPWIDGET_UPDATE
-                        putExtra(android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_IDS, prayerIds)
-                    }
-                    context.sendBroadcast(intent)
+        widgetRefreshJob = viewModelScope.launch {
+            do {
+                delay(250)
+                widgetRefreshRequested = false
+                try {
+                    dev.barakah.app.widget.PrayerWidget().updateAll(context)
+                } catch (e: Exception) {
+                    android.util.Log.e("BarakahViewModel", "Error updating PrayerWidget", e)
                 }
-
-                val remainingIds = appWidgetManager.getAppWidgetIds(
-                    android.content.ComponentName(context, dev.barakah.app.widget.PrayerRemainingWidgetReceiver::class.java)
-                )
-                if (remainingIds != null && remainingIds.isNotEmpty()) {
-                    val intent = android.content.Intent(context, dev.barakah.app.widget.PrayerRemainingWidgetReceiver::class.java).apply {
-                        action = android.appwidget.AppWidgetManager.ACTION_APPWIDGET_UPDATE
-                        putExtra(android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_IDS, remainingIds)
-                    }
-                    context.sendBroadcast(intent)
+                try {
+                    dev.barakah.app.widget.PrayerRemainingWidget().updateAll(context)
+                } catch (e: Exception) {
+                    android.util.Log.e("BarakahViewModel", "Error updating PrayerRemainingWidget", e)
                 }
-
-                val nawafilIds = appWidgetManager.getAppWidgetIds(
-                    android.content.ComponentName(context, dev.barakah.app.widget.NawafilWidgetReceiver::class.java)
-                )
-                if (nawafilIds != null && nawafilIds.isNotEmpty()) {
-                    val intent = android.content.Intent(context, dev.barakah.app.widget.NawafilWidgetReceiver::class.java).apply {
-                        action = android.appwidget.AppWidgetManager.ACTION_APPWIDGET_UPDATE
-                        putExtra(android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_IDS, nawafilIds)
-                    }
-                    context.sendBroadcast(intent)
+                try {
+                    dev.barakah.app.widget.NawafilWidget().updateAll(context)
+                } catch (e: Exception) {
+                    android.util.Log.e("BarakahViewModel", "Error updating NawafilWidget", e)
                 }
-            } catch (e: Exception) {
-                android.util.Log.e("BarakahViewModel", "Error sending widget update broadcasts", e)
-            }
+            } while (widgetRefreshRequested)
         }
     }
 
@@ -833,8 +828,9 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun recalculatePrayerTimes() {
-        val calendar = Calendar.getInstance()
-        val offsetHours = PrayerCalculator.getEffectiveTimezoneOffset(_currentLocation.value.first, _currentLocation.value.second)
+        val timeZoneId = currentTimeZoneId()
+        val calendar = Calendar.getInstance(TimeZone.getTimeZone(timeZoneId))
+        val offsetHours = PrayerCalculator.getTimeZoneOffset(timeZoneId, calendar)
 
         val newTimes = PrayerCalculator.calculate(
             latitude = _currentLocation.value.first,
@@ -855,6 +851,15 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         updateParsedSeconds(newTimes)
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
         updateWidgetsGlobally()
+    }
+
+    private fun currentTimeZoneId(): String {
+        val selectedTimeZoneId = if (_locationMethod.value == "auto") {
+            TimeZone.getDefault().id
+        } else {
+            prefs.getString("loc_timezone", null)
+        }
+        return PrayerCalculator.resolveTimeZoneId(selectedTimeZoneId)
     }
 
     fun setShowNawafil(value: Boolean) {
@@ -1186,9 +1191,9 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun calculateNextPrayer() {
-        val now = Calendar.getInstance()
+        val tzId = currentTimeZoneId()
+        val now = Calendar.getInstance(TimeZone.getTimeZone(tzId))
         val dayOfYear = now.get(Calendar.DAY_OF_YEAR)
-        val tzId = TimeZone.getDefault().id
         
         // Detect day-change or timezone/DST transitions and trigger live recalculation
         if ((lastCheckedDayOfYear != -1 && lastCheckedDayOfYear != dayOfYear) ||

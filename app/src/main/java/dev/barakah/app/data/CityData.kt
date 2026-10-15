@@ -1,86 +1,150 @@
 package dev.barakah.app.data
 
+import android.content.Context
+import android.database.sqlite.SQLiteDatabase
+import android.util.Log
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
+import java.util.zip.GZIPInputStream
+import java.util.Locale
+
 data class CitySuggestion(
     val name: String,
     val country: String,
     val countryAr: String,
     val nameAr: String,
     val lat: Double,
-    val lng: Double
+    val lng: Double,
+    val timeZoneId: String
 )
 
+/** Offline place search backed by the GeoNames cities500 gazetteer. */
 object CityData {
-    val cities = listOf(
-        CitySuggestion("Mecca", "Saudi Arabia", "المملكة العربية السعودية", "مكة المكرمة", 21.4225, 39.8262),
-        CitySuggestion("Medina", "Saudi Arabia", "المملكة العربية السعودية", "المدينة المنورة", 24.4667, 39.6100),
-        CitySuggestion("Riyadh", "Saudi Arabia", "المملكة العربية السعودية", "الرياض", 24.7136, 46.6753),
-        CitySuggestion("Jeddah", "Saudi Arabia", "المملكة العربية السعودية", "جدة", 21.5433, 39.1728),
-        CitySuggestion("Cairo", "Egypt", "مصر", "القاهرة", 30.0444, 31.2357),
-        CitySuggestion("Alexandria", "Egypt", "مصر", "الإسكندرية", 31.2001, 29.9187),
-        CitySuggestion("Giza", "Egypt", "مصر", "الجيزة", 30.0131, 31.2089),
-        CitySuggestion("Abu Dhabi", "United Arab Emirates", "الإمارات العربية المتحدة", "أبو ظبي", 24.4539, 54.3773),
-        CitySuggestion("Dubai", "United Arab Emirates", "الإمارات العربية المتحدة", "دبي", 25.2048, 55.2708),
-        CitySuggestion("Sharjah", "United Arab Emirates", "الإمارات العربية المتحدة", "الشارقة", 25.3463, 55.4209),
-        CitySuggestion("Amman", "Jordan", "الأردن", "عمان", 31.9454, 35.9284),
-        CitySuggestion("Beirut", "Lebanon", "لبنان", "بيروت", 33.8938, 35.5018),
-        CitySuggestion("Damascus", "Syria", "سوريا", "دمشق", 33.5138, 36.2765),
-        CitySuggestion("Aleppo", "Syria", "سوريا", "حلب", 36.2021, 37.1343),
-        CitySuggestion("Baghdad", "Iraq", "العراق", "بغداد", 33.3152, 44.3661),
-        CitySuggestion("Erbil", "Iraq", "العراق", "أربيل", 36.1901, 44.0094),
-        CitySuggestion("Kuwait City", "Kuwait", "الكويت", "الكويت", 29.3759, 47.9774),
-        CitySuggestion("Doha", "Qatar", "قطر", "الدوحة", 25.2854, 51.5310),
-        CitySuggestion("Manama", "Bahrain", "البحرين", "المنامة", 26.2285, 50.5860),
-        CitySuggestion("Muscat", "Oman", "عمان", "مسقط", 23.5859, 58.4059),
-        CitySuggestion("Salalah", "Oman", "عمان", "صلالة", 17.0151, 54.0924),
-        CitySuggestion("Sanaa", "Yemen", "اليمن", "صنعاء", 15.3694, 44.1910),
-        CitySuggestion("Aden", "Yemen", "اليمن", "عدن", 12.7855, 45.0186),
-        CitySuggestion("Jerusalem", "Palestine", "فلسطين", "القدس الشريف", 31.7683, 35.2137),
-        CitySuggestion("Gaza", "Palestine", "فلسطين", "غزة", 31.5000, 34.4667),
-        CitySuggestion("Tunis", "Tunisia", "تونس", "تونس", 36.8065, 10.1815),
-        CitySuggestion("Algiers", "Algeria", "الجزائر", "الجزائر", 36.7538, 3.0588),
-        CitySuggestion("Casablanca", "Morocco", "المغرب", "الدار البيضاء", 33.5731, -7.5898),
-        CitySuggestion("Rabat", "Morocco", "المغرب", "الرباط", 34.0209, -6.8416),
-        CitySuggestion("Tripoli", "Libya", "ليبيا", "طرابلس", 32.8872, 13.1913),
-        CitySuggestion("Khartoum", "Sudan", "السودان", "الخرطوم", 15.5007, 32.5599),
-        CitySuggestion("Mogadishu", "Somalia", "الصومال", "مقديشو", 2.0433, 45.3433),
-        CitySuggestion("Jakarta", "Indonesia", "إندونيسيا", "جاكرتا", -6.2088, 106.8456),
-        CitySuggestion("Kuala Lumpur", "Malaysia", "ماليزيا", "كوالالمبور", 3.1390, 101.6869),
-        CitySuggestion("Singapore", "Singapore", "سنغافورة", "سنغافورة", 1.3521, 103.8198),
-        CitySuggestion("Istanbul", "Turkey", "تركيا", "إسطنبول", 41.0082, 28.9784),
-        CitySuggestion("Ankara", "Turkey", "تركيا", "أنقرة", 39.9334, 32.8597),
-        CitySuggestion("Tehran", "Iran", "إيران", "طهران", 35.6892, 51.3890),
-        CitySuggestion("Kabul", "Afghanistan", "أفغانستان", "كابل", 34.5553, 69.2075),
-        CitySuggestion("Karachi", "Pakistan", "باكستان", "كراتشي", 24.8607, 67.0011),
-        CitySuggestion("Islamabad", "Pakistan", "باكستان", "إسلام آباد", 33.6844, 73.0479),
-        CitySuggestion("Dhaka", "Bangladesh", "بنغلاديش", "دكا", 23.8103, 90.4125),
-        CitySuggestion("Tashkent", "Uzbekistan", "أوزكبستان", "طشقند", 41.2995, 69.2401),
-        CitySuggestion("London", "United Kingdom", "المملكة المتحدة", "لندن", 51.5074, -0.1278),
-        CitySuggestion("Manchester", "United Kingdom", "المملكة المتحدة", "مانشستر", 53.4808, -2.2426),
-        CitySuggestion("Paris", "France", "فرنسا", "باريس", 48.8566, 2.3522),
-        CitySuggestion("Berlin", "Germany", "ألمانيا", "برلين", 52.5200, 13.4050),
-        CitySuggestion("Munich", "Germany", "ألمانيا", "ميونيخ", 48.1351, 11.5820),
-        CitySuggestion("Cologne", "Germany", "ألمانيا", "كولونيا / Köln", 50.9375, 6.9603),
-        CitySuggestion("Frankfurt", "Germany", "ألمانيا", "فرانكفورت", 50.1109, 8.6821),
-        CitySuggestion("Hamburg", "Germany", "ألمانيا", "هامبورغ", 53.5511, 9.9937),
-        CitySuggestion("Rome", "Italy", "إيطاليا", "روما", 41.9028, 12.4964),
-        CitySuggestion("Milan", "Italy", "إيطاليا", "ميلان", 45.4642, 9.1900),
-        CitySuggestion("Madrid", "Spain", "إسبانيا", "مدريد", 40.4168, -3.7038),
-        CitySuggestion("Barcelona", "Spain", "إسبانيا", "برشلونة", 41.3851, 2.1734),
-        CitySuggestion("Vienna", "Austria", "النمسا", "فيينا", 48.2082, 16.3738),
-        CitySuggestion("Amsterdam", "Netherlands", "هولندا", "أمستردام", 52.3676, 4.9041),
-        CitySuggestion("Moscow", "Russia", "روسيا", "موسكو", 55.7558, 37.6173),
-        CitySuggestion("New York", "United States", "الولايات المتحدة الأمريكية", "نيويورك", 40.7128, -74.0060),
-        CitySuggestion("Los Angeles", "United States", "الولايات المتحدة الأمريكية", "لوس أنجلوس", 34.0522, -118.2437),
-        CitySuggestion("Chicago", "United States", "الولايات المتحدة الأمريكية", "شيكاغو", 41.8781, -87.6298),
-        CitySuggestion("Toronto", "Canada", "كندا", "تورونتو", 43.6532, -79.3832),
-        CitySuggestion("Montreal", "Canada", "كندا", "مونتريال", 45.5017, -73.5673),
-        CitySuggestion("Sydney", "Australia", "أستراليا", "سيدني", -33.8688, 151.2093),
-        CitySuggestion("Melbourne", "Australia", "أستراليا", "ملبورن", -37.8136, 144.9631),
-        CitySuggestion("Tokyo", "Japan", "اليابان", "طوكيو", 35.6762, 139.6503),
-        CitySuggestion("Seoul", "South Korea", "كوريا الجنوبية", "سيول", 37.5665, 126.9780),
-        CitySuggestion("Beijing", "China", "الصين", "بكين", 39.9042, 116.4074),
-        CitySuggestion("Cape Town", "South Africa", "جنوب أفريقيا", "كيب تاون", -33.9249, 18.4241),
-        CitySuggestion("São Paulo", "Brazil", "البرازيل", "ساو باولو", -23.5505, -46.6333),
-        CitySuggestion("Mexico City", "Mexico", "المكسيك", "مكسيكو سيتي", 19.4326, -99.1332)
-    )
+    private const val TAG = "CityData"
+    private const val DATABASE_PREFIX = "geonames-cities500-"
+    private val databaseMutex = Mutex()
+    @Volatile private var database: SQLiteDatabase? = null
+
+    suspend fun search(context: Context, query: String, limit: Int = 5): List<CitySuggestion> =
+        withContext(Dispatchers.IO) {
+            val term = query.trim()
+            if (term.length < 2 || limit <= 0) return@withContext emptyList()
+
+            try {
+                val db = openDatabase(context.applicationContext)
+                val prefixResults = queryDatabase(db, "${escapeLike(term)}%", limit)
+                if (prefixResults.isNotEmpty()) prefixResults
+                else queryDatabase(db, "%${escapeLike(term)}%", limit)
+            } catch (error: Exception) {
+                Log.e(TAG, "Unable to search the offline city catalog", error)
+                emptyList()
+            }
+        }
+
+    suspend fun nearestTimeZoneId(context: Context, latitude: Double, longitude: Double): String? =
+        withContext(Dispatchers.IO) {
+            try {
+                val db = openDatabase(context.applicationContext)
+                db.rawQuery("SELECT latitude, longitude, timezone_id FROM city", null).use { cursor ->
+                    var nearestDistance = Double.MAX_VALUE
+                    var nearestTimeZone: String? = null
+                    val originLatitudeRadians = Math.toRadians(latitude)
+                    while (cursor.moveToNext()) {
+                        val cityLatitude = cursor.getDouble(0)
+                        val cityLongitude = cursor.getDouble(1)
+                        val latitudeDelta = Math.toRadians(cityLatitude - latitude)
+                        val longitudeDelta = Math.toRadians(cityLongitude - longitude)
+                        val haversine = kotlin.math.sin(latitudeDelta / 2).let { it * it } +
+                            kotlin.math.cos(originLatitudeRadians) * kotlin.math.cos(Math.toRadians(cityLatitude)) *
+                            kotlin.math.sin(longitudeDelta / 2).let { it * it }
+                        val distance = 2 * 6_371_000.0 * kotlin.math.asin(kotlin.math.sqrt(haversine.coerceIn(0.0, 1.0)))
+                        if (distance < nearestDistance) {
+                            nearestDistance = distance
+                            nearestTimeZone = cursor.getString(2)
+                        }
+                    }
+                    if (nearestDistance <= 100_000.0) nearestTimeZone else null
+                }
+            } catch (error: Exception) {
+                Log.e(TAG, "Unable to resolve a timezone for the saved location", error)
+                null
+            }
+        }
+
+    private suspend fun openDatabase(context: Context): SQLiteDatabase = databaseMutex.withLock {
+        database?.takeIf { it.isOpen }?.let { return@withLock it }
+
+        val catalogVersion = context.assets.open("cities500.version").bufferedReader().use { it.readText().trim() }
+        require(catalogVersion.matches(Regex("[0-9a-f]{64}"))) { "Invalid GeoNames catalog version" }
+        val databaseFileName = "$DATABASE_PREFIX$catalogVersion.sqlite"
+        val file = context.getDatabasePath(databaseFileName)
+        if (!file.exists()) {
+            file.parentFile?.mkdirs()
+            val temporaryFile = File(file.parentFile, "$databaseFileName.tmp")
+            try {
+                GZIPInputStream(context.assets.open("cities500.sqlite.gz")).use { input ->
+                    FileOutputStream(temporaryFile).use { output -> input.copyTo(output) }
+                }
+                if (!temporaryFile.renameTo(file)) {
+                    throw IllegalStateException("Could not install the offline city catalog")
+                }
+            } finally {
+                temporaryFile.delete()
+            }
+        }
+
+        val openedDatabase = SQLiteDatabase.openDatabase(file.absolutePath, null, SQLiteDatabase.OPEN_READONLY)
+        context.databaseList()
+            .filter { it.startsWith(DATABASE_PREFIX) && it.endsWith(".sqlite") && it != databaseFileName }
+            .forEach(context::deleteDatabase)
+        openedDatabase.also { database = it }
+    }
+
+    private fun queryDatabase(db: SQLiteDatabase, pattern: String, limit: Int): List<CitySuggestion> {
+        val sql = """
+            SELECT c.name, c.country_code, c.arabic_name, c.latitude, c.longitude, c.timezone_id
+            FROM city AS c
+            WHERE c.name LIKE ? ESCAPE char(92) COLLATE NOCASE
+               OR c.ascii_name LIKE ? ESCAPE char(92) COLLATE NOCASE
+               OR c.arabic_name LIKE ? ESCAPE char(92) COLLATE NOCASE
+               OR c.id IN (
+                    SELECT a.city_id FROM city_alias AS a
+                    WHERE a.name LIKE ? ESCAPE char(92) COLLATE NOCASE
+               )
+            ORDER BY c.population DESC, c.name COLLATE NOCASE ASC
+            LIMIT ?
+        """.trimIndent()
+        val args = arrayOf(pattern, pattern, pattern, pattern, limit.toString())
+        return db.rawQuery(sql, args).use { cursor ->
+            buildList {
+                while (cursor.moveToNext()) {
+                    val name = cursor.getString(0)
+                    val countryCode = cursor.getString(1)
+                    val arabicName = cursor.getString(2) ?: name
+                    val country = Locale("", countryCode).getDisplayCountry(Locale.ENGLISH)
+                    val countryAr = Locale("", countryCode).getDisplayCountry(Locale.forLanguageTag("ar"))
+                    add(
+                        CitySuggestion(
+                            name = name,
+                            country = country,
+                            countryAr = countryAr.ifBlank { country },
+                            nameAr = arabicName.ifBlank { name },
+                            lat = cursor.getDouble(3),
+                            lng = cursor.getDouble(4),
+                            timeZoneId = cursor.getString(5)
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    private fun escapeLike(value: String): String = value
+        .replace("\\", "\\\\")
+        .replace("%", "\\%")
+        .replace("_", "\\_")
 }

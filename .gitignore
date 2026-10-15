@@ -19,4 +19,6 @@ debug.keystore
 debug.keystore.base64
 keystore.jks
 app/keystore.jks
+/app/src/main/assets/cities500.sqlite.gz
+/app/src/main/assets/cities500.version
 /.build-outputs
