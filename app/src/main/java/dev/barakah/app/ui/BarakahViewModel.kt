@@ -13,8 +13,12 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.glance.appwidget.updateAll
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import dev.barakah.app.data.*
+import dev.barakah.app.widget.PrayerWidget
+import dev.barakah.app.widget.PrayerRemainingWidget
+import dev.barakah.app.widget.NawafilWidget
+import dev.barakah.app.widget.refreshWidgetInstances
 import dev.barakah.app.util.PrayerCalculator
 import dev.barakah.app.util.QiblaManager
 import com.google.android.gms.location.LocationServices
@@ -724,18 +728,35 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         val context = getApplication<Application>().applicationContext
         widgetRefreshScope.launch {
             widgetRefreshMutex.withLock {
+                val manager = GlanceAppWidgetManager(context)
+                val prayerWidget = PrayerWidget()
+                val remainingWidget = PrayerRemainingWidget()
+                val nawafilWidget = NawafilWidget()
+
                 try {
-                    dev.barakah.app.widget.PrayerWidget().updateAll(context)
+                    refreshWidgetInstances(
+                        context,
+                        prayerWidget,
+                        manager.getGlanceIds(PrayerWidget::class.java)
+                    )
                 } catch (e: Exception) {
                     android.util.Log.e("BarakahViewModel", "Error updating PrayerWidget", e)
                 }
                 try {
-                    dev.barakah.app.widget.PrayerRemainingWidget().updateAll(context)
+                    refreshWidgetInstances(
+                        context,
+                        remainingWidget,
+                        manager.getGlanceIds(PrayerRemainingWidget::class.java)
+                    )
                 } catch (e: Exception) {
                     android.util.Log.e("BarakahViewModel", "Error updating PrayerRemainingWidget", e)
                 }
                 try {
-                    dev.barakah.app.widget.NawafilWidget().updateAll(context)
+                    refreshWidgetInstances(
+                        context,
+                        nawafilWidget,
+                        manager.getGlanceIds(NawafilWidget::class.java)
+                    )
                 } catch (e: Exception) {
                     android.util.Log.e("BarakahViewModel", "Error updating NawafilWidget", e)
                 }
