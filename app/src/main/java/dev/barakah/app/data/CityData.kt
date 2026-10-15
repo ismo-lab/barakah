@@ -12,14 +12,16 @@ import java.io.FileOutputStream
 import java.util.Locale
 
 data class CitySuggestion(
+    val id: Int,
     val name: String,
-    val country: String,
-    val countryAr: String,
-    val nameAr: String,
+    val localizedName: String?,
+    val countryName: String,
     val lat: Double,
     val lng: Double,
     val timeZoneId: String
-)
+) {
+    fun displayName(languageTag: String): String = localizedName?.takeIf { it.isNotBlank() } ?: name
+}
 
 /** Offline place search backed by the GeoNames cities500 gazetteer. */
 object CityData {
@@ -28,22 +30,26 @@ object CityData {
     private val databaseMutex = Mutex()
     @Volatile private var database: SQLiteDatabase? = null
 
-    suspend fun search(context: Context, query: String, limit: Int = 5): List<CitySuggestion> =
-        withContext(Dispatchers.IO) {
-            val term = query.trim()
-            if (term.length < 2 || limit <= 0) return@withContext emptyList()
+    suspend fun search(
+        context: Context,
+        query: String,
+        limit: Int = 5,
+        languageTag: String = "en"
+    ): List<CitySuggestion> = withContext(Dispatchers.IO) {
+        val term = query.trim()
+        if (term.length < 2 || limit <= 0) return@withContext emptyList()
 
-            try {
-                val db = openDatabase(context.applicationContext)
-                val countryCodes = matchingCountryCodes(term)
-                val prefixResults = queryDatabase(db, "${escapeLike(term)}%", limit, countryCodes)
-                if (prefixResults.isNotEmpty()) prefixResults
-                else queryDatabase(db, "%${escapeLike(term)}%", limit, countryCodes)
-            } catch (error: Exception) {
-                Log.e(TAG, "Unable to search the offline city catalog", error)
-                emptyList()
-            }
+        try {
+            val db = openDatabase(context.applicationContext)
+            val countryCodes = matchingCountryCodes(term)
+            val prefixResults = queryDatabase(db, "${escapeLike(term)}%", limit, countryCodes, languageTag)
+            if (prefixResults.isNotEmpty()) prefixResults
+            else queryDatabase(db, "%${escapeLike(term)}%", limit, countryCodes, languageTag)
+        } catch (error: Exception) {
+            Log.e(TAG, "Unable to search the offline city catalog", error)
+            emptyList()
         }
+    }
 
     suspend fun nearestTimeZoneId(context: Context, latitude: Double, longitude: Double): String? =
         withContext(Dispatchers.IO) {
@@ -118,42 +124,56 @@ object CityData {
         db: SQLiteDatabase,
         pattern: String,
         limit: Int,
-        countryCodes: List<String>
+        countryCodes: List<String>,
+        languageTag: String
     ): List<CitySuggestion> {
         val countryClause = if (countryCodes.isEmpty()) "" else
             "OR c.country_code IN (${countryCodes.joinToString(",") { "?" }})"
         val sql = """
-            SELECT c.name, c.country_code, c.arabic_name, c.latitude, c.longitude, c.timezone_id
+            SELECT DISTINCT c.id, c.name, c.country_code,
+                (SELECT n.name FROM city_localized_name AS n
+                 WHERE n.city_id = c.id AND n.language_tag = ?
+                 ORDER BY n.is_preferred DESC, n.name COLLATE NOCASE ASC LIMIT 1) AS localized_name,
+                c.latitude, c.longitude, c.timezone_id
             FROM city AS c
-            WHERE c.name LIKE ? ESCAPE char(92) COLLATE NOCASE
-               OR c.ascii_name LIKE ? ESCAPE char(92) COLLATE NOCASE
-               OR c.arabic_name LIKE ? ESCAPE char(92) COLLATE NOCASE
-               OR c.id IN (
+            WHERE (
+                   c.name LIKE ? ESCAPE char(92) COLLATE NOCASE
+                OR c.ascii_name LIKE ? ESCAPE char(92) COLLATE NOCASE
+                OR c.id IN (
                     SELECT a.city_id FROM city_alias AS a
                     WHERE a.name LIKE ? ESCAPE char(92) COLLATE NOCASE
-               )
-               $countryClause
+                )
+                OR c.id IN (
+                    SELECT n.city_id FROM city_localized_name AS n
+                    WHERE n.name LIKE ? ESCAPE char(92) COLLATE NOCASE
+                )
+                $countryClause
+            )
+              AND trim(c.name) <> ''
+              AND trim(c.country_code) <> ''
             ORDER BY c.population DESC, c.name COLLATE NOCASE ASC
             LIMIT ?
         """.trimIndent()
-        val args = (listOf(pattern, pattern, pattern, pattern) + countryCodes + limit.toString()).toTypedArray()
+        val args = (listOf(languageTag, pattern, pattern, pattern, pattern) +
+            countryCodes + limit.toString()).toTypedArray()
+        val locale = Locale.forLanguageTag(languageTag)
         return db.rawQuery(sql, args).use { cursor ->
             buildList {
                 while (cursor.moveToNext()) {
-                    val name = cursor.getString(0)
-                    val countryCode = cursor.getString(1)
-                    val arabicName = cursor.getString(2) ?: name
-                    val country = Locale("", countryCode).getDisplayCountry(Locale.ENGLISH)
-                    val countryAr = Locale("", countryCode).getDisplayCountry(Locale.forLanguageTag("ar"))
+                    val name = cursor.getString(1)?.trim().orEmpty()
+                    val countryCode = cursor.getString(2)?.trim().orEmpty()
+                    if (name.isBlank() || countryCode.isBlank()) continue
+                    val countryName = Locale("", countryCode).getDisplayCountry(locale)
+                        .ifBlank { Locale("", countryCode).getDisplayCountry(Locale.ENGLISH) }
                     add(
                         CitySuggestion(
+                            id = cursor.getInt(0),
                             name = name,
-                            country = country,
-                            countryAr = countryAr.ifBlank { country },
-                            nameAr = arabicName.ifBlank { name },
-                            lat = cursor.getDouble(3),
-                            lng = cursor.getDouble(4),
-                            timeZoneId = cursor.getString(5)
+                            localizedName = cursor.getString(3),
+                            countryName = countryName,
+                            lat = cursor.getDouble(4),
+                            lng = cursor.getDouble(5),
+                            timeZoneId = cursor.getString(6)
                         )
                     )
                 }
