@@ -24,6 +24,7 @@ import java.util.*
 
 class PrayerWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        provideContent {
         val prefs = context.getSharedPreferences("barakah_prefs", Context.MODE_PRIVATE)
         val isAr = prefs.getString("app_lang", "ar") == "ar"
         val defaultLabel = if (isAr) "الموقع غير محدد" else "No Location Selected"
@@ -95,7 +96,7 @@ class PrayerWidget : GlanceAppWidget() {
             }
         }
         
-        provideContent {
+        
             PrayerWidgetContent(times, label, isAr, ::formatTimeStr, is24Hour)
         }
     }
