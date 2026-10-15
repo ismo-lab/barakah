@@ -52,15 +52,11 @@ class AdhanPlaybackService : Service() {
 
         createNotificationChannel()
         val isAr = prefs.getString("app_lang", "ar") == "ar"
-        startForeground(NOTIFICATION_ID, createNotification(prayerName, isAr))
-
         try {
+            startForeground(NOTIFICATION_ID, createNotification(prayerName, isAr))
             releasePlayer()
             val audioResource = if (prayerName == "Fajr") R.raw.adhan_fajr else R.raw.adhan_regular
-            val newPlayer = MediaPlayer.create(this, audioResource) ?: run {
-                stopPlayback()
-                return START_NOT_STICKY
-            }
+            val newPlayer = MediaPlayer()
             player = newPlayer
             newPlayer.setWakeMode(this, PowerManager.PARTIAL_WAKE_LOCK)
             newPlayer.setAudioAttributes(
@@ -69,6 +65,14 @@ class AdhanPlaybackService : Service() {
                     .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                     .build()
             )
+            resources.openRawResourceFd(audioResource).use { descriptor ->
+                newPlayer.setDataSource(
+                    descriptor.fileDescriptor,
+                    descriptor.startOffset,
+                    descriptor.length
+                )
+            }
+            newPlayer.prepare()
             newPlayer.setOnCompletionListener { stopPlayback() }
             newPlayer.start()
 
@@ -128,7 +132,7 @@ class AdhanPlaybackService : Service() {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(if (isAr) "أذان صلاة $prayerLabel" else "$prayerLabel Adhan")
-            .setContentText(if (isAr) "اضغط للإيقاف" else "Tap Stop to stop playback")
+            .setContentText(if (isAr) "يُشغّل الأذان" else "Adhan is playing")
             .setContentIntent(openAppIntent)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setOngoing(true)
