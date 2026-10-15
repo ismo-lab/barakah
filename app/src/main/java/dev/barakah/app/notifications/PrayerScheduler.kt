@@ -2,6 +2,8 @@ package dev.barakah.app.notifications
 
 import android.app.AlarmManager
 import android.app.PendingIntent
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import dev.barakah.app.util.PrayerCalculator
@@ -169,6 +171,15 @@ object PrayerScheduler {
     }
 
     private fun scheduleWidgetRefresh(context: Context, prayerTimes: List<String>, timeZone: TimeZone) {
+        val remainingWidget = ComponentName(
+            context,
+            dev.barakah.app.widget.PrayerRemainingWidgetReceiver::class.java
+        )
+        if (AppWidgetManager.getInstance(context).getAppWidgetIds(remainingWidget).isEmpty()) {
+            cancelWidgetRefresh(context)
+            return
+        }
+
         val now = System.currentTimeMillis()
         val nextRefreshAt = prayerTimes.mapNotNull { timeString ->
             val parts = timeString.trim().split(":")
