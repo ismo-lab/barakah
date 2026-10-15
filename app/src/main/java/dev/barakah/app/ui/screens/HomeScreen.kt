@@ -5,6 +5,8 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -35,6 +37,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextDirection
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.barakah.app.ui.BarakahViewModel
@@ -765,10 +768,23 @@ fun HomeScreen(
         androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides layoutDirection) {
             // Location states
             var locationQuery by remember { mutableStateOf("") }
+            var searchSubmission by remember { mutableIntStateOf(0) }
             var citySuggestions by remember { mutableStateOf(emptyList<dev.barakah.app.data.CitySuggestion>()) }
-            LaunchedEffect(locationQuery) {
+            LaunchedEffect(locationQuery, searchSubmission, currentLang) {
+                val query = locationQuery.trim()
+                citySuggestions = emptyList()
+                if (query.length < 2) return@LaunchedEffect
                 delay(250)
-                citySuggestions = dev.barakah.app.data.CityData.search(context, locationQuery)
+                val results = dev.barakah.app.data.CityData.search(
+                    context,
+                    query,
+                    languageTag = currentLang
+                )
+                if (locationQuery.trim() == query) {
+                    citySuggestions = results
+                        .filter { it.name.isNotBlank() && it.displayName(currentLang).isNotBlank() }
+                        .distinctBy { it.id }
+                }
             }
             val keyboardController = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
             val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
@@ -1358,13 +1374,23 @@ fun HomeScreen(
                                     if (locationMethod == "manual") {
                                         OutlinedTextField(
                                             value = locationQuery,
-                                            onValueChange = { locationQuery = it },
+                                            onValueChange = {
+                                                locationQuery = it
+                                                citySuggestions = emptyList()
+                                            },
                                             placeholder = { Text(if (isAr) "ابحث عن مدينة..." else "Search city name...") },
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .height(56.dp),
                                             maxLines = 1,
                                             textStyle = MaterialTheme.typography.bodyMedium,
+                                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                                            keyboardActions = KeyboardActions(
+                                                onSearch = {
+                                                    searchSubmission++
+                                                    keyboardController?.hide()
+                                                }
+                                            ),
                                             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                                             shape = RoundedCornerShape(12.dp)
                                         )
@@ -1377,14 +1403,15 @@ fun HomeScreen(
                                                 modifier = Modifier.fillMaxWidth().heightIn(max = 180.dp)
                                             ) {
                                                 suggestions.forEach { city ->
-                                                    val displayName = if (isAr) "${city.nameAr}، ${city.countryAr}" else "${city.name}, ${city.country}"
+                                                    key(city.id) {
+                                                    val displayName = "${city.displayName(currentLang)}، ${city.countryName}"
                                                     Row(
                                                         modifier = Modifier
                                                             .fillMaxWidth()
                                                             .clip(RoundedCornerShape(8.dp))
                                                             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
                                                             .clickable {
-                                                                viewModel.updateLocation(city.lat, city.lng, if (isAr) city.nameAr else city.name, isSuccessFeedback = true, timeZoneId = city.timeZoneId)
+                                                                viewModel.updateLocation(city.lat, city.lng, city.displayName(currentLang), isSuccessFeedback = true, timeZoneId = city.timeZoneId)
                                                                 locationQuery = ""
                                                                 keyboardController?.hide()
                                                                 focusManager.clearFocus()
@@ -1396,6 +1423,7 @@ fun HomeScreen(
                                                         Icon(Icons.Default.LocationCity, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
                                                         Spacer(modifier = Modifier.width(8.dp))
                                                         Text(displayName, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                                                    }
                                                     }
                                                 }
                                             }
