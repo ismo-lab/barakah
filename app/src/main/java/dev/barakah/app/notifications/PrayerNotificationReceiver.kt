@@ -56,6 +56,23 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
         val appPrefs = context.getSharedPreferences("barakah_prefs", Context.MODE_PRIVATE)
         val isAr = appPrefs.getString("app_lang", "ar") == "ar"
 
+        if (appPrefs.getBoolean("adhan_audio_enabled", false) &&
+            prayerName in setOf("Fajr", "Dhuhr", "Asr", "Maghrib", "Isha")
+        ) {
+            val playbackIntent = Intent(context, AdhanPlaybackService::class.java).apply {
+                putExtra(AdhanPlaybackService.EXTRA_PRAYER_NAME, prayerName)
+            }
+            try {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    context.startForegroundService(playbackIntent)
+                } else {
+                    context.startService(playbackIntent)
+                }
+            } catch (error: Exception) {
+                android.util.Log.e("PrayerNotifReceiver", "Could not start Adhan playback", error)
+            }
+        }
+
         val channelId = "prayer_channel"
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             val channelName = if (isAr) "مواقيت الصلاة والذكر" else "Prayer Times & Remembrance"
