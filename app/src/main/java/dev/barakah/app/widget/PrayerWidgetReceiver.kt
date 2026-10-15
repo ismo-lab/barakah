@@ -32,12 +32,22 @@ class PrayerWidgetRefreshReceiver : android.content.BroadcastReceiver() {
             kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO
         ).launch {
             try {
-                PrayerWidget().updateAll(appContext)
-                PrayerRemainingWidget().updateAll(appContext)
-                NawafilWidget().updateAll(appContext)
+                try {
+                    PrayerWidget().updateAll(appContext)
+                } catch (error: Exception) {
+                    android.util.Log.e("PrayerWidgetRefresh", "Unable to refresh PrayerWidget", error)
+                }
+                try {
+                    PrayerRemainingWidget().updateAll(appContext)
+                } catch (error: Exception) {
+                    android.util.Log.e("PrayerWidgetRefresh", "Unable to refresh PrayerRemainingWidget", error)
+                }
+                try {
+                    NawafilWidget().updateAll(appContext)
+                } catch (error: Exception) {
+                    android.util.Log.e("PrayerWidgetRefresh", "Unable to refresh NawafilWidget", error)
+                }
                 dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(appContext)
-            } catch (error: Exception) {
-                android.util.Log.e("PrayerWidgetRefresh", "Unable to refresh prayer widgets", error)
             } finally {
                 pendingResult.finish()
             }
