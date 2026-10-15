@@ -2,9 +2,12 @@ package dev.barakah.app.widget
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.glance.currentState
+import androidx.datastore.preferences.core.Preferences
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.action.clickable
@@ -18,6 +21,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import dev.barakah.app.MainActivity
+import dev.barakah.app.widget.WidgetRefreshState
 import dev.barakah.app.util.PrayerCalculator
 import dev.barakah.app.util.localize
 import java.util.*
@@ -25,6 +29,7 @@ import java.util.*
 class PrayerWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         provideContent {
+            val refreshToken = currentState<Preferences>()[WidgetRefreshState.refreshToken] ?: 0L
             // Glance can reuse an active session and recompose this block without rerunning provideGlance.
             val prefs = context.getSharedPreferences("barakah_prefs", Context.MODE_PRIVATE)
             val isAr = prefs.getString("app_lang", "ar") == "ar"
@@ -98,7 +103,9 @@ class PrayerWidget : GlanceAppWidget() {
             }
         
         
-            PrayerWidgetContent(times, label, isAr, ::formatTimeStr, is24Hour)
+            key(refreshToken) {
+                PrayerWidgetContent(times, label, isAr, ::formatTimeStr, is24Hour)
+            }
         }
     }
 
