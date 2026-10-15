@@ -15,12 +15,16 @@ data class CitySuggestion(
     val id: Int,
     val name: String,
     val localizedName: String?,
+    val localizedLanguageTag: String?,
     val countryName: String,
     val lat: Double,
     val lng: Double,
     val timeZoneId: String
 ) {
-    fun displayName(languageTag: String): String = localizedName?.takeIf { it.isNotBlank() } ?: name
+    fun displayName(languageTag: String): String =
+        localizedName?.takeIf {
+            it.isNotBlank() && localizedLanguageTag == Locale.forLanguageTag(languageTag).language
+        } ?: name
 }
 
 /** Offline place search backed by the GeoNames cities500 gazetteer. */
@@ -41,7 +45,7 @@ object CityData {
 
         try {
             val db = openDatabase(context.applicationContext)
-            val countryCodes = matchingCountryCodes(term)
+            val countryCodes = matchingCountryCodes(term, languageTag)
             val prefixResults = queryDatabase(db, "${escapeLike(term)}%", limit, countryCodes, languageTag)
             if (prefixResults.isNotEmpty()) prefixResults
             else queryDatabase(db, "%${escapeLike(term)}%", limit, countryCodes, languageTag)
@@ -110,8 +114,8 @@ object CityData {
         openedDatabase.also { database = it }
     }
 
-    private fun matchingCountryCodes(query: String): List<String> {
-        val displayLocales = listOf(Locale.ENGLISH, Locale.forLanguageTag("ar"))
+    private fun matchingCountryCodes(query: String, languageTag: String): List<String> {
+        val displayLocales = listOf(Locale.ENGLISH, Locale.forLanguageTag(languageTag))
         return Locale.getISOCountries().filter { countryCode ->
             countryCode.equals(query, ignoreCase = true) ||
                 displayLocales.any { locale ->
@@ -170,6 +174,7 @@ object CityData {
                             id = cursor.getInt(0),
                             name = name,
                             localizedName = cursor.getString(3),
+                            localizedLanguageTag = cursor.getString(3)?.let { Locale.forLanguageTag(languageTag).language },
                             countryName = countryName,
                             lat = cursor.getDouble(4),
                             lng = cursor.getDouble(5),
