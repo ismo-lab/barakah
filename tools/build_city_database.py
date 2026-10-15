@@ -4,16 +4,14 @@
 from __future__ import annotations
 
 import argparse
-import gzip
 import hashlib
-import shutil
 import sqlite3
 import urllib.request
 import zipfile
 from pathlib import Path
 
 SOURCE_URL = "https://download.geonames.org/export/dump/cities500.zip"
-DEFAULT_OUTPUT = Path("app/src/main/assets/cities500.sqlite.gz")
+DEFAULT_OUTPUT = Path("app/src/main/assets/cities500.sqlite")
 
 
 def is_arabic(text: str) -> bool:
@@ -28,7 +26,7 @@ def is_searchable_alias(text: str) -> bool:
 def build(source: Path, output: Path) -> int:
     output.parent.mkdir(parents=True, exist_ok=True)
     output.unlink(missing_ok=True)
-    database_file = output.with_suffix("") if output.suffix == ".gz" else output
+    database_file = output
     database_file.unlink(missing_ok=True)
 
     database = sqlite3.connect(database_file)
@@ -110,10 +108,6 @@ def build(source: Path, output: Path) -> int:
         return count
     finally:
         database.close()
-        if output.suffix == ".gz" and database_file.exists():
-            with database_file.open("rb") as source_file, gzip.open(output, "wb", compresslevel=9) as target_file:
-                shutil.copyfileobj(source_file, target_file)
-            database_file.unlink()
 
 
 def sha256_file(path: Path) -> str:
