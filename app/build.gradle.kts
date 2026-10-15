@@ -32,12 +32,13 @@ val versionProps = Properties().apply {
 val majorVersion = versionProps.getProperty("MAJOR", "1").toInt()
 val minorVersion = versionProps.getProperty("MINOR", "0").toInt()
 val patchVersion = versionProps.getProperty("PATCH", "0").toInt()
-val buildNumber = versionProps.getProperty("BUILD_NUMBER", "1004").toInt()
+val buildNumber = versionProps.getProperty("BUILD_NUMBER", "1006").toInt()
+val ciRunOffset = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 0
 
 // Standard Android Version Code calculation formula:
-// MAJOR * 100000 + MINOR * 10000 + PATCH * 100 + BUILD_NUMBER
-// Guarantees strictly monotonically increasing integer versionCode (>= 101004)
-val currentVersionCode = majorVersion * 100000 + minorVersion * 10000 + patchVersion * 100 + buildNumber
+// MAJOR * 100000 + MINOR * 10000 + PATCH * 100 + BUILD_NUMBER + ciRunOffset
+// Guarantees strictly monotonically increasing integer versionCode for updates
+val currentVersionCode = majorVersion * 100000 + minorVersion * 10000 + patchVersion * 100 + buildNumber + ciRunOffset
 val currentVersionName = "$majorVersion.$minorVersion.$patchVersion"
 
 android {
@@ -65,27 +66,33 @@ android {
       val rootKeystore = rootProject.file("debug.keystore")
       val base64File = rootProject.file("debug.keystore.base64")
       
-      if (rootKeystore.exists()) {
-        try {
-          rootKeystore.copyTo(keystoreFile, overwrite = true)
-          println("Dynamic keystore copy successful from debug.keystore: ${keystoreFile.length()} bytes")
-        } catch (e: Exception) {
-          println("Dynamic keystore copy from debug.keystore failed: ${e.message}")
-        }
-      } else if (base64File.exists()) {
+      // 1. If base64 persistent keystore exists, decode it first so all environments share the exact same key
+      if (base64File.exists() && base64File.length() > 0) {
         try {
           val rawContent = base64File.readText().trim()
           if (rawContent.isNotEmpty()) {
             val decodedBytes = Base64.getMimeDecoder().decode(rawContent)
             keystoreFile.writeBytes(decodedBytes)
+            if (!rootKeystore.exists() || rootKeystore.length() == 0L) {
+              rootKeystore.writeBytes(decodedBytes)
+            }
             println("Dynamic keystore extraction successful from debug.keystore.base64: ${keystoreFile.length()} bytes")
           }
         } catch (e: Exception) {
           println("Dynamic keystore extraction from debug.keystore.base64 failed: ${e.message}")
         }
+      } else if (rootKeystore.exists() && rootKeystore.length() > 0) {
+        try {
+          rootKeystore.copyTo(keystoreFile, overwrite = true)
+          val bytes = rootKeystore.readBytes()
+          base64File.writeText(Base64.getEncoder().encodeToString(bytes))
+          println("Dynamic keystore copy successful from debug.keystore and saved to base64: ${keystoreFile.length()} bytes")
+        } catch (e: Exception) {
+          println("Dynamic keystore copy from debug.keystore failed: ${e.message}")
+        }
       }
 
-      if (!keystoreFile.exists()) {
+      if (!keystoreFile.exists() || keystoreFile.length() == 0L) {
         try {
           println("WARNING: debug.keystore.base64 not found or extraction failed. Generating fallback debug keystore...")
           val process = ProcessBuilder(
@@ -102,6 +109,11 @@ android {
           val exitCode = process.waitFor()
           if (exitCode == 0) {
             println("Fallback debug keystore generated successfully: ${keystoreFile.length()} bytes")
+            val bytes = keystoreFile.readBytes()
+            base64File.writeText(Base64.getEncoder().encodeToString(bytes))
+            if (!rootKeystore.exists()) {
+              rootKeystore.writeBytes(bytes)
+            }
           } else {
             println("Fallback debug keystore generation failed with exit code $exitCode")
           }
@@ -114,8 +126,10 @@ android {
       storePassword = "android"
       keyAlias = "androiddebugkey"
       keyPassword = "android"
-      isV1SigningEnabled = true
-      isV2SigningEnabled = true
+      enableV1Signing = true
+      enableV2Signing = true
+      enableV3Signing = true
+      enableV4Signing = true
     }
   }
 

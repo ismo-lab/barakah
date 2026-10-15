@@ -27,7 +27,6 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.abs
 import dev.barakah.app.R
-import android.media.MediaPlayer
 
 class BarakahViewModel(application: Application) : AndroidViewModel(application) {
 

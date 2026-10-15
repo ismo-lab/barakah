@@ -96,7 +96,11 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
                         .setAutoCancel(true)
                         .setContentIntent(pendingIntent)
                         
-                    notificationManager.notify(ID_DAILY, builder.build())
+                    try {
+                        notificationManager.notify(ID_DAILY, builder.build())
+                    } catch (e: Exception) {
+                        android.util.Log.e("PrayerNotifReceiver", "Failed to post daily notification: ${e.message}")
+                    }
                 }
             }
             
@@ -169,7 +173,11 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
                         .setAutoCancel(true)
                         .setContentIntent(pendingIntent)
                         
-                    notificationManager.notify(ID_DAILY, builder.build())
+                    try {
+                        notificationManager.notify(ID_DAILY, builder.build())
+                    } catch (e: Exception) {
+                        android.util.Log.e("PrayerNotifReceiver", "Failed to post occasion notification: ${e.message}")
+                    }
                 }
             }
             
@@ -259,7 +267,11 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
             else -> ID_PRAYER
         }
             
-        notificationManager.notify(notifId, builder.build())
+        try {
+            notificationManager.notify(notifId, builder.build())
+        } catch (e: Exception) {
+            android.util.Log.e("PrayerNotifReceiver", "Failed to post prayer notification: ${e.message}")
+        }
 
         // Reschedule for next days
         PrayerScheduler.scheduleNextPrayers(context)

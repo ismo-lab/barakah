@@ -204,9 +204,7 @@ fun MainNavigationContainer(
         bottomBar = {
             if (!isLandscape && !shouldHideNavigation) {
                 NavigationBar(
-                    modifier = Modifier
-                        .windowInsetsPadding(WindowInsets.navigationBars)
-                        .testTag("bottom_nav_bar")
+                    modifier = Modifier.testTag("bottom_nav_bar")
                 ) {
                     navItems.forEach { item ->
                         val isSelected = currentDestination?.route == item.route && !(item.route == "home" && showSettingsDialog)

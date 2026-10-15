@@ -1,38 +1,42 @@
 package dev.barakah.app
 
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
-import org.json.JSONObject
 
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+
+@RunWith(RobolectricTestRunner::class)
 class ExampleUnitTest {
   @Test
   fun testLocalTafseerParsing() {
-    try {
-      val file = File("src/main/assets/quran/tafseer_ar.json")
-      assert(file.exists()) { "tafseer_ar.json should exist in assets!" }
-      val text = file.readText()
-      
-      val obj = JSONObject(text)
-      println("Keys in root: " + obj.keys().asSequence().toList())
-      if (obj.has("surahs")) {
-        val surahsArr = obj.getJSONArray("surahs")
-        println("Number of surahs: ${surahsArr.length()}")
-        if (surahsArr.length() > 0) {
-          val firstSurah = surahsArr.getJSONObject(0)
-          println("First surah keys: " + firstSurah.keys().asSequence().toList())
-          println("First surah id: ${firstSurah.optInt("id")}")
-          if (firstSurah.has("ayahs")) {
-            val ayahsArr = firstSurah.getJSONArray("ayahs")
-            println("First surah ayahs count: ${ayahsArr.length()}")
-            if (ayahsArr.length() > 0) {
-              println("First ayah: ${ayahsArr.getJSONObject(0)}")
-            }
-          }
-        }
+    val file = listOf(
+      File("src/main/assets/quran/tafseer_ar.json"),
+      File("app/src/main/assets/quran/tafseer_ar.json")
+    ).firstOrNull { it.exists() }
+
+    assertTrue("tafseer_ar.json should exist in assets!", file != null && file.exists())
+    val reader = android.util.JsonReader(file!!.reader())
+    reader.beginArray()
+    assertTrue(reader.hasNext())
+    reader.beginObject()
+    var hasNumber = false
+    var hasAya = false
+    var hasText = false
+    while (reader.hasNext()) {
+      when (reader.nextName()) {
+        "number" -> { reader.nextString(); hasNumber = true }
+        "aya" -> { reader.nextString(); hasAya = true }
+        "text" -> { reader.nextString(); hasText = true }
+        else -> reader.skipValue()
       }
-    } catch (e: Exception) {
-      e.printStackTrace()
-      assert(false) { "Error: ${e.message}" }
     }
+    reader.endObject()
+    reader.close()
+    assertTrue("Should have number field", hasNumber)
+    assertTrue("Should have aya field", hasAya)
+    assertTrue("Should have text field", hasText)
   }
 }
+
