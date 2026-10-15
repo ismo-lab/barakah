@@ -1,11 +1,11 @@
 package dev.barakah.app.widget
 
 import android.content.Context
+import androidx.glance.GlanceId
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.appwidget.update
-import androidx.glance.GlanceId
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.longPreferencesKey
 
@@ -24,7 +24,7 @@ suspend fun refreshWidgetInstances(
 ) {
     glanceIds.forEach { glanceId ->
         updateAppWidgetState<Preferences>(context, glanceId) { state ->
-            state[WidgetRefreshState.refreshToken] = System.currentTimeMillis()
+            state[WidgetRefreshState.refreshToken] = (state[WidgetRefreshState.refreshToken] ?: 0L) + 1L
         }
         widget.update(context, glanceId)
     }
