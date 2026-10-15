@@ -1404,8 +1404,8 @@ fun HomeScreen(
                                             ) {
                                                 suggestions.forEach { city ->
                                                     key(city.id) {
-                                                    val displayName = "${city.displayName(currentLang)}، ${city.countryName}"
-                                                    Row(
+                                                        val displayName = "${city.displayName(currentLang)}، ${city.countryName}"
+                                                        Row(
                                                         modifier = Modifier
                                                             .fillMaxWidth()
                                                             .clip(RoundedCornerShape(8.dp))
@@ -1422,8 +1422,8 @@ fun HomeScreen(
                                                     ) {
                                                         Icon(Icons.Default.LocationCity, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
                                                         Spacer(modifier = Modifier.width(8.dp))
-                                                        Text(displayName, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
-                                                    }
+                                                            Text(displayName, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                                                        }
                                                     }
                                                 }
                                             }
