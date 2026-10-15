@@ -54,6 +54,9 @@ Barakah relies gratefully on the efforts of the global FOSS Islamic developer co
 - **Holy Quran Database & Tafseer**: [Quran-Data](https://github.com/rn0x/Quran-Data), [QuranTafseer-ar-json](https://github.com/00AhmedMokhtar00/QuranTafseer-ar-json), and [tafsir_api](https://github.com/spa5k/tafsir_api) by spa5k
 - **Astronomical Mathematics**: [Adhan SDK](https://github.com/batoulapps/adhan-java)
 - **Adhan Audio Assets**: [adhan-mp3](https://github.com/Kiwifu/adhan-mp3) by Kiwifu
+- **Offline City Search and City Timezones**: [GeoNames cities500](https://download.geonames.org/export/dump/cities500.zip), © GeoNames, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The bundled catalog is derived from GeoNames and contains populated places with a population above 500 or designated capitals. It is broad global coverage, but does not claim to include every named village or settlement. GPS mode uses the device's configured timezone; manual city selections use the IANA timezone ID supplied with each city record.
+
+GitHub Actions downloads the GeoNames export and creates the catalog before building each APK, so lookup works without a network connection after installation. For a local build, install Python 3.12 and run `python tools/build_city_database.py` before Gradle; pass `--source path/to/cities500.zip` to use a saved GeoNames export. The generated source checksum versions the app's local database cache, so a newer APK replaces an older cached catalog on its next search.
 
 ---
 

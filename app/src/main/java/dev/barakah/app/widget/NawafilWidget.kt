@@ -34,8 +34,11 @@ class NawafilWidget : GlanceAppWidget() {
         val isLocationSet = !(rawLabel.isNullOrEmpty() || rawLabel == "Mecca, KSA" || rawLabel == "Mecca (GPS Fallback)" || rawLabel == "مكة المكرمة (تلقائي)" || rawLabel == "الموقع غير محدد" || rawLabel == "No Location Selected")
         val useWesternNumbersInArabic = prefs.getBoolean("use_western_numbers_in_arabic", false)
         
-        val calendar = Calendar.getInstance()
-        val offsetHours = PrayerCalculator.getEffectiveTimezoneOffset(lat, lng)
+        val isAutoLocation = prefs.getString("location_method", "manual") == "auto"
+        val selectedTimeZoneId = if (isAutoLocation) TimeZone.getDefault().id else prefs.getString("loc_timezone", null)
+        val timeZoneId = PrayerCalculator.resolveTimeZoneId(selectedTimeZoneId)
+        val calendar = Calendar.getInstance(TimeZone.getTimeZone(timeZoneId))
+        val offsetHours = PrayerCalculator.getTimeZoneOffset(timeZoneId, calendar)
         
         val asrMethod = prefs.getString("asr_method", "standard") ?: "standard"
         val ishaMethod = prefs.getString("isha_method", "standard") ?: "standard"
@@ -75,7 +78,7 @@ class NawafilWidget : GlanceAppWidget() {
                 val parts = timeStr.trim().split(":")
                 val h = parts[0].toInt()
                 val min = parts[1].split(" ")[0].trim().toInt()
-                val cal = Calendar.getInstance().apply {
+                val cal = Calendar.getInstance(TimeZone.getTimeZone(timeZoneId)).apply {
                     set(Calendar.HOUR_OF_DAY, h)
                     set(Calendar.MINUTE, min)
                     add(Calendar.MINUTE, offsetMinutes)
