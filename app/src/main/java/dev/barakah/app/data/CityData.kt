@@ -9,7 +9,6 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
-import java.util.zip.GZIPInputStream
 import java.util.Locale
 
 data class CitySuggestion(
@@ -87,7 +86,7 @@ object CityData {
             file.parentFile?.mkdirs()
             val temporaryFile = File(file.parentFile, "$databaseFileName.tmp")
             try {
-                GZIPInputStream(context.assets.open("cities500.sqlite.gz")).use { input ->
+                context.assets.open("cities500.sqlite").use { input ->
                     FileOutputStream(temporaryFile).use { output -> input.copyTo(output) }
                 }
                 if (!temporaryFile.renameTo(file)) {
