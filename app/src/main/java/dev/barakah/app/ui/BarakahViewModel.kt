@@ -19,10 +19,13 @@ import dev.barakah.app.util.PrayerCalculator
 import dev.barakah.app.util.QiblaManager
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.abs
@@ -91,8 +94,8 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private var locationCallback: com.google.android.gms.location.LocationCallback? = null
-    private var widgetRefreshJob: Job? = null
-    private var widgetRefreshRequested = false
+    private val widgetRefreshScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val widgetRefreshMutex = Mutex()
 
     @SuppressLint("MissingPermission")
     fun startLocationUpdates() {
@@ -707,14 +710,9 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun updateWidgetsGlobally() {
-        val context = getApplication<Application>()
-        widgetRefreshRequested = true
-        if (widgetRefreshJob?.isActive == true) return
-
-        widgetRefreshJob = viewModelScope.launch {
-            do {
-                delay(250)
-                widgetRefreshRequested = false
+        val context = getApplication<Application>().applicationContext
+        widgetRefreshScope.launch {
+            widgetRefreshMutex.withLock {
                 try {
                     dev.barakah.app.widget.PrayerWidget().updateAll(context)
                 } catch (e: Exception) {
@@ -730,7 +728,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
                 } catch (e: Exception) {
                     android.util.Log.e("BarakahViewModel", "Error updating NawafilWidget", e)
                 }
-            } while (widgetRefreshRequested)
+            }
         }
     }
 
