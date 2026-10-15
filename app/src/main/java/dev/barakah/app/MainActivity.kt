@@ -140,6 +140,11 @@ class MainActivity : ComponentActivity() {
         activityViewModel?.stopLocationUpdates()
         super.onPause()
     }
+
+    override fun onStop() {
+        super.onStop()
+        activityViewModel?.refreshWidgetsWhenAppStops()
+    }
 }
 
 @Composable
