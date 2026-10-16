@@ -37,7 +37,6 @@ datastorePreferences = "1.1.7"
 glance = "1.1.1"
 robolectric = "4.16.1"
 roborazzi = "1.59.0"
-firebaseBom = "34.12.0"
 secretsGradlePlugin = "2.0.1"
 
 [libraries]
@@ -88,7 +87,6 @@ robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "
 roborazzi = { group = "io.github.takahirom.roborazzi", name = "roborazzi", version.ref = "roborazzi" }
 roborazzi-compose = { group = "io.github.takahirom.roborazzi", name = "roborazzi-compose", version.ref = "roborazzi" }
 roborazzi-junit-rule = { group = "io.github.takahirom.roborazzi", name = "roborazzi-junit-rule", version.ref = "roborazzi" }
-firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
