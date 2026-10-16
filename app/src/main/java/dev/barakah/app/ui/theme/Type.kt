@@ -9,6 +9,38 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import dev.barakah.app.R
+
+/** Preference value: keep the system Arabic face (the app's historical behaviour). */
+const val QURAN_FONT_SYSTEM = "system"
+
+/** Preference value: use [AmiriQuranFamily] for Quran text. */
+const val QURAN_FONT_AMIRI = "amiri"
+
+/**
+ * The Uthmani-script face, used for Quran text only: the verse text, the Bismillah,
+ * and the Arabic verse shown in the tafsir dialog. Everything else in the app keeps
+ * the system font, so this never changes the look of the surrounding UI.
+ */
+val AmiriQuranFamily = FontFamily(Font(R.font.amiri_quran))
+
+/**
+ * Amiri Quran declares a 2.45em line box (hhea ascent 1.815 + descent 0.634) because
+ * its Quranic marks stack far above the letters. Any lineHeight tighter than that
+ * clips the marks, so Quran text drawn in this face must use this multiplier.
+ */
+const val AMIRI_QURAN_LINE_HEIGHT = 2.5f
+
+/** The system Arabic face fits comfortably in 1.5x, which is what this app has always used. */
+const val DEFAULT_ARABIC_LINE_HEIGHT = 1.5f
+
+/** Resolves the Quran text face from the stored preference. */
+fun quranFontFamilyFor(preference: String): FontFamily =
+    if (preference == QURAN_FONT_AMIRI) AmiriQuranFamily else FontFamily.Default
+
+/** Resolves the lineHeight multiplier that goes with [quranFontFamilyFor]. */
+fun quranLineHeightFor(preference: String): Float =
+    if (preference == QURAN_FONT_AMIRI) AMIRI_QURAN_LINE_HEIGHT else DEFAULT_ARABIC_LINE_HEIGHT
 
 val Typography = Typography(
     displayLarge = TextStyle(

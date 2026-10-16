@@ -23,7 +23,7 @@ Only English and Arabic are supported.
 ## 🌟 Key Features
 
 * **Home Dashboard**: View real-time prayer schedule trackers, choose voluntary (Nawafil) prayers to track, configure high-fidelity Mecca Al-Haram Adhan background play, and set flexible reminder notifications.
-* **Quran Reader**: Access the complete Holy Quran text alongside Arabic Tafseer or English translations and adjustable font scaling.
+* **Quran Reader**: Access the complete Holy Quran text alongside Arabic Tafseer or English translations, adjustable font scaling, and an optional Uthmani-script face (Amiri Quran) applied to the Quran text alone.
 * **Qiblah Compass**: Locate the Kaaba directions instantly using interactive, hardware-sensor calibrated alignment with physical haptic vibrations.
 * **Haptic Tasbih**: Maintain focus during remembrance with a digital counter (misbaha) supporting custom targets and discrete haptic pulses.
 * **Duas (Supplications)**: Read through compiled *Hisnul Muslim* (حصن المسلم) supplications organized by daily activities and scenarios.
@@ -52,6 +52,7 @@ Barakah relies gratefully on the efforts of the global FOSS Islamic developer co
 - **Hisnul Muslim Supplications**: [HisnElMuslim](https://github.com/asellam/HisnElMuslim)
 - **Holy Quran Database**: [Quran-Data](https://github.com/rn0x/Quran-Data)
 - **Holy Quran Database & Tafseer**: [Quran-Data](https://github.com/rn0x/Quran-Data), [QuranTafseer-ar-json](https://github.com/00AhmedMokhtar00/QuranTafseer-ar-json), and [tafsir_api](https://github.com/spa5k/tafsir_api) by spa5k
+- **Quran Script Font**: [Amiri Quran](https://github.com/aliftype/amiri) © Khaled Hosny and the Amiri Project Authors, licensed under the [SIL Open Font License 1.1](https://openfontlicense.org). The bundled licence text is in [docs/AmiriQuran-OFL.txt](docs/AmiriQuran-OFL.txt).
 - **Astronomical Mathematics**: [Adhan SDK](https://github.com/batoulapps/adhan-java)
 - **Adhan Audio Assets**: [adhan-mp3](https://github.com/Kiwifu/adhan-mp3) by Kiwifu
 - **Offline City Search, Localized Names, and City Timezones**: [GeoNames cities500](https://download.geonames.org/export/dump/cities500.zip) and [GeoNames alternateNamesV2](https://download.geonames.org/export/dump/alternateNamesV2.zip), © GeoNames, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The bundled catalog keeps canonical city records separate from language-tagged alternate names. Arabic labels use GeoNames entries tagged as Arabic; when no localized name exists, the app shows the canonical city name instead of guessing from its script. The catalog contains populated places with a population above 500 or designated capitals. It is broad global coverage, but does not claim to include every named village or settlement. GPS mode uses the device's configured timezone; manual city selections use the IANA timezone ID supplied with each city record.
