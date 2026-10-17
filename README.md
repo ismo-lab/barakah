@@ -10,25 +10,22 @@
   <img src="https://img.shields.io/badge/UI-Jetpack_Compose-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white" alt="Jetpack Compose" />
   <img src="https://img.shields.io/badge/Privacy-100%25-4CAF50?style=flat-square&logo=shield-halved&logoColor=white" alt="Privacy First" />
   <img src="https://img.shields.io/badge/License-GPL--3.0-blue?style=flat-square" alt="License" />
+  <a href="https://github.com/ismo-lab/barakah/actions/workflows/android.yml"><img src="https://github.com/ismo-lab/barakah/actions/workflows/android.yml/badge.svg" alt="Android CI" /></a>
 </p>
 
 **Barakah** is a privacy-respecting, fully Free and Open Source (FOSS) Islamic companion application crafted specifically for Android. By pairing Material 3 aesthetics with local offline-first reliability, **Barakah** serves as an eye-safe, advertisement-free spiritual toolkit for daily routines.
 
-## 🌍 Supported Languages
-
-The interface is English or Arabic, switchable in Settings. Widget labels come from Android
-resources instead, so they follow the device language: Arabic and German are translated, and
-everything else falls back to English.
-
----
+**Get the app:** the latest signed APK is on the [Releases](https://github.com/ismo-lab/barakah/releases) page as `Barakah-v<version>.apk`.
 
 ## 🌟 Key Features
 
 * **Home Dashboard**: View real-time prayer schedule trackers, choose voluntary (Nawafil) prayers to track, configure high-fidelity Mecca Al-Haram Adhan background play, and set flexible reminder notifications.
+* **Hijri Calendar**: The home screen shows today's Hijri date, and the occasions list is dated from it. A ±2-day shift in Settings lines the calendar up with the moon sighting your community follows.
 * **Quran Reader**: Access the complete Holy Quran text alongside Arabic Tafseer or English translations, adjustable font scaling, and an optional Uthmani-script face (Amiri Quran) applied to the Quran text alone.
 * **Qiblah Compass**: Locate the Kaaba directions instantly using interactive, hardware-sensor calibrated alignment with physical haptic vibrations.
 * **Haptic Tasbih**: Maintain focus during remembrance with a digital counter (misbaha) supporting custom targets and discrete haptic pulses.
 * **Duas (Supplications)**: Read through compiled *Hisnul Muslim* (حصن المسلم) supplications organized by daily activities and scenarios.
+* **Home-Screen Widgets**: Three of them — the daily prayer times, a live countdown to the next prayer, and the voluntary (Nawafil) times.
 
 ---
 
@@ -46,9 +43,11 @@ and no Google Play Services dependency.
 ```
 
 The offline city catalog is not committed. Run `python tools/build_city_database.py` once (Python
-3.12) before building, otherwise city search quietly returns nothing; passing `--source` and
-`--alternate-names-source` uses saved GeoNames exports instead of downloading them. CI builds the
-same catalog as a cached step.
+3.12) before building, otherwise city search quietly returns nothing; pass `--source` and
+`--alternate-names-source` to use saved GeoNames exports instead of downloading them. CI downloads
+both exports and builds the same catalog as a cached step before packaging each APK, so lookup works
+with no network connection after installation. Checksums of the two sources version the on-device
+cache, so a newer APK replaces an older cached catalog on its next search.
 
 Signing: the build expects `app/keystore.jks`. Locally it is materialised from
 `debug.keystore.base64` or `debug.keystore`, and a throwaway key is generated when neither
@@ -61,20 +60,9 @@ runner's fonts and SDK image; dispatch the workflow with `record_screenshots` to
 
 ---
 
-## 🎨 Design Spec & Aesthetics
-
-* **Material 3** with a light and a dark scheme, Material You dynamic colour on Android 12 and
-  above, and an optional pure-black (AMOLED) dark theme.
-* **The theme is the app's choice, not the phone's**: light, dark or follow-system is set in
-  Settings, and the status and navigation bar icons follow whatever is chosen.
-* **Arabic-first typography**: the Amiri Quran face is applied to Quran text alone, so the rest of
-  the interface stays on the system font and stays legible at small sizes.
-* **Arabic-Indic numerals** by default in Arabic, with a setting to use Western digits instead.
-
----
-
 ## 🔒 Privacy Guarantee
 
+* **No Network Permission**: Barakah does not declare `android.permission.INTERNET`, so it has no way to send anything anywhere, even in principle. The Quran, tafseer, supplications and the city catalog are all bundled in the APK.
 * **Zero Telemetry**: No user tracking, analytics nodes, or telemetry collection processes.
 * **Offline Processing**: Real-time astronomical coordinates and physical tracking parameters remain completely local on-device.
 * **Forever Ad-Free & Free**: Absolutely zero ads, monetization models, or dark UI design patterns.
@@ -93,8 +81,6 @@ Barakah relies gratefully on the efforts of the global FOSS Islamic developer co
 - **Astronomical Mathematics**: [Adhan SDK](https://github.com/batoulapps/adhan-java)
 - **Adhan Audio Assets**: [adhan-mp3](https://github.com/Kiwifu/adhan-mp3) by Kiwifu
 - **Offline City Search, Localized Names, and City Timezones**: [GeoNames cities500](https://download.geonames.org/export/dump/cities500.zip) and [GeoNames alternateNamesV2](https://download.geonames.org/export/dump/alternateNamesV2.zip), © GeoNames, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The bundled catalog keeps canonical city records separate from language-tagged alternate names. Arabic labels use GeoNames entries tagged as Arabic; when no localized name exists, the app shows the canonical city name instead of guessing from its script. The catalog contains populated places with a population above 500 or designated capitals. It is broad global coverage, but does not claim to include every named village or settlement. GPS mode uses the device's configured timezone; manual city selections use the IANA timezone ID supplied with each city record.
-
-GitHub Actions downloads the GeoNames city and localized-name exports and creates the catalog before building each APK, so lookup works without a network connection after installation. For a local build, install Python 3.12 and run `python tools/build_city_database.py` before Gradle; pass `--source path/to/cities500.zip` and `--alternate-names-source path/to/alternateNamesV2.zip` to use saved GeoNames exports. Checksums of both sources version the app's local database cache, so a newer APK replaces an older cached catalog on its next search.
 
 ---
 
