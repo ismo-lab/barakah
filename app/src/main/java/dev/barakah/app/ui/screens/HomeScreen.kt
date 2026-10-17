@@ -23,6 +23,7 @@ import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -67,46 +68,46 @@ fun HomeScreen(
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
     val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
     val isShortScreen = configuration.screenHeightDp < 600
-    val locationLabel by viewModel.locationLabel.collectAsState()
-    val times by viewModel.prayerTimes.collectAsState()
-    val isLocationSet by viewModel.isLocationSet.collectAsState()
-    val activeHighlight by viewModel.activeHighlightName.collectAsState()
+    val locationLabel by viewModel.locationLabel.collectAsStateWithLifecycle()
+    val times by viewModel.prayerTimes.collectAsStateWithLifecycle()
+    val isLocationSet by viewModel.isLocationSet.collectAsStateWithLifecycle()
+    val activeHighlight by viewModel.activeHighlightName.collectAsStateWithLifecycle()
 
     // Persistent Settings states retrieved from viewmodel
-    val notifyMorningAdhkar by viewModel.notifyMorningAdhkar.collectAsState()
-    val notifyEveningAdhkar by viewModel.notifyEveningAdhkar.collectAsState()
-    val morningAdhkarOffset by viewModel.morningAdhkarOffset.collectAsState()
-    val eveningAdhkarOffset by viewModel.eveningAdhkarOffset.collectAsState()
-    val notifyBeforeAdhan by viewModel.notifyBeforeAdhan.collectAsState()
-    val notifyOccasions by viewModel.notifyOccasions.collectAsState()
-    val notifyFasting by viewModel.notifyFasting.collectAsState()
-    val notifyJumuah by viewModel.notifyJumuah.collectAsState()
-    val notifySuhur by viewModel.notifySuhur.collectAsState()
-    val notifyIftar by viewModel.notifyIftar.collectAsState()
-    val currentLang by viewModel.appLanguage.collectAsState()
-    val appTheme by viewModel.appTheme.collectAsState()
-    val useDynamicColor by viewModel.useDynamicColor.collectAsState()
-    val amoledDark by viewModel.amoledDark.collectAsState()
-    val enableTasbihHaptics by viewModel.enableTasbihHaptics.collectAsState()
-    val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
-    val fontAr by viewModel.arabicFontSize.collectAsState()
-    val fontEn by viewModel.englishFontSize.collectAsState()
-    val quranFont by viewModel.quranFont.collectAsState()
-    val locationMethod by viewModel.locationMethod.collectAsState()
+    val notifyMorningAdhkar by viewModel.notifyMorningAdhkar.collectAsStateWithLifecycle()
+    val notifyEveningAdhkar by viewModel.notifyEveningAdhkar.collectAsStateWithLifecycle()
+    val morningAdhkarOffset by viewModel.morningAdhkarOffset.collectAsStateWithLifecycle()
+    val eveningAdhkarOffset by viewModel.eveningAdhkarOffset.collectAsStateWithLifecycle()
+    val notifyBeforeAdhan by viewModel.notifyBeforeAdhan.collectAsStateWithLifecycle()
+    val notifyOccasions by viewModel.notifyOccasions.collectAsStateWithLifecycle()
+    val notifyFasting by viewModel.notifyFasting.collectAsStateWithLifecycle()
+    val notifyJumuah by viewModel.notifyJumuah.collectAsStateWithLifecycle()
+    val notifySuhur by viewModel.notifySuhur.collectAsStateWithLifecycle()
+    val notifyIftar by viewModel.notifyIftar.collectAsStateWithLifecycle()
+    val currentLang by viewModel.appLanguage.collectAsStateWithLifecycle()
+    val appTheme by viewModel.appTheme.collectAsStateWithLifecycle()
+    val useDynamicColor by viewModel.useDynamicColor.collectAsStateWithLifecycle()
+    val amoledDark by viewModel.amoledDark.collectAsStateWithLifecycle()
+    val enableTasbihHaptics by viewModel.enableTasbihHaptics.collectAsStateWithLifecycle()
+    val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsStateWithLifecycle()
+    val fontAr by viewModel.arabicFontSize.collectAsStateWithLifecycle()
+    val fontEn by viewModel.englishFontSize.collectAsStateWithLifecycle()
+    val quranFont by viewModel.quranFont.collectAsStateWithLifecycle()
+    val locationMethod by viewModel.locationMethod.collectAsStateWithLifecycle()
 
-    val showNawafil by viewModel.showNawafil.collectAsState()
-    val notifyNawafil by viewModel.notifyNawafil.collectAsState()
-    val adhanAudioEnabled by viewModel.adhanAudioEnabled.collectAsState()
-    val adhanAudioMode by viewModel.adhanAudioMode.collectAsState()
-    val adhanAudioStream by viewModel.adhanAudioStream.collectAsState()
-    val asrMethod by viewModel.asrMethod.collectAsState()
-    val ishaMethod by viewModel.ishaMethod.collectAsState()
-    val adjFajr by viewModel.adjFajr.collectAsState()
-    val adjSunrise by viewModel.adjSunrise.collectAsState()
-    val adjDhuhr by viewModel.adjDhuhr.collectAsState()
-    val adjAsr by viewModel.adjAsr.collectAsState()
-    val adjMaghrib by viewModel.adjMaghrib.collectAsState()
-    val adjIsha by viewModel.adjIsha.collectAsState()
+    val showNawafil by viewModel.showNawafil.collectAsStateWithLifecycle()
+    val notifyNawafil by viewModel.notifyNawafil.collectAsStateWithLifecycle()
+    val adhanAudioEnabled by viewModel.adhanAudioEnabled.collectAsStateWithLifecycle()
+    val adhanAudioMode by viewModel.adhanAudioMode.collectAsStateWithLifecycle()
+    val adhanAudioStream by viewModel.adhanAudioStream.collectAsStateWithLifecycle()
+    val asrMethod by viewModel.asrMethod.collectAsStateWithLifecycle()
+    val ishaMethod by viewModel.ishaMethod.collectAsStateWithLifecycle()
+    val adjFajr by viewModel.adjFajr.collectAsStateWithLifecycle()
+    val adjSunrise by viewModel.adjSunrise.collectAsStateWithLifecycle()
+    val adjDhuhr by viewModel.adjDhuhr.collectAsStateWithLifecycle()
+    val adjAsr by viewModel.adjAsr.collectAsStateWithLifecycle()
+    val adjMaghrib by viewModel.adjMaghrib.collectAsStateWithLifecycle()
+    val adjIsha by viewModel.adjIsha.collectAsStateWithLifecycle()
 
     val isAr = currentLang == "ar"
 
@@ -127,11 +128,11 @@ fun HomeScreen(
     } else null
 
     // Alert settings
-    val alertSettings by viewModel.alertSettings.collectAsState()
+    val alertSettings by viewModel.alertSettings.collectAsStateWithLifecycle()
     
     val prayers = listOf("Fajr", "Sunrise", "Dhuhr", "Asr", "Maghrib", "Isha")
 
-    val showSettingsDialog by viewModel.showSettingsDialog.collectAsState()
+    val showSettingsDialog by viewModel.showSettingsDialog.collectAsStateWithLifecycle()
 
     // The Gregorian date in the header is a formatted remember, so it needs a key that rolls over at
     // midnight: a screen left open overnight kept showing yesterday's date. This polls rather than
@@ -304,7 +305,7 @@ fun HomeScreen(
                             tint = MaterialTheme.colorScheme.secondary,
                             modifier = Modifier.size(16.dp)
                         )
-                        val locLabel = viewModel.locationLabel.collectAsState().value
+                        val locLabel = viewModel.locationLabel.collectAsStateWithLifecycle().value
                         Text(
                             text = if (isAr) locLabel else locLabel.uppercase(),
                             style = MaterialTheme.typography.labelMedium,
@@ -2169,11 +2170,11 @@ fun CountdownCardView(
     isAr: Boolean,
     translatePrayer: (String) -> String
 ) {
-    val countdown by viewModel.nextPrayerCountdown.collectAsState()
-    val nextPrayerName by viewModel.nextPrayerName.collectAsState()
-    val isLocationSet by viewModel.isLocationSet.collectAsState()
+    val countdown by viewModel.nextPrayerCountdown.collectAsStateWithLifecycle()
+    val nextPrayerName by viewModel.nextPrayerName.collectAsStateWithLifecycle()
+    val isLocationSet by viewModel.isLocationSet.collectAsStateWithLifecycle()
 
-val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
+val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsStateWithLifecycle()
 
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
     val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE

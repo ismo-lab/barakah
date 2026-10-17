@@ -23,6 +23,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -71,13 +72,13 @@ fun OthersScreen(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
-    val appLanguage by viewModel.appLanguage.collectAsState()
+    val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
     val isAr = appLanguage == "ar"
-    val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
+    val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsStateWithLifecycle()
     
     val context = LocalContext.current
     val vibrator = remember { context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? Vibrator }
-    val isHapticEnabled by viewModel.enableTasbihHaptics.collectAsState()
+    val isHapticEnabled by viewModel.enableTasbihHaptics.collectAsStateWithLifecycle()
 
     fun triggerVibration() {
         if (!isHapticEnabled) return

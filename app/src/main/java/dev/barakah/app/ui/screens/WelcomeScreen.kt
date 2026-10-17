@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,7 +42,7 @@ import com.google.accompanist.permissions.isGranted
 @Composable
 fun WelcomeScreen(viewModel: BarakahViewModel) {
     var step by remember { mutableIntStateOf(1) } // 1: Language, 2: Calculations, 3: Notifications, 4: Location
-    val currentLang by viewModel.appLanguage.collectAsState()
+    val currentLang by viewModel.appLanguage.collectAsStateWithLifecycle()
     val isAr = currentLang == "ar"
 
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
@@ -93,7 +94,7 @@ fun WelcomeScreen(viewModel: BarakahViewModel) {
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun LanguageStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
-    val currentLang by viewModel.appLanguage.collectAsState()
+    val currentLang by viewModel.appLanguage.collectAsStateWithLifecycle()
     var permissionRequested by remember { mutableStateOf(false) }
     val notificationPermissionState = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
         rememberPermissionState(android.Manifest.permission.POST_NOTIFICATIONS)
@@ -199,7 +200,7 @@ fun LanguageCard(label: String, isSelected: Boolean, onClick: () -> Unit) {
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
  fun LocationStep(viewModel: BarakahViewModel, onFinish: () -> Unit) {
-     val currentLang by viewModel.appLanguage.collectAsState()
+     val currentLang by viewModel.appLanguage.collectAsStateWithLifecycle()
      val isAr = currentLang == "ar"
      var query by remember { mutableStateOf("") }
      var filteredCities by remember { mutableStateOf(emptyList<dev.barakah.app.data.CitySuggestion>()) }
@@ -353,23 +354,23 @@ fun LanguageCard(label: String, isSelected: Boolean, onClick: () -> Unit) {
 
 @Composable
 fun NotificationsStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
-    val currentLang by viewModel.appLanguage.collectAsState()
+    val currentLang by viewModel.appLanguage.collectAsStateWithLifecycle()
     val isAr = currentLang == "ar"
 
-    val notifyMorningAdhkar by viewModel.notifyMorningAdhkar.collectAsState()
-    val notifyEveningAdhkar by viewModel.notifyEveningAdhkar.collectAsState()
-    val notifyBeforeAdhan by viewModel.notifyBeforeAdhan.collectAsState()
-    val notifyOccasions by viewModel.notifyOccasions.collectAsState()
-    val notifyFasting by viewModel.notifyFasting.collectAsState()
-    val notifyJumuah by viewModel.notifyJumuah.collectAsState()
-    val notifySuhur by viewModel.notifySuhur.collectAsState()
-    val notifyIftar by viewModel.notifyIftar.collectAsState()
-    val showNawafil by viewModel.showNawafil.collectAsState()
-    val notifyNawafil by viewModel.notifyNawafil.collectAsState()
-    val enableTasbihHaptics by viewModel.enableTasbihHaptics.collectAsState()
-    val morningAdhkarOffset by viewModel.morningAdhkarOffset.collectAsState()
-    val eveningAdhkarOffset by viewModel.eveningAdhkarOffset.collectAsState()
-    val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
+    val notifyMorningAdhkar by viewModel.notifyMorningAdhkar.collectAsStateWithLifecycle()
+    val notifyEveningAdhkar by viewModel.notifyEveningAdhkar.collectAsStateWithLifecycle()
+    val notifyBeforeAdhan by viewModel.notifyBeforeAdhan.collectAsStateWithLifecycle()
+    val notifyOccasions by viewModel.notifyOccasions.collectAsStateWithLifecycle()
+    val notifyFasting by viewModel.notifyFasting.collectAsStateWithLifecycle()
+    val notifyJumuah by viewModel.notifyJumuah.collectAsStateWithLifecycle()
+    val notifySuhur by viewModel.notifySuhur.collectAsStateWithLifecycle()
+    val notifyIftar by viewModel.notifyIftar.collectAsStateWithLifecycle()
+    val showNawafil by viewModel.showNawafil.collectAsStateWithLifecycle()
+    val notifyNawafil by viewModel.notifyNawafil.collectAsStateWithLifecycle()
+    val enableTasbihHaptics by viewModel.enableTasbihHaptics.collectAsStateWithLifecycle()
+    val morningAdhkarOffset by viewModel.morningAdhkarOffset.collectAsStateWithLifecycle()
+    val eveningAdhkarOffset by viewModel.eveningAdhkarOffset.collectAsStateWithLifecycle()
+    val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsStateWithLifecycle()
 
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
     val isShortScreen = configuration.screenHeightDp < 600
@@ -596,11 +597,11 @@ fun NotificationToggleCard(
 
 @Composable
 fun CalculationStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
-    val currentLang by viewModel.appLanguage.collectAsState()
+    val currentLang by viewModel.appLanguage.collectAsStateWithLifecycle()
     val isAr = currentLang == "ar"
     
-    val asrMethod by viewModel.asrMethod.collectAsState()
-    val ishaMethod by viewModel.ishaMethod.collectAsState()
+    val asrMethod by viewModel.asrMethod.collectAsStateWithLifecycle()
+    val ishaMethod by viewModel.ishaMethod.collectAsStateWithLifecycle()
 
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
     val isShortScreen = configuration.screenHeightDp < 600

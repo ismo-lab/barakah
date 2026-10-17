@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -56,8 +57,8 @@ fun QiblahScreen(
     modifier: Modifier = Modifier
 ) {
     val view = LocalView.current
-    val hapticEnabled by viewModel.enableTasbihHaptics.collectAsState()
-    val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
+    val hapticEnabled by viewModel.enableTasbihHaptics.collectAsStateWithLifecycle()
+    val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsStateWithLifecycle()
 
     DisposableEffect(viewModel) {
         viewModel.startQiblaTracking()
@@ -66,12 +67,12 @@ fun QiblahScreen(
         }
     }
 
-    val compassAzimuth by viewModel.compassAzimuth.collectAsState()
-    val compassStatus by viewModel.compassStatus.collectAsState()
-    val compassTilt by viewModel.compassTilt.collectAsState()
-    val qiblaBearing by viewModel.qiblaBearing.collectAsState()
-    val locationLabel by viewModel.locationLabel.collectAsState()
-    val appLanguage by viewModel.appLanguage.collectAsState()
+    val compassAzimuth by viewModel.compassAzimuth.collectAsStateWithLifecycle()
+    val compassStatus by viewModel.compassStatus.collectAsStateWithLifecycle()
+    val compassTilt by viewModel.compassTilt.collectAsStateWithLifecycle()
+    val qiblaBearing by viewModel.qiblaBearing.collectAsStateWithLifecycle()
+    val locationLabel by viewModel.locationLabel.collectAsStateWithLifecycle()
+    val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
     val isAr = appLanguage == "ar"
 
     // Whether the needle is allowed to be believed. With no live reading, pointing at a

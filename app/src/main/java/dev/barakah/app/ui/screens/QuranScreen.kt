@@ -23,6 +23,7 @@ import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,7 +55,7 @@ fun QuranScreen(
     modifier: Modifier = Modifier
 ) {
     var searchQuery by remember { mutableStateOf("") }
-    val bookmarks by viewModel.bookmarks.collectAsState()
+    val bookmarks by viewModel.bookmarks.collectAsStateWithLifecycle()
     
     // Filters: 0 -> All Surahs, 1 -> Bookmarks Only
     var activeFilterTab by remember { mutableStateOf(0) }
@@ -70,23 +71,23 @@ fun QuranScreen(
     }
     
     // Resume state
-    val lastReadingState by viewModel.lastReadingState.collectAsState()
+    val lastReadingState by viewModel.lastReadingState.collectAsStateWithLifecycle()
     val context = androidx.compose.ui.platform.LocalContext.current
     
     // Fonts collected directly from centralized viewModel
-    val arabicFontSize by viewModel.arabicFontSize.collectAsState()
-    val englishFontSize by viewModel.englishFontSize.collectAsState()
-    val quranFont by viewModel.quranFont.collectAsState()
+    val arabicFontSize by viewModel.arabicFontSize.collectAsStateWithLifecycle()
+    val englishFontSize by viewModel.englishFontSize.collectAsStateWithLifecycle()
+    val quranFont by viewModel.quranFont.collectAsStateWithLifecycle()
     // Only Quran text uses the selected face; the surrounding UI keeps the system font.
     val quranFontFamily = quranFontFamilyFor(quranFont)
     val quranLineHeight = quranLineHeightFor(quranFont)
-    val appLanguage by viewModel.appLanguage.collectAsState()
+    val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
     val isAr = appLanguage == "ar"
-    val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
+    val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsStateWithLifecycle()
 
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     
-    val allSurahs by QuranData.surahsFlow.collectAsState()
+    val allSurahs by QuranData.surahsFlow.collectAsStateWithLifecycle()
 
     // Long-pressing a verse opens its tafseer, which is read from a bundled asset.
     val scope = rememberCoroutineScope()

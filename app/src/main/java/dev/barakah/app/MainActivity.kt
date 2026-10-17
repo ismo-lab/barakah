@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -45,10 +46,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             val viewModel: BarakahViewModel = viewModel()
             activityViewModel = viewModel
-            val themeMode by viewModel.appTheme.collectAsState()
-            val useDynamicColor by viewModel.useDynamicColor.collectAsState()
-            val amoledDark by viewModel.amoledDark.collectAsState()
-            val appLanguage by viewModel.appLanguage.collectAsState()
+            val themeMode by viewModel.appTheme.collectAsStateWithLifecycle()
+            val useDynamicColor by viewModel.useDynamicColor.collectAsStateWithLifecycle()
+            val amoledDark by viewModel.amoledDark.collectAsStateWithLifecycle()
+            val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
  
             val isSystemDark = androidx.compose.foundation.isSystemInDarkTheme()
             val darkTheme = when (themeMode) {
@@ -71,10 +72,10 @@ class MainActivity : ComponentActivity() {
                 CompositionLocalProvider(
                     androidx.compose.ui.platform.LocalLayoutDirection provides layoutDirection
                 ) {
-                    val isFirstRun by viewModel.isFirstRun.collectAsState()
+                    val isFirstRun by viewModel.isFirstRun.collectAsStateWithLifecycle()
                     val navController = rememberNavController()
 
-                    val showGpsPrompt by viewModel.showGpsSettingsPrompt.collectAsState()
+                    val showGpsPrompt by viewModel.showGpsSettingsPrompt.collectAsStateWithLifecycle()
                     val isAr = appLanguage == "ar"
 
                     if (showGpsPrompt) {
@@ -152,7 +153,7 @@ fun MainNavigationContainer(
     viewModel: BarakahViewModel,
     navController: NavHostController
 ) {
-    val currentLang by viewModel.appLanguage.collectAsState()
+    val currentLang by viewModel.appLanguage.collectAsStateWithLifecycle()
     val isAr = currentLang == "ar"
     
     var screenKeys by remember { mutableStateOf(mapOf<String, Int>()) }
@@ -199,7 +200,7 @@ fun MainNavigationContainer(
     val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
-    val showSettingsDialog by viewModel.showSettingsDialog.collectAsState()
+    val showSettingsDialog by viewModel.showSettingsDialog.collectAsStateWithLifecycle()
 
     val shouldHideNavigation = showSettingsDialog || currentDestination?.route == "others"
 

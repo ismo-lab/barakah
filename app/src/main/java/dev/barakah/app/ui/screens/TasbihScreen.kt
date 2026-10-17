@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,16 +43,16 @@ fun TasbihScreen(
     viewModel: BarakahViewModel,
     modifier: Modifier = Modifier
 ) {
-    val count by viewModel.tasbihCount.collectAsState()
-    val target by viewModel.tasbihTarget.collectAsState()
-    val activeDhikr by viewModel.selectedDhikr.collectAsState()
-    val appLanguage by viewModel.appLanguage.collectAsState()
+    val count by viewModel.tasbihCount.collectAsStateWithLifecycle()
+    val target by viewModel.tasbihTarget.collectAsStateWithLifecycle()
+    val activeDhikr by viewModel.selectedDhikr.collectAsStateWithLifecycle()
+    val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
     val isAr = appLanguage == "ar"
     
     val haptic = LocalView.current
     val view = LocalView.current
-    val enableTasbihHaptics by viewModel.enableTasbihHaptics.collectAsState()
-    val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
+    val enableTasbihHaptics by viewModel.enableTasbihHaptics.collectAsStateWithLifecycle()
+    val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsStateWithLifecycle()
 
     var showDhikrDropdown by remember { mutableStateOf(false) }
 
