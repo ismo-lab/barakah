@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -34,8 +35,10 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.semantics.semantics
@@ -56,8 +59,8 @@ fun QiblahScreen(
     modifier: Modifier = Modifier
 ) {
     val view = LocalView.current
-    val hapticEnabled by viewModel.enableTasbihHaptics.collectAsState()
-    val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
+    val hapticEnabled by viewModel.enableTasbihHaptics.collectAsStateWithLifecycle()
+    val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsStateWithLifecycle()
 
     DisposableEffect(viewModel) {
         viewModel.startQiblaTracking()
@@ -66,12 +69,12 @@ fun QiblahScreen(
         }
     }
 
-    val compassAzimuth by viewModel.compassAzimuth.collectAsState()
-    val compassStatus by viewModel.compassStatus.collectAsState()
-    val compassTilt by viewModel.compassTilt.collectAsState()
-    val qiblaBearing by viewModel.qiblaBearing.collectAsState()
-    val locationLabel by viewModel.locationLabel.collectAsState()
-    val appLanguage by viewModel.appLanguage.collectAsState()
+    val compassAzimuth by viewModel.compassAzimuth.collectAsStateWithLifecycle()
+    val compassStatus by viewModel.compassStatus.collectAsStateWithLifecycle()
+    val compassTilt by viewModel.compassTilt.collectAsStateWithLifecycle()
+    val qiblaBearing by viewModel.qiblaBearing.collectAsStateWithLifecycle()
+    val locationLabel by viewModel.locationLabel.collectAsStateWithLifecycle()
+    val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
     val isAr = appLanguage == "ar"
 
     // Whether the needle is allowed to be believed. With no live reading, pointing at a
@@ -185,6 +188,9 @@ fun QiblahScreen(
     val innerCoreSize = if (isLandscape || isShortScreen) 56.dp else 76.dp
     val coreIconSize = if (isLandscape || isShortScreen) 26.dp else 36.dp
 
+    // The two layouts draw the same dial, at the smaller landscape size or the full one.
+    val dialStyle = if (isLandscape) QiblahDialStyle.Compact else QiblahDialStyle.Full
+
     if (isLandscape) {
         Row(
             modifier = modifier
@@ -196,134 +202,26 @@ fun QiblahScreen(
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Left Panel: Rotate compass
-            Box(
-                modifier = Modifier
-                    .size(compassSize)
-                    .testTag("compass_dial_outer")
-                    .weight(0.45f)
-                    .semantics {
-                        val angleFormatted = shortestDiff.toInt().toString().localize(isAr, useWesternNumbersInArabic)
-                        contentDescription = when {
-                            !hasLiveHeading -> statusMessage
-                            isAligned -> if (isAr) "تم محاذاة اتجاه القبلة بنجاح" else "Qibla is perfectly aligned!"
-                            else -> if (isAr) "القبلة تبعد $angleFormatted درجة" else "Qibla is $angleFormatted degrees away"
-                        }
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                // Background Radial Glow Aura when aligned
-                if (isAligned) {
-                    Box(
-                        modifier = Modifier
-                            .size(glowSize)
-                            .rotate(relativeAngle)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.radialGradient(
-                                    colors = listOf(
-                                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f),
-                                        Color.Transparent
-                                    )
-                                )
-                            )
-                    )
-                }
-
-                // Outer ring
-                Box(
-                    modifier = Modifier
-                        .size(dialRingSize)
-                        .border(2.dp, alignmentColor.copy(alpha = 0.4f), CircleShape)
-                )
-
-                // Compass Rose
-                val tickColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
-                val primaryColor = MaterialTheme.colorScheme.primary
-                val secondaryColor = MaterialTheme.colorScheme.secondary
-
-                Canvas(
-                    modifier = Modifier
-                        .size(canvasSize)
-                        .rotate(-animatedHeading)
-                ) {
-                    val center = Offset(size.width / 2f, size.height / 2f)
-                    val outerRadius = size.width / 2f
-                    val innerRadiusShort = outerRadius - 8.dp.toPx()
-                    val innerRadiusLong = outerRadius - 16.dp.toPx()
-
-                    for (deg in 0 until 360 step 15) {
-                        val angleRad = Math.toRadians(deg.toDouble())
-                        val isMajor = deg % 90 == 0
-                        val isSemiMajor = deg % 45 == 0 && !isMajor
-                        
-                        val r1 = outerRadius
-                        val r2 = if (isMajor) innerRadiusLong else if (isSemiMajor) (outerRadius - 11.dp.toPx()) else innerRadiusShort
-
-                        val strokeW = if (isMajor) 2.5.dp.toPx() else if (isSemiMajor) 1.5.dp.toPx() else 1.dp.toPx()
-                        val color = if (isMajor) primaryColor else if (isSemiMajor) secondaryColor else tickColor
-
-                        val startX = center.x + r1 * sin(angleRad).toFloat()
-                        val startY = center.y - r1 * cos(angleRad).toFloat()
-
-                        val endX = center.x + r2 * sin(angleRad).toFloat()
-                        val endY = center.y - r2 * cos(angleRad).toFloat()
-
-                        drawLine(
-                            color = color,
-                            start = Offset(startX, startY),
-                            end = Offset(endX, endY),
-                            strokeWidth = strokeW,
-                            cap = StrokeCap.Round
-                        )
-                    }
-                }
-
-                // Live Pointer
-                Box(
-                    modifier = Modifier
-                        .size(pointerSize)
-                        .rotate(relativeAngle)
-                        .alpha(if (hasLiveHeading) 1f else 0.25f)
-                        .testTag("compass_pointer"),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Canvas(modifier = Modifier.fillMaxSize()) {
-                        val center = Offset(size.width / 2f, size.height / 2f)
-                        val pointerLen = size.width / 2f - 16.dp.toPx()
-
-                        val arrowPath = androidx.compose.ui.graphics.Path().apply {
-                            moveTo(center.x, center.y - pointerLen)
-                            lineTo(center.x - 10.dp.toPx(), center.y - pointerLen + 18.dp.toPx())
-                            lineTo(center.x - 3.dp.toPx(), center.y - pointerLen + 14.dp.toPx())
-                            lineTo(center.x - 3.dp.toPx(), center.y)
-                            lineTo(center.x + 3.dp.toPx(), center.y)
-                            lineTo(center.x + 3.dp.toPx(), center.y - pointerLen + 14.dp.toPx())
-                            lineTo(center.x + 10.dp.toPx(), center.y - pointerLen + 18.dp.toPx())
-                            close()
-                        }
-                        drawPath(arrowPath, secondaryColor)
-                    }
-                }
-
-                // Inner core
-                Surface(
-                    modifier = Modifier
-                        .size(innerCoreSize)
-                        .border(2.dp, alignmentColor, CircleShape),
-                    shape = CircleShape,
-                    color = if (isAligned) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
-                    tonalElevation = 4.dp
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Default.Explore,
-                            contentDescription = null,
-                            tint = alignmentColor,
-                            modifier = Modifier.size(coreIconSize)
-                        )
-                    }
-                }
-            }
+            QiblahDial(
+                compassSize = compassSize,
+                glowSize = glowSize,
+                dialRingSize = dialRingSize,
+                canvasSize = canvasSize,
+                pointerSize = pointerSize,
+                innerCoreSize = innerCoreSize,
+                coreIconSize = coreIconSize,
+                style = dialStyle,
+                isAligned = isAligned,
+                relativeAngle = relativeAngle,
+                animatedHeading = animatedHeading,
+                alignmentColor = alignmentColor,
+                hasLiveHeading = hasLiveHeading,
+                isAr = isAr,
+                useWesternNumbersInArabic = useWesternNumbersInArabic,
+                shortestDiff = shortestDiff,
+                statusMessage = statusMessage,
+                modifier = Modifier.weight(0.45f)
+            )
 
             // Right Panel: Info & Settings
             Column(
@@ -343,104 +241,44 @@ fun QiblahScreen(
                 )
                 
                 // Location Bar
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                QiblahLocationRow(
+                    text = if (isAr) "موقعك الحالي: $locationLabel" else "Location: $locationLabel",
+                    textStyle = MaterialTheme.typography.bodySmall,
+                    iconSize = 16.dp,
+                    spacerWidth = 8.dp,
+                    contentPadding = 10.dp,
+                    shape = 12.dp,
+                    horizontalArrangement = Arrangement.Start,
                     modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier.padding(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.MyLocation,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = if (isAr) "موقعك الحالي: $locationLabel" else "Location: $locationLabel",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
+                )
 
                 // Alignment Status Bubble
-                AnimatedVisibility(
+                QiblahAlignedBanner(
                     visible = isAligned,
-                    enter = fadeIn() + expandVertically(),
-                    exit = fadeOut() + shrinkVertically()
-                ) {
-                    Surface(
-                        shape = RoundedCornerShape(10.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = if (isAr) "🕌 تم محاذاة القبلة بدقة!" else "🕌 PERFECTLY ALIGNED!",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(6.dp)
-                        )
-                    }
-                }
+                    isAr = isAr,
+                    textStyle = MaterialTheme.typography.bodyMedium,
+                    shape = 10.dp,
+                    textPadding = PaddingValues(6.dp),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
 
                 // Stats details Card
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(12.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = if (isAr) "اتجاه هاتفك" else "Your Heading",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    headingText,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = if (isAr) "اتجاه القبلة" else "Mecca Target",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    "${qiblaBearing.toInt()}°".localize(isAr, useWesternNumbersInArabic),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.secondary
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = statusMessage,
-                            style = MaterialTheme.typography.labelSmall,
-                            textAlign = TextAlign.Center,
-                            color = statusColor
-                        )
-                    }
-                }
+                QiblahStatsCard(
+                    isAr = isAr,
+                    headingText = headingText,
+                    qiblaBearing = qiblaBearing,
+                    statusMessage = statusMessage,
+                    statusColor = statusColor,
+                    useWesternNumbersInArabic = useWesternNumbersInArabic,
+                    labelStyle = MaterialTheme.typography.labelSmall,
+                    valueStyle = MaterialTheme.typography.titleMedium,
+                    statusStyle = MaterialTheme.typography.labelSmall,
+                    shape = 16.dp,
+                    containerAlpha = 0.3f,
+                    contentPadding = 12.dp,
+                    rowSpacing = 8.dp
+                )
             }
         }
     } else {
@@ -488,166 +326,40 @@ fun QiblahScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 // Info panel
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                QiblahLocationRow(
+                    text = if (isAr) "حسب موقعك في: $locationLabel" else "Relative to: $locationLabel",
+                    textStyle = MaterialTheme.typography.labelLarge,
+                    iconSize = 18.dp,
+                    spacerWidth = 10.dp,
+                    contentPadding = 12.dp,
+                    shape = 16.dp,
+                    horizontalArrangement = Arrangement.Center,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 8.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp).fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.MyLocation,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = if (isAr) "حسب موقعك في: $locationLabel" else "Relative to: $locationLabel",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                }
+                )
             }
 
             // 2. LIVE ROTATING COMPASS DIAL CARD
-            Box(
-                modifier = Modifier
-                    .size(compassSize)
-                    .testTag("compass_dial_outer")
-                    .semantics {
-                        val angleFormatted = shortestDiff.toInt().toString().localize(isAr, useWesternNumbersInArabic)
-                        contentDescription = when {
-                            !hasLiveHeading -> statusMessage
-                            isAligned -> if (isAr) "تم محاذاة اتجاه القبلة بنجاح" else "Qibla is perfectly aligned!"
-                            else -> if (isAr) "القبلة تبعد $angleFormatted درجة" else "Qibla is $angleFormatted degrees away"
-                        }
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                // Background Radial Glow Aura when aligned
-                if (isAligned) {
-                    Box(
-                        modifier = Modifier
-                            .size(glowSize)
-                            .rotate(relativeAngle)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.radialGradient(
-                                    colors = listOf(
-                                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f),
-                                        Color.Transparent
-                                    )
-                                )
-                            )
-                    )
-                }
-
-                // Outer ring
-                Box(
-                    modifier = Modifier
-                        .size(dialRingSize)
-                        .border(2.dp, alignmentColor.copy(alpha = 0.4f), CircleShape)
-                )
-
-                // Compass Rose / Geometric markings drawing
-                val tickColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
-                val primaryColor = MaterialTheme.colorScheme.primary
-                val secondaryColor = MaterialTheme.colorScheme.secondary
-
-                Canvas(
-                    modifier = Modifier
-                        .size(canvasSize)
-                        .rotate(-animatedHeading) // Orient dial opposite to heading so true North stays Up
-                ) {
-                    // Draw 360 degree ticks
-                    val center = Offset(size.width / 2f, size.height / 2f)
-                    val outerRadius = size.width / 2f
-                    val innerRadiusShort = outerRadius - 10.dp.toPx()
-                    val innerRadiusLong = outerRadius - 20.dp.toPx()
-
-                    for (deg in 0 until 360 step 15) {
-                        val angleRad = Math.toRadians(deg.toDouble())
-                        val isMajor = deg % 90 == 0
-                        val isSemiMajor = deg % 45 == 0 && !isMajor
-                        
-                        val r1 = outerRadius
-                        val r2 = if (isMajor) innerRadiusLong else if (isSemiMajor) (outerRadius - 14.dp.toPx()) else innerRadiusShort
-
-                        val strokeW = if (isMajor) 3.dp.toPx() else if (isSemiMajor) 2.dp.toPx() else 1.dp.toPx()
-                        val color = if (isMajor) primaryColor else if (isSemiMajor) secondaryColor else tickColor
-
-                        val startX = center.x + r1 * sin(angleRad).toFloat()
-                        val startY = center.y - r1 * cos(angleRad).toFloat()
-
-                        val endX = center.x + r2 * sin(angleRad).toFloat()
-                        val endY = center.y - r2 * cos(angleRad).toFloat()
-
-                        drawLine(
-                            color = color,
-                            start = Offset(startX, startY),
-                            end = Offset(endX, endY),
-                            strokeWidth = strokeW,
-                            cap = StrokeCap.Round
-                        )
-                    }
-                }
-
-                // Live Rotating Pointer pointing to Mecca
-                Box(
-                    modifier = Modifier
-                        .size(pointerSize)
-                        .rotate(relativeAngle) // Relative rotation pointing Mecca
-                        .alpha(if (hasLiveHeading) 1f else 0.25f)
-                        .testTag("compass_pointer"),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Canvas(modifier = Modifier.fillMaxSize()) {
-                        val center = Offset(size.width / 2f, size.height / 2f)
-                        val pointerLen = size.width / 2f - 24.dp.toPx()
-
-                        // Draw golden Mecca Arrow pointer
-                        val arrowPath = androidx.compose.ui.graphics.Path().apply {
-                            moveTo(center.x, center.y - pointerLen)
-                            lineTo(center.x - 14.dp.toPx(), center.y - pointerLen + 24.dp.toPx())
-                            lineTo(center.x - 4.dp.toPx(), center.y - pointerLen + 18.dp.toPx())
-                            lineTo(center.x - 4.dp.toPx(), center.y)
-                            lineTo(center.x + 4.dp.toPx(), center.y)
-                            lineTo(center.x + 4.dp.toPx(), center.y - pointerLen + 18.dp.toPx())
-                            lineTo(center.x + 14.dp.toPx(), center.y - pointerLen + 24.dp.toPx())
-                            close()
-                         }
-                          drawPath(arrowPath, secondaryColor)
-                    }
-                }
-
-                // Beautiful Static Inner Core with Kaaba Icon representation
-                Surface(
-                    modifier = Modifier
-                        .size(innerCoreSize)
-                        .border(3.dp, alignmentColor, CircleShape),
-                    shape = CircleShape,
-                    color = if (isAligned) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
-                    tonalElevation = 6.dp
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Default.Explore,
-                            contentDescription = null,
-                            tint = alignmentColor,
-                            modifier = Modifier.size(coreIconSize)
-                        )
-                    }
-                }
-            }
+            QiblahDial(
+                compassSize = compassSize,
+                glowSize = glowSize,
+                dialRingSize = dialRingSize,
+                canvasSize = canvasSize,
+                pointerSize = pointerSize,
+                innerCoreSize = innerCoreSize,
+                coreIconSize = coreIconSize,
+                style = dialStyle,
+                isAligned = isAligned,
+                relativeAngle = relativeAngle,
+                animatedHeading = animatedHeading,
+                alignmentColor = alignmentColor,
+                hasLiveHeading = hasLiveHeading,
+                isAr = isAr,
+                useWesternNumbersInArabic = useWesternNumbersInArabic,
+                shortestDiff = shortestDiff,
+                statusMessage = statusMessage
+            )
 
             // 3. BOTTOM ALIGN STATUS PANEL
             Column(
@@ -655,78 +367,384 @@ fun QiblahScreen(
                 modifier = Modifier
                     .fillMaxWidth()
             ) {
-                AnimatedVisibility(
+                QiblahAlignedBanner(
                     visible = isAligned,
-                    enter = fadeIn() + expandVertically(),
-                    exit = fadeOut() + shrinkVertically()
-                ) {
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    ) {
-                        Text(
-                            text = if (isAr) "🕌 تم محاذاة القبلة بدقة!" else "🕌 PERFECTLY ALIGNED!",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)
-                        )
-                    }
-                }
+                    isAr = isAr,
+                    textStyle = MaterialTheme.typography.titleMedium,
+                    shape = 12.dp,
+                    textPadding = PaddingValues(vertical = 8.dp, horizontal = 16.dp),
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
 
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = if (isAr) "اتجاه هاتفك" else "Your Heading",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    headingText,
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = if (isAr) "اتجاه القبلة" else "Mecca Target",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    "${qiblaBearing.toInt()}°".localize(isAr, useWesternNumbersInArabic),
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.secondary
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = statusMessage,
-                            style = MaterialTheme.typography.bodySmall,
-                            textAlign = TextAlign.Center,
-                            color = statusColor
-                        )
-                    }
-                }
+                QiblahStatsCard(
+                    isAr = isAr,
+                    headingText = headingText,
+                    qiblaBearing = qiblaBearing,
+                    statusMessage = statusMessage,
+                    statusColor = statusColor,
+                    useWesternNumbersInArabic = useWesternNumbersInArabic,
+                    labelStyle = MaterialTheme.typography.labelMedium,
+                    valueStyle = MaterialTheme.typography.titleLarge,
+                    statusStyle = MaterialTheme.typography.bodySmall,
+                    shape = 20.dp,
+                    containerAlpha = 0.4f,
+                    contentPadding = 16.dp,
+                    rowSpacing = 12.dp
+                )
             }
         }
+        }
+    }
+}
+
+/**
+ * The drawing details of the dial. The landscape layout draws it smaller, with slightly finer ticks
+ * and a shorter pointer, so the numbers that differ between the two live here instead of being
+ * copied into the drawing code twice.
+ */
+private class QiblahDialStyle(
+    val tickInsetShort: Dp,
+    val tickInsetLong: Dp,
+    val tickInsetSemiMajor: Dp,
+    val majorStroke: Dp,
+    val semiMajorStroke: Dp,
+    val pointerLengthInset: Dp,
+    val arrowHalfWidth: Dp,
+    val arrowTipHeight: Dp,
+    val arrowInnerHeight: Dp,
+    val arrowInnerHalfWidth: Dp,
+    val coreBorder: Dp,
+    val coreElevation: Dp
+) {
+    companion object {
+        /** The smaller dial, which is the one landscape uses. */
+        val Compact = QiblahDialStyle(
+            tickInsetShort = 8.dp,
+            tickInsetLong = 16.dp,
+            tickInsetSemiMajor = 11.dp,
+            majorStroke = 2.5.dp,
+            semiMajorStroke = 1.5.dp,
+            pointerLengthInset = 16.dp,
+            arrowHalfWidth = 10.dp,
+            arrowTipHeight = 18.dp,
+            arrowInnerHeight = 14.dp,
+            arrowInnerHalfWidth = 3.dp,
+            coreBorder = 2.dp,
+            coreElevation = 4.dp
+        )
+
+        /** The full size dial, which is the one portrait uses. */
+        val Full = QiblahDialStyle(
+            tickInsetShort = 10.dp,
+            tickInsetLong = 20.dp,
+            tickInsetSemiMajor = 14.dp,
+            majorStroke = 3.dp,
+            semiMajorStroke = 2.dp,
+            pointerLengthInset = 24.dp,
+            arrowHalfWidth = 14.dp,
+            arrowTipHeight = 24.dp,
+            arrowInnerHeight = 18.dp,
+            arrowInnerHalfWidth = 4.dp,
+            coreBorder = 3.dp,
+            coreElevation = 6.dp
+        )
+    }
+}
+
+/**
+ * The rotating dial: the glow that appears when aligned, the tick ring, the pointer towards Mecca
+ * and the Kaaba core. Both layouts show exactly this, so it is drawn here once and only the sizes,
+ * the alignment state and the wording are handed in.
+ */
+@Composable
+private fun QiblahDial(
+    compassSize: Dp,
+    glowSize: Dp,
+    dialRingSize: Dp,
+    canvasSize: Dp,
+    pointerSize: Dp,
+    innerCoreSize: Dp,
+    coreIconSize: Dp,
+    style: QiblahDialStyle,
+    isAligned: Boolean,
+    relativeAngle: Float,
+    animatedHeading: Float,
+    alignmentColor: Color,
+    hasLiveHeading: Boolean,
+    isAr: Boolean,
+    useWesternNumbersInArabic: Boolean,
+    shortestDiff: Float,
+    statusMessage: String,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .size(compassSize)
+            .testTag("compass_dial_outer")
+            .semantics {
+                val angleFormatted = shortestDiff.toInt().toString().localize(isAr, useWesternNumbersInArabic)
+                contentDescription = when {
+                    !hasLiveHeading -> statusMessage
+                    isAligned -> if (isAr) "تم محاذاة اتجاه القبلة بنجاح" else "Qibla is perfectly aligned!"
+                    else -> if (isAr) "القبلة تبعد $angleFormatted درجة" else "Qibla is $angleFormatted degrees away"
+                }
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        // Background Radial Glow Aura when aligned
+        if (isAligned) {
+            Box(
+                modifier = Modifier
+                    .size(glowSize)
+                    .rotate(relativeAngle)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.radialGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f),
+                                Color.Transparent
+                            )
+                        )
+                    )
+            )
+        }
+
+        // Outer ring
+        Box(
+            modifier = Modifier
+                .size(dialRingSize)
+                .border(2.dp, alignmentColor.copy(alpha = 0.4f), CircleShape)
+        )
+
+        // Compass Rose
+        val tickColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+        val primaryColor = MaterialTheme.colorScheme.primary
+        val secondaryColor = MaterialTheme.colorScheme.secondary
+
+        Canvas(
+            modifier = Modifier
+                .size(canvasSize)
+                .rotate(-animatedHeading)
+        ) {
+            val center = Offset(size.width / 2f, size.height / 2f)
+            val outerRadius = size.width / 2f
+            val innerRadiusShort = outerRadius - style.tickInsetShort.toPx()
+            val innerRadiusLong = outerRadius - style.tickInsetLong.toPx()
+
+            for (deg in 0 until 360 step 15) {
+                val angleRad = Math.toRadians(deg.toDouble())
+                val isMajor = deg % 90 == 0
+                val isSemiMajor = deg % 45 == 0 && !isMajor
+
+                val r1 = outerRadius
+                val r2 = if (isMajor) innerRadiusLong else if (isSemiMajor) (outerRadius - style.tickInsetSemiMajor.toPx()) else innerRadiusShort
+
+                val strokeW = if (isMajor) style.majorStroke.toPx() else if (isSemiMajor) style.semiMajorStroke.toPx() else 1.dp.toPx()
+                val color = if (isMajor) primaryColor else if (isSemiMajor) secondaryColor else tickColor
+
+                val startX = center.x + r1 * sin(angleRad).toFloat()
+                val startY = center.y - r1 * cos(angleRad).toFloat()
+
+                val endX = center.x + r2 * sin(angleRad).toFloat()
+                val endY = center.y - r2 * cos(angleRad).toFloat()
+
+                drawLine(
+                    color = color,
+                    start = Offset(startX, startY),
+                    end = Offset(endX, endY),
+                    strokeWidth = strokeW,
+                    cap = StrokeCap.Round
+                )
+            }
+        }
+
+        // Live Pointer
+        Box(
+            modifier = Modifier
+                .size(pointerSize)
+                .rotate(relativeAngle)
+                .alpha(if (hasLiveHeading) 1f else 0.25f)
+                .testTag("compass_pointer"),
+            contentAlignment = Alignment.Center
+        ) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val center = Offset(size.width / 2f, size.height / 2f)
+                val pointerLen = size.width / 2f - style.pointerLengthInset.toPx()
+
+                val arrowPath = androidx.compose.ui.graphics.Path().apply {
+                    moveTo(center.x, center.y - pointerLen)
+                    lineTo(center.x - style.arrowHalfWidth.toPx(), center.y - pointerLen + style.arrowTipHeight.toPx())
+                    lineTo(center.x - style.arrowInnerHalfWidth.toPx(), center.y - pointerLen + style.arrowInnerHeight.toPx())
+                    lineTo(center.x - style.arrowInnerHalfWidth.toPx(), center.y)
+                    lineTo(center.x + style.arrowInnerHalfWidth.toPx(), center.y)
+                    lineTo(center.x + style.arrowInnerHalfWidth.toPx(), center.y - pointerLen + style.arrowInnerHeight.toPx())
+                    lineTo(center.x + style.arrowHalfWidth.toPx(), center.y - pointerLen + style.arrowTipHeight.toPx())
+                    close()
+                }
+                drawPath(arrowPath, secondaryColor)
+            }
+        }
+
+        // Inner core
+        Surface(
+            modifier = Modifier
+                .size(innerCoreSize)
+                .border(style.coreBorder, alignmentColor, CircleShape),
+            shape = CircleShape,
+            color = if (isAligned) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+            tonalElevation = style.coreElevation
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = Icons.Default.Explore,
+                    contentDescription = null,
+                    tint = alignmentColor,
+                    modifier = Modifier.size(coreIconSize)
+                )
+            }
+        }
+    }
+}
+
+/** The row that names the place the bearing is relative to. */
+@Composable
+private fun QiblahLocationRow(
+    text: String,
+    textStyle: TextStyle,
+    iconSize: Dp,
+    spacerWidth: Dp,
+    contentPadding: Dp,
+    shape: Dp,
+    horizontalArrangement: Arrangement.Horizontal,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        shape = RoundedCornerShape(shape),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        modifier = modifier
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(contentPadding)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = horizontalArrangement
+        ) {
+            Icon(
+                imageVector = Icons.Default.MyLocation,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(iconSize)
+            )
+            Spacer(modifier = Modifier.width(spacerWidth))
+            Text(
+                text = text,
+                style = textStyle,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+/** The banner that slides in once the phone is pointed at the Kaaba. */
+@Composable
+private fun QiblahAlignedBanner(
+    visible: Boolean,
+    isAr: Boolean,
+    textStyle: TextStyle,
+    shape: Dp,
+    textPadding: PaddingValues,
+    modifier: Modifier = Modifier,
+    textAlign: TextAlign? = null
+) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn() + expandVertically(),
+        exit = fadeOut() + shrinkVertically()
+    ) {
+        Surface(
+            shape = RoundedCornerShape(shape),
+            color = MaterialTheme.colorScheme.primaryContainer,
+            modifier = modifier
+        ) {
+            Text(
+                text = if (isAr) "🕌 تم محاذاة القبلة بدقة!" else "🕌 PERFECTLY ALIGNED!",
+                style = textStyle,
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                textAlign = textAlign,
+                modifier = Modifier.padding(textPadding)
+            )
+        }
+    }
+}
+
+/** The phone's heading, the bearing to Mecca, and the status line under them. */
+@Composable
+private fun QiblahStatsCard(
+    isAr: Boolean,
+    headingText: String,
+    qiblaBearing: Double,
+    statusMessage: String,
+    statusColor: Color,
+    useWesternNumbersInArabic: Boolean,
+    labelStyle: TextStyle,
+    valueStyle: TextStyle,
+    statusStyle: TextStyle,
+    shape: Dp,
+    containerAlpha: Float,
+    contentPadding: Dp,
+    rowSpacing: Dp
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(shape),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = containerAlpha)
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(contentPadding),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = if (isAr) "اتجاه هاتفك" else "Your Heading",
+                        style = labelStyle,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        headingText,
+                        style = valueStyle,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = if (isAr) "اتجاه القبلة" else "Mecca Target",
+                        style = labelStyle,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        "${qiblaBearing.toInt()}°".localize(isAr, useWesternNumbersInArabic),
+                        style = valueStyle,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(rowSpacing))
+            Text(
+                text = statusMessage,
+                style = statusStyle,
+                textAlign = TextAlign.Center,
+                color = statusColor
+            )
         }
     }
 }

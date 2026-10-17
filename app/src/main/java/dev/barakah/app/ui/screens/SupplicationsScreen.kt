@@ -23,6 +23,7 @@ import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,12 +47,12 @@ fun SupplicationsScreen(
     viewModel: BarakahViewModel,
     modifier: Modifier = Modifier
 ) {
-    val searchPattern by viewModel.duaSearchQuery.collectAsState()
-    val activeCategory by viewModel.selectedDuaCategory.collectAsState()
-    val filteredDuas by viewModel.filteredDuas.collectAsState()
-    val appLanguage by viewModel.appLanguage.collectAsState()
+    val searchPattern by viewModel.duaSearchQuery.collectAsStateWithLifecycle()
+    val activeCategory by viewModel.selectedDuaCategory.collectAsStateWithLifecycle()
+    val filteredDuas by viewModel.filteredDuas.collectAsStateWithLifecycle()
+    val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
     val isAr = appLanguage == "ar"
-    val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
+    val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
     val vibrator = remember {
@@ -67,10 +68,10 @@ fun SupplicationsScreen(
         list
     }
 
-    val duaBookmarks by viewModel.duaBookmarks.collectAsState()
+    val duaBookmarks by viewModel.duaBookmarks.collectAsStateWithLifecycle()
     val favoriteDuaIds = remember(duaBookmarks) { duaBookmarks.map { it.duaId }.toSet() }
     val duaTapCounts = remember { mutableStateMapOf<String, Int>() }
-    val enableTasbihHaptics by viewModel.enableTasbihHaptics.collectAsState()
+    val enableTasbihHaptics by viewModel.enableTasbihHaptics.collectAsStateWithLifecycle()
 
     LaunchedEffect(activeCategory) {
         duaTapCounts.clear()
@@ -325,7 +326,7 @@ fun SupplicationsScreen(
                             )
                         }
                         
-                        items(filteredCategories) { category ->
+                        items(filteredCategories, key = { category -> category }) { category ->
                             val color = getCategoryColor(category)
                             val icon = getCategoryIcon(category)
                             
