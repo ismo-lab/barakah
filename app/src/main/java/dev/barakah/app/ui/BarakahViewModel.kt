@@ -223,6 +223,9 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     val adjMaghrib = MutableStateFlow(prefs.getInt(AppPrefs.ADJ_MAGHRIB, 0))
     val adjIsha = MutableStateFlow(prefs.getInt(AppPrefs.ADJ_ISHA, 0))
 
+    /** Days to shift the calculated Hijri date by, so it can follow the local moon sighting. */
+    val hijriAdjustment = MutableStateFlow(prefs.getInt(AppPrefs.HIJRI_ADJUSTMENT, 0))
+
     // Cached parsed prayer seconds to eliminate 1s loop allocations
     private var CachedFajrSec = 0
     private var CachedSunriseSec = 0
@@ -951,6 +954,15 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         recalculatePrayerTimes()
     }
 
+    /**
+     * Shifts the Hijri date by [value] days. Prayer times are unaffected, so nothing has to be
+     * rescheduled; the screens that show the date observe [hijriAdjustment] and redraw.
+     */
+    fun setHijriAdjustment(value: Int) {
+        hijriAdjustment.value = value
+        prefs.edit { putInt(AppPrefs.HIJRI_ADJUSTMENT, value) }
+    }
+
     fun resetToDefaults() {
         setAppTheme("system")
         setUseDynamicColor(true)
@@ -970,6 +982,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         setAdjAsr(0)
         setAdjMaghrib(0)
         setAdjIsha(0)
+        setHijriAdjustment(0)
     }
 
 

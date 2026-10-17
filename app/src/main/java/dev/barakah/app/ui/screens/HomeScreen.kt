@@ -106,6 +106,7 @@ fun HomeScreen(
     val adjAsr by viewModel.adjAsr.collectAsStateWithLifecycle()
     val adjMaghrib by viewModel.adjMaghrib.collectAsStateWithLifecycle()
     val adjIsha by viewModel.adjIsha.collectAsStateWithLifecycle()
+    val hijriAdjustment by viewModel.hijriAdjustment.collectAsStateWithLifecycle()
 
     val isAr = currentLang == "ar"
 
@@ -313,7 +314,7 @@ fun HomeScreen(
                         )
                     }
 
-                    val hijriDateStr = getHijriDateString(isAr)
+                    val hijriDateStr = getHijriDateString(isAr, hijriAdjustment)
                     Text(
                         text = translateHijri(hijriDateStr).localize(isAr, useWesternNumbersInArabic),
                         style = if (isLandscape || isShortScreen) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineLarge,
@@ -335,6 +336,18 @@ fun HomeScreen(
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    // The Hijri date above is calculated, not sighted, so it can be a day out where
+                    // the user is. Point at the setting that fixes that rather than just caveating.
+                    Text(
+                        text = (if (isAr) {
+                            "تاريخ محسوب — قد يختلف بيوم، ويمكن ضبطه من الإعدادات."
+                        } else {
+                            "Calculated — may differ by a day; adjustable in Settings."
+                        }).localize(isAr, useWesternNumbersInArabic),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                     )
                 }
 
@@ -787,8 +800,8 @@ fun HomeScreen(
     }
 }
 
-private fun getHijriDateString(isAr: Boolean = false): String {
-    return dev.barakah.app.util.HijriCalendarHelper.getTodayHijriDateString(isAr)
+private fun getHijriDateString(isAr: Boolean = false, adjustmentDays: Int = 0): String {
+    return dev.barakah.app.util.HijriCalendarHelper.getTodayHijriDateString(isAr, adjustmentDays)
 }
 
 /** The local calendar day, for keying anything that has to roll over at midnight. */

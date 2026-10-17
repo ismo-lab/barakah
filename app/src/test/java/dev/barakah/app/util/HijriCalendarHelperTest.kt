@@ -1,6 +1,8 @@
 package dev.barakah.app.util
 
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -83,6 +85,54 @@ class HijriCalendarHelperTest {
         assertTrue("1 Ramadan resolved to '$date'", Regex("""^\d{1,2} [A-Z][a-z]{2} \d{4}$""").matches(date))
 
         val range = HijriCalendarHelper.getGregorianEquivalentRange(9, 1, 3, false)
+        assertTrue("range was '$range'", range.contains(" to "))
+    }
+
+    @Test
+    fun `the date shown for an occasion converts back to that same occasion`() {
+        // The occasions list and the occasion reminders used to convert with two different
+        // calendars, so the Eid date on screen could be a day away from the day reminded about.
+        // Whatever date the list shows has to convert back to the day it claims -- with and
+        // without the user's adjustment.
+        val occasions = listOf(
+            1 to 1, 1 to 10, 3 to 12, 7 to 27, 8 to 15,
+            9 to 1, 9 to 26, 10 to 1, 11 to 1, 12 to 9, 12 to 10
+        )
+
+        for (adjustment in listOf(0, 1, -1)) {
+            for ((month, day) in occasions) {
+                val shown = HijriCalendarHelper.getGregorianEquivalent(month, day, isAr = false, adjustmentDays = adjustment)
+                assertTrue("$day/$month ($adjustment) showed '$shown'", shown.isNotEmpty())
+
+                val gregorian = LocalDate.parse(shown, DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH))
+                val hijri = HijriCalendarHelper.getHijriDateFor(gregorian.plusDays(adjustment.toLong()))
+
+                assertEquals("$day/$month ($adjustment) showed $shown", day, hijri.day)
+                assertEquals("$day/$month ($adjustment) showed $shown", month, hijri.month)
+            }
+        }
+    }
+
+    @Test
+    fun `an adjustment moves the date by exactly those days`() {
+        // The shift is applied by moving the day the conversion is done for, so +1 has to read
+        // exactly like tomorrow and -1 exactly like today.
+        assertEquals(
+            HijriCalendarHelper.getTomorrowHijriDate(),
+            HijriCalendarHelper.getTodayHijriDate(adjustmentDays = 1)
+        )
+        assertEquals(
+            HijriCalendarHelper.getTodayHijriDate(),
+            HijriCalendarHelper.getTomorrowHijriDate(adjustmentDays = -1)
+        )
+    }
+
+    @Test
+    fun `the last ten nights resolve even when ramadan is short`() {
+        // Ramadan is 29 days long in some years, so the 30th night does not exist that year and
+        // the range has to end on the last night that does.
+        val range = HijriCalendarHelper.getGregorianEquivalentRange(9, 21, 30, false)
+
         assertTrue("range was '$range'", range.contains(" to "))
     }
 
