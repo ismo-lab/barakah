@@ -25,6 +25,7 @@ import dev.barakah.app.data.AppPrefs
 import dev.barakah.app.data.LocationDefaults
 import dev.barakah.app.widget.WidgetRefreshState
 import dev.barakah.app.util.ClockTime
+import dev.barakah.app.util.NawafilTimes
 import dev.barakah.app.util.PrayerCalculator
 import dev.barakah.app.util.localize
 import java.util.*
@@ -87,10 +88,10 @@ class NawafilWidget : GlanceAppWidget() {
                 ClockTime.offset(timeStr, offsetMinutes, TimeZone.getTimeZone(timeZoneId))
 
             // Calculate 4 Nawafil times
-            val duhaRaw = calculateOffsetTime(times.sunrise, 20)
-            val qiyamRaw = calculateOffsetTime(times.fajr, -150)
-            val tahajjudRaw = calculateOffsetTime(times.fajr, -90)
-            val witrRaw = calculateOffsetTime(times.isha, 30)
+            val duhaRaw = calculateOffsetTime(times.sunrise, NawafilTimes.DUHA_AFTER_SUNRISE)
+            val qiyamRaw = calculateOffsetTime(times.fajr, NawafilTimes.QIYAM_BEFORE_FAJR)
+            val tahajjudRaw = calculateOffsetTime(times.fajr, NawafilTimes.TAHAJJUD_BEFORE_FAJR)
+            val witrRaw = calculateOffsetTime(times.isha, NawafilTimes.WITR_AFTER_ISHA)
 
             val is24Hour = android.text.format.DateFormat.is24HourFormat(context)
 

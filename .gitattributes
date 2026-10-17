@@ -1,0 +1,7 @@
+# Keep the stored form of every text file normalised to LF, and let each checkout use the
+# platform's own line endings. Without this, whether a commit lands as one line or the whole file
+# depends on each contributor's core.autocrlf setting.
+* text=auto
+
+# Windows batch files have to keep CRLF to stay runnable.
+*.bat text eol=crlf

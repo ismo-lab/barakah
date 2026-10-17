@@ -16,7 +16,9 @@
 
 ## 🌍 Supported Languages
 
-Only English and Arabic are supported.
+The interface is English or Arabic, switchable in Settings. Widget labels come from Android
+resources instead, so they follow the device language: Arabic and German are translated, and
+everything else falls back to English.
 
 ---
 
@@ -30,9 +32,44 @@ Only English and Arabic are supported.
 
 ---
 
+## 🛠 Building & Running the Tests
+
+You need JDK 17 and an Android SDK with API 36 installed. The tests additionally need JDK 21,
+because Robolectric sandboxes Android 36 only on 21 and above. There are no API keys to obtain
+and no Google Play Services dependency.
+
+```bash
+./gradlew assembleDebug     # debug APK:   app/build/outputs/apk/debug/app-debug.apk
+./gradlew assembleRelease   # release APK: app/build/outputs/apk/release/app-release.apk
+./gradlew test              # unit and screenshot tests, on JDK 21
+./gradlew lintDebug         # Android Lint
+```
+
+The offline city catalog is not committed. Run `python tools/build_city_database.py` once (Python
+3.12) before building, otherwise city search quietly returns nothing; passing `--source` and
+`--alternate-names-source` uses saved GeoNames exports instead of downloading them. CI builds the
+same catalog as a cached step.
+
+Signing: the build expects `app/keystore.jks`. Locally it is materialised from
+`debug.keystore.base64` or `debug.keystore`, and a throwaway key is generated when neither
+exists, so an APK built on one machine will not install over one built on another. Release builds
+are signed from repository secrets.
+
+The screenshot tests compare against the reference images in `app/src/test/screenshots`, which
+were recorded on CI. They can fail on another machine, because the rendered image depends on the
+runner's fonts and SDK image; dispatch the workflow with `record_screenshots` to make new ones.
+
+---
+
 ## 🎨 Design Spec & Aesthetics
 
-Built from the ground up for Material Design 3
+* **Material 3** with a light and a dark scheme, Material You dynamic colour on Android 12 and
+  above, and an optional pure-black (AMOLED) dark theme.
+* **The theme is the app's choice, not the phone's**: light, dark or follow-system is set in
+  Settings, and the status and navigation bar icons follow whatever is chosen.
+* **Arabic-first typography**: the Amiri Quran face is applied to Quran text alone, so the rest of
+  the interface stays on the system font and stays legible at small sizes.
+* **Arabic-Indic numerals** by default in Arabic, with a setting to use Western digits instead.
 
 ---
 

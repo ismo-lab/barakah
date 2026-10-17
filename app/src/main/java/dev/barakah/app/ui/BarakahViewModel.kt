@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.util.Log
 import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -26,6 +27,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -36,10 +38,14 @@ import java.util.*
 import kotlin.math.abs
 import dev.barakah.app.R
 
+private const val TAG = "BarakahViewModel"
+
 class BarakahViewModel(application: Application) : AndroidViewModel(application) {
 
     private val db = AppDatabase.getDatabase(application)
-    val repository = AppRepository(db)
+
+    /** The data layer is an implementation detail; the screens only see StateFlows. */
+    private val repository = AppRepository(db)
 
     // Hardware managers
     private val sensorManager = QiblaManager(application)
@@ -407,7 +413,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             val filter = IntentFilter(android.location.LocationManager.PROVIDERS_CHANGED_ACTION)
             application.registerReceiver(gpsStatusReceiver, filter)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Unable to watch for location services being switched on or off", e)
         }
 
         // Guarantee app default language is arabic when first open
@@ -574,7 +580,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Unable to get a GPS fix", e)
             fallBackToPlaceholderIfUnset()
             viewModelScope.launch {
                 val msg = if (_appLanguage.value == "ar") "حدث خطأ أثناء تحديد الموقع، يرجى اختياره يدوياً" else "GPS error occurred, please select manually"
@@ -611,7 +617,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
                 null
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Unable to name the location from its coordinates", e)
             null
         }
     }
@@ -1176,7 +1182,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
                 vibrator?.vibrate(duration)
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Unable to vibrate the device", e)
         }
     }
 
@@ -1351,11 +1357,12 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         sensorManager.stop()
         qiblaWatchdogJob?.cancel()
         countdownJob?.cancel()
+        widgetRefreshScope.cancel()
         stopLocationUpdates()
         try {
             getApplication<Application>().unregisterReceiver(gpsStatusReceiver)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Unable to stop watching for location services", e)
         }
     }
 }

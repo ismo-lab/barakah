@@ -7,6 +7,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import dev.barakah.app.util.ClockTime
+import dev.barakah.app.util.NawafilTimes
 import dev.barakah.app.util.PrayerCalculator
 import java.util.Calendar
 import java.util.TimeZone
@@ -134,10 +135,10 @@ object PrayerScheduler {
 
             if (showNawafil) {
                 // Secondary / Nawafil
-                val duhaTime = ClockTime.offset(times.sunrise, 20, timeZone)
-                val witrTime = ClockTime.offset(times.isha, 30, timeZone)
-                val tahajjudTime = ClockTime.offset(times.fajr, -90, timeZone)
-                val qiyamTime = ClockTime.offset(times.fajr, -150, timeZone)
+                val duhaTime = ClockTime.offset(times.sunrise, NawafilTimes.DUHA_AFTER_SUNRISE, timeZone)
+                val witrTime = ClockTime.offset(times.isha, NawafilTimes.WITR_AFTER_ISHA, timeZone)
+                val tahajjudTime = ClockTime.offset(times.fajr, NawafilTimes.TAHAJJUD_BEFORE_FAJR, timeZone)
+                val qiyamTime = ClockTime.offset(times.fajr, NawafilTimes.QIYAM_BEFORE_FAJR, timeZone)
                 
                 scheduleAlarm(context, "Duha (Nafilah)", duhaTime, 6, notifyNawafil && isEnabled("Duha (Nafilah)"), timeZone)
                 scheduleAlarm(context, "Witr (Nafilah)", witrTime, 7, notifyNawafil && isEnabled("Witr (Nafilah)"), timeZone)
