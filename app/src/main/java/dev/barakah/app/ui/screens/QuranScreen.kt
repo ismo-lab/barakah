@@ -88,6 +88,9 @@ fun QuranScreen(
     
     val allSurahs by QuranData.surahsFlow.collectAsState()
 
+    // Long-pressing a verse opens its tafseer, which is read from a bundled asset.
+    val scope = rememberCoroutineScope()
+
     // Filter surahs list
     val filteredSurahs = remember(searchQuery, activeFilterTab, bookmarks, allSurahs) {
         allSurahs.filter { surah ->
@@ -636,12 +639,16 @@ fun QuranScreen(
                                     },
                                     onLongClick = {
                                         viewModel.triggerVibration(40)
-                                        val taf = if (isAr) {
-                                            QuranData.loadTafseer(context, surah.id, verse.index)
-                                        } else {
-                                            QuranData.loadEnglishTafseer(context, surah.id, verse.index)
+                                        // Reading the tafseer touches a bundled asset, so the dialog is
+                                        // opened from a coroutine that hops off the main thread.
+                                        scope.launch {
+                                            val taf = if (isAr) {
+                                                QuranData.loadTafseer(context, surah.id, verse.index)
+                                            } else {
+                                                QuranData.loadEnglishTafseer(context, surah.id, verse.index)
+                                            }
+                                            showVerseTafseerDialog = Pair(verse, taf)
                                         }
-                                        showVerseTafseerDialog = Pair(verse, taf)
                                     }
                                 )
                                 .testTag("verse_block_${verse.index}")

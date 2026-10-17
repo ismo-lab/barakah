@@ -146,14 +146,8 @@ object QuranData {
     private var cachedSurahId: Int = -1
     private var cachedSurahTafseer: Map<Int, String> = emptyMap()
 
-    fun loadTafseer(context: Context, surahId: Int, ayahId: Int): String {
-        synchronized(this) {
-            if (cachedSurahId == surahId && cachedSurahTafseer.isNotEmpty()) {
-                val value = cachedSurahTafseer[ayahId]
-                if (value != null) return value
-            }
-        }
-        
+    /** Reads the bundled tafseer for one surah. Blocking: call it from a background dispatcher. */
+    private fun readTafseerAsset(context: Context, surahId: Int): Map<Int, String> {
         val surahMap = mutableMapOf<Int, String>()
         try {
             context.assets.open("quran/tafseer_ar.json").use { inputStream ->
@@ -185,7 +179,24 @@ object QuranData {
         } catch (e: Exception) {
             android.util.Log.e("QuranData", "Error loading tafseer for surah $surahId: ${e.message}", e)
         }
-        
+        return surahMap
+    }
+
+    /**
+     * The tafseer is one bundled asset for the whole Quran, so reading it walks the file up to this
+     * surah. That is real work, and it does not belong on the main thread while a verse is being
+     * held down.
+     */
+    suspend fun loadTafseer(context: Context, surahId: Int, ayahId: Int): String {
+        synchronized(this) {
+            if (cachedSurahId == surahId && cachedSurahTafseer.isNotEmpty()) {
+                val value = cachedSurahTafseer[ayahId]
+                if (value != null) return value
+            }
+        }
+
+        val surahMap = withContext(Dispatchers.IO) { readTafseerAsset(context, surahId) }
+
         synchronized(this) {
             cachedSurahId = surahId
             cachedSurahTafseer = surahMap
@@ -196,14 +207,8 @@ object QuranData {
     private var cachedEnSurahId: Int = -1
     private var cachedEnSurahTafseer: Map<Int, String> = emptyMap()
 
-    fun loadEnglishTafseer(context: Context, surahId: Int, ayahId: Int): String {
-        synchronized(this) {
-            if (cachedEnSurahId == surahId && cachedEnSurahTafseer.isNotEmpty()) {
-                val value = cachedEnSurahTafseer[ayahId]
-                if (value != null) return value
-            }
-        }
-
+    /** Reads the bundled English tafseer for one surah. Blocking: call it off the main thread. */
+    private fun readEnglishTafseerAsset(context: Context, surahId: Int): Map<Int, String> {
         val enMap = mutableMapOf<Int, String>()
         try {
             context.assets.open("quran/en_tafseer/$surahId.json").use { inputStream ->
@@ -239,6 +244,19 @@ object QuranData {
         } catch (e: Exception) {
             android.util.Log.e("QuranData", "Error opening local English tafseer asset for Surah $surahId: ${e.message}")
         }
+        return enMap
+    }
+
+    /** Reads the English tafseer, which is bundled as one file per surah, off the main thread. */
+    suspend fun loadEnglishTafseer(context: Context, surahId: Int, ayahId: Int): String {
+        synchronized(this) {
+            if (cachedEnSurahId == surahId && cachedEnSurahTafseer.isNotEmpty()) {
+                val value = cachedEnSurahTafseer[ayahId]
+                if (value != null) return value
+            }
+        }
+
+        val enMap = withContext(Dispatchers.IO) { readEnglishTafseerAsset(context, surahId) }
 
         synchronized(this) {
             if (enMap.isNotEmpty()) {
