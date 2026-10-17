@@ -64,7 +64,8 @@ object AppPrefs {
 object NotifHistoryPrefs {
     const val FILE = "notif_history"
 
-    fun lastNotified(prayerId: String) = "last_notified_$prayerId"
+    /** Keyed by the prayer id the alarm was scheduled with. */
+    fun lastNotified(prayerId: Int) = "last_notified_$prayerId"
 
-    fun lastNotifiedAt(prayerId: String) = "last_notified_ts_$prayerId"
+    fun lastNotifiedAt(prayerId: Int) = "last_notified_ts_$prayerId"
 }
