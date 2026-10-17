@@ -5,6 +5,12 @@ import java.util.TimeZone
 import kotlin.math.*
 
 object PrayerCalculator {
+    /** Latitude borrowed where the sun does not cross the horizon. Forty-eight always has a sunrise. */
+    private const val SUNRISE_FALLBACK_LATITUDE = 48.0
+
+    /** Daylight assumed in the last resort, if even the borrowed latitude cannot be solved. */
+    private const val ASSUMED_DAYLIGHT_HOURS = 12.0
+
     private val availableTimeZoneIds by lazy(LazyThreadSafetyMode.PUBLICATION) {
         TimeZone.getAvailableIDs().toHashSet()
     }
@@ -74,24 +80,41 @@ object PrayerCalculator {
         val timezoneDiff = timezoneOffset - longitude / 15.0
         var dhuhrTime = 12.0 + timezoneDiff - equationOfTime
 
-        // Sunrise and Sunset (Maghrib)
+        // Sunrise and Sunset (Maghrib). Both share one hour angle: the sun sits the same distance
+        // below the horizon at each. Where it never crosses the horizon - inside the polar circles -
+        // the day is borrowed from the nearest latitude that has one, which keeps sunrise and sunset
+        // plausible and leaves the twilight angles to the fallback below.
         val sunriseAngle = -0.833
-        val sunriseHourAngle = hourAngle(sunriseAngle, latitude, declination) ?: 6.0
-        val sunsetHourAngle = hourAngle(sunriseAngle, latitude, declination) ?: 6.0
+        val sunHourAngle = hourAngle(sunriseAngle, latitude, declination)
+            ?: hourAngle(
+                sunriseAngle,
+                latitude.coerceIn(-SUNRISE_FALLBACK_LATITUDE, SUNRISE_FALLBACK_LATITUDE),
+                declination
+            )
+            ?: (ASSUMED_DAYLIGHT_HOURS / 2.0)
 
-        val sunriseTime = dhuhrTime - sunriseHourAngle
-        val maghribTime = dhuhrTime + sunsetHourAngle
+        val sunriseTime = dhuhrTime - sunHourAngle
+        val maghribTime = dhuhrTime + sunHourAngle
 
-        // Fajr
-        val fajrHourAngle = hourAngle(-method.fajrAngle, latitude, declination) ?: 5.0
+        // A seventh of the night, the usual estimate for Fajr and Isha where their angles are out of
+        // reach - ordinary mid-latitude summers included, where the sun never dips 15 to 18 degrees.
+        val nightSeventh = (24.0 - 2.0 * sunHourAngle) / 7.0
+
+        // Fajr. The fixed offset this replaces ignored the day it was supposed to sit in: five hours
+        // before midday against a sunrise at six put Fajr after sunrise, at London in June and above
+        // the Arctic circle alike.
+        val fajrHourAngle = hourAngle(-method.fajrAngle, latitude, declination)
+            ?: (sunHourAngle + nightSeventh)
         val fajrTime = dhuhrTime - fajrHourAngle
 
-        // Isha
+        // Isha, which had the mirror image of the same bug: a flat 6.2 hours after midday landed it
+        // before maghrib wherever the evening twilight angle could not be reached.
         val ishaTime = if (method == CalculationMethod.UMM_AL_QURA) {
             maghribTime + 1.5 // 90 minutes after Maghrib
         } else {
             val angle = if (ishaMethod == "hanafi") 18.0 else method.ishaAngle
-            val ishaHourAngle = hourAngle(-angle, latitude, declination) ?: 6.2
+            val ishaHourAngle = hourAngle(-angle, latitude, declination)
+                ?: (sunHourAngle + nightSeventh)
             dhuhrTime + ishaHourAngle
         }
 
