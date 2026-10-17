@@ -191,3 +191,47 @@ jobs:
         path: app/build/reports/tests/
         retention-days: 14
 
+  # Lint finds the class of problem that compiles and runs fine but is still wrong: a permission
+  # that is used but never declared, an API above the minimum version, a resource nothing
+  # references, a manifest attribute that does nothing. assembleRelease already runs the fatal
+  # subset (lintVitalRelease), so this job is here for the rest of it.
+  #
+  # Reporting only for now: it must not block anything until its findings have been read and
+  # either fixed or deliberately turned off, so it is marked continue-on-error and the report is
+  # uploaded either way.
+  lint:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    env:
+      JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # Matches the job that builds the APK, so the analysis covers the same variant family.
+    - name: set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    # The offline city catalog is a plain asset that no Gradle task refers to, so lint does not
+    # need it and this job skips the Python steps the build job needs.
+    - name: Run lint
+      env:
+        DYNAMIC_VERSION: "ci"
+      run: ./gradlew lintDebug --stacktrace
+
+    - name: Upload lint report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: lint-report
+        path: app/build/reports/lint-results-debug.*
+        retention-days: 14
+
