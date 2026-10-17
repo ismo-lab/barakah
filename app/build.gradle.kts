@@ -34,6 +34,13 @@ val currentVersionCode = majorVersion * 100000 + minorVersion * 10000 + patchVer
 val currentVersionName = System.getenv("DYNAMIC_VERSION")?.takeIf { it.isNotEmpty() }
   ?: "$majorVersion.$minorVersion.$patchVersion"
 
+// Room writes the schema of every database version to app/schemas. Checking those in is what makes
+// the next version migratable, and it turns an entity change without a version bump into a build
+// failure instead of a silent wipe of the user's bookmarks, counts and reading position.
+ksp {
+  arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 android {
   namespace = "dev.barakah.app"
   compileSdk { version = release(36) { minorApiLevel = 1 } }

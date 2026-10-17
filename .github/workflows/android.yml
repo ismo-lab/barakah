@@ -139,7 +139,9 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Barakah-APK
-        path: app/build/outputs/apk/release/Barakah-v${{ env.VERSION_NAME }}.apk
+        path: |
+          app/build/outputs/apk/release/Barakah-v${{ env.VERSION_NAME }}.apk
+          app/schemas/**
         retention-days: 30
 
     - name: Create Release
