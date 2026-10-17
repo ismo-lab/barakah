@@ -186,7 +186,7 @@ jobs:
     - name: Run unit and screenshot tests
       env:
         DYNAMIC_VERSION: "ci"
-      run: ./gradlew test --stacktrace -Proborazzi.test.record=true
+      run: ./gradlew test --stacktrace -Proborazzi.test.record=${{ github.event.inputs.record_screenshots == 'true' }}
 
     - name: Upload test report
       if: always()
