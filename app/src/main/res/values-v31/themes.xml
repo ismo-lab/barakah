@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.MyApplication" parent="android:Theme.DeviceDefault.NoActionBar">
-        <item name="android:windowSplashScreenBackground">#FAFAFA</item>
+        <!-- BackgroundLight in Color.kt, so the splash does not change shade when the app's first
+             frame lands. -->
+        <item name="android:windowSplashScreenBackground">#FBFDF8</item>
     </style>
 </resources>

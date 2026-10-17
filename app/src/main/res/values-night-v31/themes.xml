@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.MyApplication" parent="android:Theme.DeviceDefault.NoActionBar">
-        <item name="android:windowSplashScreenBackground">#1A1C1E</item>
+        <!-- BackgroundDark in Color.kt. AMOLED cannot be followed here: the system draws this window
+             before the app runs, so it can only see the day/night qualifier. -->
+        <item name="android:windowSplashScreenBackground">#121411</item>
     </style>
 </resources>
