@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import dev.barakah.app.ui.BarakahViewModel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import dev.barakah.app.util.NawafilTimes
 import dev.barakah.app.util.PrayerCalculator
 import dev.barakah.app.util.TimeUtils
 import dev.barakah.app.util.localize
@@ -213,7 +214,7 @@ fun HomeScreen(
         )
         if (showNawafil) {
             list.add(Triple("Sunrise", displayTimes.sunrise, "Sunrise Shuruq"))
-            val duhaTime = if (isLocationSet) TimeUtils.calculateOffsetTime(displayTimes.sunrise, 20) else "--:--"
+            val duhaTime = if (isLocationSet) TimeUtils.calculateOffsetTime(displayTimes.sunrise, NawafilTimes.DUHA_AFTER_SUNRISE) else "--:--"
             list.add(Triple("Duha (Nafilah)", duhaTime, "Duha Voluntary Prayer"))
         }
         list.add(Triple("Dhuhr", displayTimes.dhuhr, "Midday Prayer"))
@@ -241,7 +242,7 @@ fun HomeScreen(
                         return String.format(Locale.US, "%02d:%02d", h, m)
                     }
                     
-                    val witrStart = TimeUtils.calculateOffsetTime(displayTimes.isha, 30)
+                    val witrStart = TimeUtils.calculateOffsetTime(displayTimes.isha, NawafilTimes.WITR_AFTER_ISHA)
                     list.add(Triple("Witr (Nafilah)", "$witrStart - ${displayTimes.fajr}", "Witr Voluntary Prayer"))
                     list.add(Triple("First Third (Nafilah)", formatMins(firstThirdMin), "First Third of the Night"))
                     list.add(Triple("Midnight (Nafilah)", formatMins(midMin), "Islamic Midnight"))
@@ -254,7 +255,7 @@ fun HomeScreen(
                 }
             } catch (e: Exception) {
                 // Fallback if parsing fails
-                val witrTime = if (isLocationSet) TimeUtils.calculateOffsetTime(displayTimes.isha, 30) else "--:--"
+                val witrTime = if (isLocationSet) TimeUtils.calculateOffsetTime(displayTimes.isha, NawafilTimes.WITR_AFTER_ISHA) else "--:--"
                 list.add(Triple("Witr (Nafilah)", if (isLocationSet) "$witrTime - ${displayTimes.fajr}" else "--:--", "Witr Voluntary Prayer"))
                 list.add(Triple("First Third (Nafilah)", "--:--", "First Third of the Night"))
                 list.add(Triple("Midnight (Nafilah)", "--:--", "Islamic Midnight"))
