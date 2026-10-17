@@ -1,0 +1,181 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "f8e0288a236cc4085f91a42931692f09",
+    "entities": [
+      {
+        "tableName": "surah_bookmarks",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`surahId` INTEGER NOT NULL, `surahName` TEXT NOT NULL, `transliteration` TEXT NOT NULL, `lastReadAyah` INTEGER NOT NULL, `timestamp` INTEGER NOT NULL, PRIMARY KEY(`surahId`))",
+        "fields": [
+          {
+            "fieldPath": "surahId",
+            "columnName": "surahId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "surahName",
+            "columnName": "surahName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "transliteration",
+            "columnName": "transliteration",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastReadAyah",
+            "columnName": "lastReadAyah",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "surahId"
+          ]
+        }
+      },
+      {
+        "tableName": "tasbih_state",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`dhikrId` TEXT NOT NULL, `count` INTEGER NOT NULL, `target` INTEGER NOT NULL, `lastUpdated` INTEGER NOT NULL, PRIMARY KEY(`dhikrId`))",
+        "fields": [
+          {
+            "fieldPath": "dhikrId",
+            "columnName": "dhikrId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "count",
+            "columnName": "count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "target",
+            "columnName": "target",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUpdated",
+            "columnName": "lastUpdated",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "dhikrId"
+          ]
+        }
+      },
+      {
+        "tableName": "prayer_alert_settings",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`prayerName` TEXT NOT NULL, `isEnabled` INTEGER NOT NULL, PRIMARY KEY(`prayerName`))",
+        "fields": [
+          {
+            "fieldPath": "prayerName",
+            "columnName": "prayerName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isEnabled",
+            "columnName": "isEnabled",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "prayerName"
+          ]
+        }
+      },
+      {
+        "tableName": "dua_bookmarks",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`duaId` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, PRIMARY KEY(`duaId`))",
+        "fields": [
+          {
+            "fieldPath": "duaId",
+            "columnName": "duaId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "duaId"
+          ]
+        }
+      },
+      {
+        "tableName": "last_reading_state",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `surahId` INTEGER NOT NULL, `ayahNumber` INTEGER NOT NULL, `surahName` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "surahId",
+            "columnName": "surahId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ayahNumber",
+            "columnName": "ayahNumber",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "surahName",
+            "columnName": "surahName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f8e0288a236cc4085f91a42931692f09')"
+    ]
+  }
+}
