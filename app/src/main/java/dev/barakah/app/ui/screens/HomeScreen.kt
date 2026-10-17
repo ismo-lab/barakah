@@ -133,6 +133,17 @@ fun HomeScreen(
 
     val showSettingsDialog by viewModel.showSettingsDialog.collectAsState()
 
+    // The Gregorian date in the header is a formatted remember, so it needs a key that rolls over at
+    // midnight: a screen left open overnight kept showing yesterday's date. This polls rather than
+    // sleeping until midnight, because a delay that long does not run while the phone is asleep.
+    var gregorianDayKey by remember { mutableIntStateOf(dayKey()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(30_000L)
+            gregorianDayKey = dayKey()
+        }
+    }
+
     androidx.activity.compose.BackHandler(enabled = showSettingsDialog) {
         viewModel.setShowSettingsDialog(false)
     }
@@ -312,7 +323,7 @@ fun HomeScreen(
                         letterSpacing = (-0.5).sp
                     )
 
-                    val gregorianDateStr = remember(isAr, useWesternNumbersInArabic) {
+                    val gregorianDateStr = remember(isAr, useWesternNumbersInArabic, gregorianDayKey) {
                         @Suppress("DEPRECATION")
                         val locale = if (isAr) java.util.Locale("ar") else java.util.Locale.US
                         val sdf = SimpleDateFormat("EEE, d MMM", locale)
@@ -1990,6 +2001,9 @@ fun HomeScreen(
 private fun getHijriDateString(isAr: Boolean = false): String {
     return dev.barakah.app.util.HijriCalendarHelper.getTodayHijriDateString(isAr)
 }
+
+/** The local calendar day, for keying anything that has to roll over at midnight. */
+private fun dayKey(): Int = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
 
 data class Quadruple<A, B, C, D>(
     val first: A,

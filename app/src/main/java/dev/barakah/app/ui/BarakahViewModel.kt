@@ -233,30 +233,20 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     // 1. LOCATION STATE
     private val _currentLocation = MutableStateFlow<Pair<Double, Double>>(
         Pair(
-            prefs.getFloat(AppPrefs.LOC_LAT, 21.4225f).toDouble(),
-            prefs.getFloat(AppPrefs.LOC_LNG, 39.8262f).toDouble()
+            prefs.getFloat(AppPrefs.LOC_LAT, LocationDefaults.LATITUDE.toFloat()).toDouble(),
+            prefs.getFloat(AppPrefs.LOC_LNG, LocationDefaults.LONGITUDE.toFloat()).toDouble()
         )
     )
     val currentLocation: StateFlow<Pair<Double, Double>> = _currentLocation
 
     private val _locationLabel = MutableStateFlow(
-        run {
-            val label = prefs.getString(AppPrefs.LOC_LABEL, "")
-            if (label.isNullOrEmpty() || label == "Mecca, KSA" || label == "Mecca (GPS Fallback)" || label == "مكة المكرمة (تلقائي)") {
-                if (prefs.getString(AppPrefs.APP_LANG, "ar") == "ar") "الموقع غير محدد" else "No Location Selected"
-            } else {
-                label
-            }
-        }
+        prefs.getString(AppPrefs.LOC_LABEL, null)
+            ?.takeIf { !LocationDefaults.isPlaceholder(it) }
+            ?: LocationDefaults.unsetLabel(prefs.getString(AppPrefs.APP_LANG, "ar") == "ar")
     )
     val locationLabel: StateFlow<String> = _locationLabel
 
-    private val _isLocationSet = MutableStateFlow(
-        run {
-            val label = _locationLabel.value
-            !(label.isNullOrEmpty() || label == "No Location Selected" || label == "الموقع غير محدد" || label == "Mecca, KSA" || label == "Mecca (GPS Fallback)" || label == "مكة المكرمة (تلقائي)")
-        }
-    )
+    private val _isLocationSet = MutableStateFlow(LocationDefaults.isSet(_locationLabel.value))
     val isLocationSet: StateFlow<Boolean> = _isLocationSet
 
     private val _eventFlow = MutableSharedFlow<String>()
@@ -267,7 +257,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     // Manual cities fallback config
     data class City(val name: String, val lat: Double, val lng: Double)
     val manualCities = listOf(
-        City("Mecca, KSA", 21.4225, 39.8262),
+        City(LocationDefaults.MECCA_LABEL, LocationDefaults.LATITUDE, LocationDefaults.LONGITUDE),
         City("London, UK", 51.5074, -0.1278),
         City("Cairo, Egypt", 30.0444, 31.2357),
         City("New York, USA", 40.7128, -74.0060),
@@ -291,8 +281,8 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     // 2. PRAYER TIMES STATE initialized dynamically with stored values and proper TZ offset from launch
     private val _prayerTimes = MutableStateFlow(
         run {
-            val lat = prefs.getFloat(AppPrefs.LOC_LAT, 21.4225f).toDouble()
-            val lng = prefs.getFloat(AppPrefs.LOC_LNG, 39.8262f).toDouble()
+            val lat = prefs.getFloat(AppPrefs.LOC_LAT, LocationDefaults.LATITUDE.toFloat()).toDouble()
+            val lng = prefs.getFloat(AppPrefs.LOC_LNG, LocationDefaults.LONGITUDE.toFloat()).toDouble()
             val m = try {
                 PrayerCalculator.CalculationMethod.valueOf(prefs.getString(AppPrefs.CALC_METHOD, "MWL") ?: "MWL")
             } catch(e: Exception) {
@@ -398,6 +388,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     private var countdownJob: Job? = null
     private var lastCheckedDayOfYear = -1
     private var lastCheckedTimeZoneId = ""
+    private var lastCheckedZoneOffsetMillis = Int.MIN_VALUE
 
     private val gpsStatusReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -523,8 +514,8 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             ) == android.content.pm.PackageManager.PERMISSION_GRANTED
 
             if (!fineGranted && !coarseGranted) {
-                val label = if (_appLanguage.value == "ar") "الموقع غير محدد" else "No Location Selected"
-                updateLocation(21.4225, 39.8262, label)
+                val label = LocationDefaults.unsetLabel(_appLanguage.value == "ar")
+                updateLocation(LocationDefaults.LATITUDE, LocationDefaults.LONGITUDE, label)
                 viewModelScope.launch {
                     val msg = if (_appLanguage.value == "ar") "لم يتم منح صلاحية تحديد الموقع، يرجى تحديد موقعك" else "Location permission not granted, please select your location"
                     _eventFlow.emit(msg)
@@ -568,8 +559,8 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
                     }
                 } else {
                     // The system has no fix: fall back to Makkah and ask for a manual choice.
-                    val label = if (_appLanguage.value == "ar") "الموقع غير محدد" else "No Location Selected"
-                    updateLocation(21.4225, 39.8262, label)
+                    val label = LocationDefaults.unsetLabel(_appLanguage.value == "ar")
+                    updateLocation(LocationDefaults.LATITUDE, LocationDefaults.LONGITUDE, label)
                     viewModelScope.launch {
                         val msg = if (_appLanguage.value == "ar") "تعذر تحديد الموقع الجغرافي، يرجى اختياره يدوياً" else "Could not determine GPS location, please select manually"
                         _eventFlow.emit(msg)
@@ -578,8 +569,8 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            val label = if (_appLanguage.value == "ar") "الموقع غير محدد" else "No Location Selected"
-            updateLocation(21.4225, 39.8262, label)
+            val label = LocationDefaults.unsetLabel(_appLanguage.value == "ar")
+            updateLocation(LocationDefaults.LATITUDE, LocationDefaults.LONGITUDE, label)
             viewModelScope.launch {
                 val msg = if (_appLanguage.value == "ar") "حدث خطأ أثناء تحديد الموقع، يرجى اختياره يدوياً" else "GPS error occurred, please select manually"
                 _eventFlow.emit(msg)
@@ -609,7 +600,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     fun updateLocation(lat: Double, lng: Double, label: String, isSuccessFeedback: Boolean = false, timeZoneId: String? = null) {
         _currentLocation.value = Pair(lat, lng)
         _locationLabel.value = label
-        _isLocationSet.value = !(label.isNullOrEmpty() || label == "No Location Selected" || label == "الموقع غير محدد" || label == "Mecca, KSA" || label == "Mecca (GPS Fallback)" || label == "مكة المكرمة (تلقائي)")
+        _isLocationSet.value = LocationDefaults.isSet(label)
         _qiblaBearing.value = QiblaManager.calculateQiblaBearing(lat, lng)
         val selectedTimeZoneId = timeZoneId ?: if (_locationMethod.value == "auto") {
             TimeZone.getDefault().id
@@ -966,8 +957,8 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         setArabicFontSize(24f)
         setEnglishFontSize(16f)
         setLocationMethod("manual")
-        val defaultLabel = if (prefs.getString(AppPrefs.APP_LANG, "ar") == "ar") "الموقع غير محدد" else "No Location Selected"
-        updateLocation(21.4225, 39.8262, defaultLabel, false)
+        val defaultLabel = LocationDefaults.unsetLabel(prefs.getString(AppPrefs.APP_LANG, "ar") == "ar")
+        updateLocation(LocationDefaults.LATITUDE, LocationDefaults.LONGITUDE, defaultLabel, false)
         setAsrMethod("standard")
         setIshaMethod("standard")
         setShowNawafil(false)
@@ -1181,14 +1172,20 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         val tzId = currentTimeZoneId()
         val now = Calendar.getInstance(TimeZone.getTimeZone(tzId))
         val dayOfYear = now.get(Calendar.DAY_OF_YEAR)
-        
-        // Detect day-change or timezone/DST transitions and trigger live recalculation
+        val zoneOffsetMillis = now.get(Calendar.ZONE_OFFSET) + now.get(Calendar.DST_OFFSET)
+
+        // Detect day-change or timezone/DST transitions and trigger live recalculation. The zone id
+        // alone is not enough: a daylight saving change keeps the id and the day the same and only
+        // moves the offset, so the times would stay an hour out - and the countdown with them - for
+        // the rest of the day.
         if ((lastCheckedDayOfYear != -1 && lastCheckedDayOfYear != dayOfYear) ||
-            (lastCheckedTimeZoneId.isNotEmpty() && lastCheckedTimeZoneId != tzId)) {
+            (lastCheckedTimeZoneId.isNotEmpty() && lastCheckedTimeZoneId != tzId) ||
+            (lastCheckedZoneOffsetMillis != Int.MIN_VALUE && lastCheckedZoneOffsetMillis != zoneOffsetMillis)) {
             recalculatePrayerTimes()
         }
         lastCheckedDayOfYear = dayOfYear
         lastCheckedTimeZoneId = tzId
+        lastCheckedZoneOffsetMillis = zoneOffsetMillis
 
         val currentHour = now.get(Calendar.HOUR_OF_DAY)
         val currentMinute = now.get(Calendar.MINUTE)

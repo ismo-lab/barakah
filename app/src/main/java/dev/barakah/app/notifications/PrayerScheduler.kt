@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import dev.barakah.app.data.AppDatabase
 import dev.barakah.app.data.AppPrefs
+import dev.barakah.app.data.LocationDefaults
 import dev.barakah.app.data.AppRepository
 
 object PrayerScheduler {
@@ -45,7 +46,7 @@ object PrayerScheduler {
         coroutineScope {
             val prefs = context.getSharedPreferences(AppPrefs.FILE, Context.MODE_PRIVATE)
             val rawLabel = prefs.getString(AppPrefs.LOC_LABEL, null)
-            val isLocationSet = !(rawLabel.isNullOrEmpty() || rawLabel == "Mecca, KSA" || rawLabel == "Mecca (GPS Fallback)" || rawLabel == "مكة المكرمة (تلقائي)" || rawLabel == "الموقع غير محدد" || rawLabel == "No Location Selected")
+            val isLocationSet = LocationDefaults.isSet(rawLabel)
 
             if (!isLocationSet) {
                 cancelWidgetRefresh(context)
@@ -65,8 +66,8 @@ object PrayerScheduler {
                 return@coroutineScope
             }
 
-            val lat = prefs.getFloat(AppPrefs.LOC_LAT, 21.4225f).toDouble()
-            val lng = prefs.getFloat(AppPrefs.LOC_LNG, 39.8262f).toDouble()
+            val lat = prefs.getFloat(AppPrefs.LOC_LAT, LocationDefaults.LATITUDE.toFloat()).toDouble()
+            val lng = prefs.getFloat(AppPrefs.LOC_LNG, LocationDefaults.LONGITUDE.toFloat()).toDouble()
             
             val isAutoLocation = prefs.getString(AppPrefs.LOCATION_METHOD, "manual") == "auto"
             val selectedTimeZoneId = if (isAutoLocation) TimeZone.getDefault().id else prefs.getString(AppPrefs.LOC_TIMEZONE, null)

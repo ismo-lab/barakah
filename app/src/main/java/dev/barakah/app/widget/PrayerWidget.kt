@@ -22,6 +22,7 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import dev.barakah.app.MainActivity
 import dev.barakah.app.data.AppPrefs
+import dev.barakah.app.data.LocationDefaults
 import dev.barakah.app.widget.WidgetRefreshState
 import dev.barakah.app.util.PrayerCalculator
 import dev.barakah.app.util.localize
@@ -34,12 +35,12 @@ class PrayerWidget : GlanceAppWidget() {
             // Glance can reuse an active session and recompose this block without rerunning provideGlance.
             val prefs = context.getSharedPreferences(AppPrefs.FILE, Context.MODE_PRIVATE)
             val isAr = prefs.getString(AppPrefs.APP_LANG, "ar") == "ar"
-            val defaultLabel = if (isAr) "الموقع غير محدد" else "No Location Selected"
-            val lat = prefs.getFloat(AppPrefs.LOC_LAT, 21.4225f).toDouble()
-            val lng = prefs.getFloat(AppPrefs.LOC_LNG, 39.8262f).toDouble()
+            val defaultLabel = LocationDefaults.unsetLabel(isAr)
+            val lat = prefs.getFloat(AppPrefs.LOC_LAT, LocationDefaults.LATITUDE.toFloat()).toDouble()
+            val lng = prefs.getFloat(AppPrefs.LOC_LNG, LocationDefaults.LONGITUDE.toFloat()).toDouble()
             val rawLabel = prefs.getString(AppPrefs.LOC_LABEL, null)
-            val label = if (rawLabel.isNullOrEmpty() || rawLabel == "Mecca, KSA" || rawLabel == "Mecca (GPS Fallback)" || rawLabel == "مكة المكرمة (تلقائي)") defaultLabel else rawLabel
-            val isLocationSet = !(rawLabel.isNullOrEmpty() || rawLabel == "Mecca, KSA" || rawLabel == "Mecca (GPS Fallback)" || rawLabel == "مكة المكرمة (تلقائي)" || rawLabel == "الموقع غير محدد" || rawLabel == "No Location Selected")
+            val label = rawLabel?.takeIf { !LocationDefaults.isPlaceholder(it) } ?: defaultLabel
+            val isLocationSet = LocationDefaults.isSet(rawLabel)
             val useWesternNumbersInArabic = prefs.getBoolean(AppPrefs.USE_WESTERN_NUMBERS_IN_ARABIC, false)
         
             val isAutoLocation = prefs.getString(AppPrefs.LOCATION_METHOD, "manual") == "auto"
