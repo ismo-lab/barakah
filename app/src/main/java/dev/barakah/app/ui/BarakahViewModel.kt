@@ -389,6 +389,8 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
     // 7. QIBLAH / COMPASS STATE
     val compassAzimuth = sensorManager.compassHeading
+    val compassStatus = sensorManager.status
+    val compassTilt = sensorManager.tiltDegrees
     private val _qiblaBearing = MutableStateFlow(0.0)
     val qiblaBearing: StateFlow<Double> = _qiblaBearing
 
@@ -1105,14 +1107,26 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
     // QIBLA LOCK FEEDBACK
     private var isQiblaScreenActive = false
+    private var qiblaWatchdogJob: Job? = null
 
     fun startQiblaTracking() {
         isQiblaScreenActive = true
         sensorManager.start()
+        // Sensors report many times a second; if they go quiet while the dial is on screen,
+        // the manager flags it so the UI can say why the needle stopped moving.
+        qiblaWatchdogJob?.cancel()
+        qiblaWatchdogJob = viewModelScope.launch {
+            while (true) {
+                delay(1000)
+                sensorManager.checkForStall()
+            }
+        }
     }
 
     fun stopQiblaTracking() {
         isQiblaScreenActive = false
+        qiblaWatchdogJob?.cancel()
+        qiblaWatchdogJob = null
         sensorManager.stop()
     }
 
@@ -1313,6 +1327,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     override fun onCleared() {
         super.onCleared()
         sensorManager.stop()
+        qiblaWatchdogJob?.cancel()
         countdownJob?.cancel()
         stopLocationUpdates()
         try {

@@ -22,6 +22,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
@@ -40,10 +41,14 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 import dev.barakah.app.ui.BarakahViewModel
+import dev.barakah.app.util.CompassStatus
 import dev.barakah.app.util.QiblaManager
 import dev.barakah.app.util.localize
 import android.view.HapticFeedbackConstants
 import kotlin.math.abs
+
+/** Beyond this tilt the azimuth stops being meaningful, so the dial asks for a flat phone. */
+private const val TILT_WARNING_DEGREES = 25f
 
 @Composable
 fun QiblahScreen(
@@ -62,23 +67,35 @@ fun QiblahScreen(
     }
 
     val compassAzimuth by viewModel.compassAzimuth.collectAsState()
+    val compassStatus by viewModel.compassStatus.collectAsState()
+    val compassTilt by viewModel.compassTilt.collectAsState()
     val qiblaBearing by viewModel.qiblaBearing.collectAsState()
     val locationLabel by viewModel.locationLabel.collectAsState()
     val appLanguage by viewModel.appLanguage.collectAsState()
     val isAr = appLanguage == "ar"
 
-    // Smooth heading rotation interpolation
+    // Whether the needle is allowed to be believed. With no live reading, pointing at a
+    // direction would be a lie, so the dial is dimmed and the readout shows a dash instead.
+    val hasLiveHeading = compassStatus.hasLiveHeading
+
+    // Smooth heading rotation interpolation.
+    // The needle always travels the short way round: animating the raw 0..360 value makes it
+    // sweep all the way back whenever the heading crosses North, which reads as a stuck dial.
+    var unwrappedHeading by remember { mutableStateOf(compassAzimuth) }
+    LaunchedEffect(compassAzimuth) {
+        unwrappedHeading += QiblaManager.shortestAngleDelta(unwrappedHeading, compassAzimuth)
+    }
     val animatedHeading by animateFloatAsState(
-        targetValue = compassAzimuth,
+        targetValue = unwrappedHeading,
         animationSpec = spring(
-            dampingRatio = Spring.DampingRatioLowBouncy,
-            stiffness = Spring.StiffnessMedium
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMediumLow
         ),
         label = "compassRotation"
     )
 
     // Compute relative pointer rotation (Mecca Bearing - Phone Heading)
-    val relativeAngle = (qiblaBearing.toFloat() - animatedHeading + 360f) % 360f
+    val relativeAngle = QiblaManager.normalizeDegrees(qiblaBearing.toFloat() - animatedHeading)
 
     // Check if phone is perfectly pointed to Kaaba (with hysteresis loop to prevent jitter)
     val exactDiff = abs(compassAzimuth - qiblaBearing.toFloat())
@@ -86,8 +103,10 @@ fun QiblahScreen(
 
     var isAligned by remember { mutableStateOf(false) }
 
-    LaunchedEffect(shortestDiff) {
-        if (shortestDiff < 2.5f && !isAligned) {
+    LaunchedEffect(shortestDiff, hasLiveHeading) {
+        if (!hasLiveHeading) {
+            isAligned = false
+        } else if (shortestDiff < 2.5f && !isAligned) {
             isAligned = true
         } else if (shortestDiff > 8.0f && isAligned) {
             isAligned = false
@@ -110,6 +129,42 @@ fun QiblahScreen(
         MaterialTheme.colorScheme.primary
     } else {
         MaterialTheme.colorScheme.secondary
+    }
+
+    // Explain the dial whenever it is not actually tracking, so a compass that cannot move is
+    // never just silently frozen on screen.
+    val statusMessage = when {
+        compassStatus == CompassStatus.NO_SENSOR ->
+            if (isAr) "لا يحتوي هذا الهاتف على مستشعر بوصلة، لذا لا يمكن للقرص تتبع الاتجاه."
+            else "This phone has no compass sensor, so the dial cannot track your direction."
+        compassStatus == CompassStatus.UNCALIBRATED ->
+            if (isAr) "البوصلة تحتاج إلى معايرة: ابتعد عن المعادن والأغطية المغناطيسية ثم حرّك الهاتف على شكل الرقم 8."
+            else "Compass needs calibrating: move away from metal and magnetic cases, then wave the phone in a figure 8."
+        compassStatus == CompassStatus.STALLED ->
+            if (isAr) "توقّف مستشعر البوصلة عن الإرسال. اخرج من هذه الشاشة ثم أعد فتحها."
+            else "The compass sensor stopped reporting. Leave this screen and open it again."
+        compassStatus == CompassStatus.WAITING ->
+            if (isAr) "في انتظار قراءة البوصلة…"
+            else "Waiting for the compass sensor…"
+        compassTilt > TILT_WARNING_DEGREES ->
+            if (isAr) "أمسك الهاتف بشكل مسطح للحصول على دقة أعلى."
+            else "Hold your phone flat for highest precision."
+        else ->
+            if (isAr) "يرجى وضع الهاتف بشكل مسطح والابتعاد عن المعادن أو الأغطية المغناطيسية لدقة أعلى."
+            else "Hold your phone flat, away from metal objects or magnetic cases for highest precision."
+    }
+    val statusIsProblem = compassStatus == CompassStatus.NO_SENSOR ||
+        compassStatus == CompassStatus.STALLED ||
+        compassStatus == CompassStatus.UNCALIBRATED
+    val statusColor = if (statusIsProblem) {
+        MaterialTheme.colorScheme.error
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+    }
+    val headingText = if (hasLiveHeading) {
+        "${compassAzimuth.toInt()}°".localize(isAr, useWesternNumbersInArabic)
+    } else {
+        "—"
     }
 
     val glowScale by animateFloatAsState(
@@ -148,10 +203,10 @@ fun QiblahScreen(
                     .weight(0.45f)
                     .semantics {
                         val angleFormatted = shortestDiff.toInt().toString().localize(isAr, useWesternNumbersInArabic)
-                        contentDescription = if (isAligned) {
-                            if (isAr) "تم محاذاة اتجاه القبلة بنجاح" else "Qibla is perfectly aligned!"
-                        } else {
-                            if (isAr) "القبلة تبعد $angleFormatted درجة" else "Qibla is $angleFormatted degrees away"
+                        contentDescription = when {
+                            !hasLiveHeading -> statusMessage
+                            isAligned -> if (isAr) "تم محاذاة اتجاه القبلة بنجاح" else "Qibla is perfectly aligned!"
+                            else -> if (isAr) "القبلة تبعد $angleFormatted درجة" else "Qibla is $angleFormatted degrees away"
                         }
                     },
                 contentAlignment = Alignment.Center
@@ -228,6 +283,7 @@ fun QiblahScreen(
                     modifier = Modifier
                         .size(pointerSize)
                         .rotate(relativeAngle)
+                        .alpha(if (hasLiveHeading) 1f else 0.25f)
                         .testTag("compass_pointer"),
                     contentAlignment = Alignment.Center
                 ) {
@@ -357,7 +413,7 @@ fun QiblahScreen(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Text(
-                                    "${compassAzimuth.toInt()}°".localize(isAr, useWesternNumbersInArabic),
+                                    headingText,
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -378,10 +434,10 @@ fun QiblahScreen(
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = if (isAr) "ضع الهاتف بشكل مسطح للحصول على دقة أعلى." else "Hold your phone flat for highest precision.",
+                            text = statusMessage,
                             style = MaterialTheme.typography.labelSmall,
                             textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                            color = statusColor
                         )
                     }
                 }
@@ -469,10 +525,10 @@ fun QiblahScreen(
                     .testTag("compass_dial_outer")
                     .semantics {
                         val angleFormatted = shortestDiff.toInt().toString().localize(isAr, useWesternNumbersInArabic)
-                        contentDescription = if (isAligned) {
-                            if (isAr) "تم محاذاة اتجاه القبلة بنجاح" else "Qibla is perfectly aligned!"
-                        } else {
-                            if (isAr) "القبلة تبعد $angleFormatted درجة" else "Qibla is $angleFormatted degrees away"
+                        contentDescription = when {
+                            !hasLiveHeading -> statusMessage
+                            isAligned -> if (isAr) "تم محاذاة اتجاه القبلة بنجاح" else "Qibla is perfectly aligned!"
+                            else -> if (isAr) "القبلة تبعد $angleFormatted درجة" else "Qibla is $angleFormatted degrees away"
                         }
                     },
                 contentAlignment = Alignment.Center
@@ -550,6 +606,7 @@ fun QiblahScreen(
                     modifier = Modifier
                         .size(pointerSize)
                         .rotate(relativeAngle) // Relative rotation pointing Mecca
+                        .alpha(if (hasLiveHeading) 1f else 0.25f)
                         .testTag("compass_pointer"),
                     contentAlignment = Alignment.Center
                 ) {
@@ -640,7 +697,7 @@ fun QiblahScreen(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Text(
-                                    "${compassAzimuth.toInt()}°".localize(isAr, useWesternNumbersInArabic),
+                                    headingText,
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -661,10 +718,10 @@ fun QiblahScreen(
                         }
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = if (isAr) "يرجى وضع الهاتف بشكل مسطح والابتعاد عن المعادن أو الأغطية المغناطيسية لدقة أعلى." else "Hold your phone flat, away from metal objects or magnetic cases for highest precision.",
+                            text = statusMessage,
                             style = MaterialTheme.typography.bodySmall,
                             textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                            color = statusColor
                         )
                     }
                 }
