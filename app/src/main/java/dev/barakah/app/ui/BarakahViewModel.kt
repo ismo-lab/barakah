@@ -6,7 +6,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.location.Location
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -19,10 +18,9 @@ import dev.barakah.app.widget.PrayerWidget
 import dev.barakah.app.widget.PrayerRemainingWidget
 import dev.barakah.app.widget.NawafilWidget
 import dev.barakah.app.widget.refreshWidgetInstances
+import dev.barakah.app.util.LocationProvider
 import dev.barakah.app.util.PrayerCalculator
 import dev.barakah.app.util.QiblaManager
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -103,86 +101,38 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    private var locationCallback: com.google.android.gms.location.LocationCallback? = null
     private val widgetRefreshScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val widgetRefreshMutex = Mutex()
 
     @SuppressLint("MissingPermission")
     fun startLocationUpdates() {
-        if (locationCallback != null) return // Already running
+        locationProvider.startUpdates(minTimeMs = 300_000L, minDistanceM = 200f) { location ->
+            val now = System.currentTimeMillis()
+            val diffLat = abs(location.latitude - _currentLocation.value.first)
+            val diffLng = abs(location.longitude - _currentLocation.value.second)
 
-        try {
-            val context = getApplication<Application>()
-            val fineGranted = androidx.core.content.ContextCompat.checkSelfPermission(
-                context,
-                android.Manifest.permission.ACCESS_FINE_LOCATION
-            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-            val coarseGranted = androidx.core.content.ContextCompat.checkSelfPermission(
-                context,
-                android.Manifest.permission.ACCESS_COARSE_LOCATION
-            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+            if (diffLat > 0.001 || diffLng > 0.001) {
+                viewModelScope.launch {
+                    val resolvedName = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        getCityNameFromLocation(location.latitude, location.longitude)
+                    }
+                    val defaultLabel = if (_appLanguage.value == "ar") "تلقائي (GPS)" else "GPS (Auto)"
+                    val label = resolvedName ?: defaultLabel
 
-            if (!fineGranted && !coarseGranted) return
+                    updateLocation(location.latitude, location.longitude, label)
 
-            val locationRequest = com.google.android.gms.location.LocationRequest.Builder(
-                Priority.PRIORITY_BALANCED_POWER_ACCURACY,
-                300000L // 5 minutes
-            ).apply {
-                setMinUpdateIntervalMillis(60000L) // 1 minute
-                setMinUpdateDistanceMeters(200f) // 200 meters
-            }.build()
-
-            val callback = object : com.google.android.gms.location.LocationCallback() {
-                override fun onLocationResult(locationResult: com.google.android.gms.location.LocationResult) {
-                    val loc = locationResult.lastLocation ?: return
-                    val now = System.currentTimeMillis()
-                    val diffLat = abs(loc.latitude - _currentLocation.value.first)
-                    val diffLng = abs(loc.longitude - _currentLocation.value.second)
-
-                    if (diffLat > 0.001 || diffLng > 0.001) {
-                        viewModelScope.launch {
-                            val resolvedName = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                                getCityNameFromLocation(loc.latitude, loc.longitude)
-                            }
-                            val defaultLabel = if (_appLanguage.value == "ar") "تلقائي (GPS)" else "GPS (Auto)"
-                            val label = resolvedName ?: defaultLabel
-
-                            updateLocation(loc.latitude, loc.longitude, label)
-
-                            if (now - lastGpsSuccessMsgTime > 60000) {
-                                lastGpsSuccessMsgTime = now
-                                val msg = if (_appLanguage.value == "ar") "تم تحديث موقعك تلقائياً بنجاح ($label)" else "GPS location updated successfully ($label)"
-                                _eventFlow.emit(msg)
-                            }
-                        }
+                    if (now - lastGpsSuccessMsgTime > 60000) {
+                        lastGpsSuccessMsgTime = now
+                        val msg = if (_appLanguage.value == "ar") "تم تحديث موقعك تلقائياً بنجاح ($label)" else "GPS location updated successfully ($label)"
+                        _eventFlow.emit(msg)
                     }
                 }
             }
-
-            locationCallback = callback
-            locationClient.requestLocationUpdates(
-                locationRequest,
-                callback,
-                android.os.Looper.getMainLooper()
-            ).addOnFailureListener {
-                if (locationCallback == callback) {
-                    locationCallback = null
-                }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
     }
 
     fun stopLocationUpdates() {
-        locationCallback?.let { callback ->
-            try {
-                locationClient.removeLocationUpdates(callback)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-            locationCallback = null
-        }
+        locationProvider.stopUpdates()
     }
 
     // Nawafil state flow
@@ -312,7 +262,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     private val _eventFlow = MutableSharedFlow<String>()
     val eventFlow: SharedFlow<String> = _eventFlow.asSharedFlow()
 
-    private val locationClient = LocationServices.getFusedLocationProviderClient(application)
+    private val locationProvider = LocationProvider(application)
 
     // Manual cities fallback config
     data class City(val name: String, val lat: Double, val lng: Double)
@@ -592,79 +542,38 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
                     }
                 }
             }
-            locationClient.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, null)
-                .addOnSuccessListener { loc: Location? ->
-                    if (loc != null) {
-                        viewModelScope.launch {
-                            val resolvedName = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                                getCityNameFromLocation(loc.latitude, loc.longitude)
-                            }
-                            val defaultLabel = if (_appLanguage.value == "ar") "تلقائي (GPS)" else "GPS (Auto)"
-                            val label = resolvedName ?: defaultLabel
-                            
-                            updateLocation(loc.latitude, loc.longitude, label)
-                            
-                            val now = System.currentTimeMillis()
-                            val diffLat = abs(loc.latitude - _currentLocation.value.first)
-                            val diffLng = abs(loc.longitude - _currentLocation.value.second)
-                            
-                            // Show success message only if it's a significant change or once in a while
-                            if (now - lastGpsSuccessMsgTime > 60000 || diffLat > 0.001 || diffLng > 0.001) {
-                                lastGpsSuccessMsgTime = now
-                                val msg = if (_appLanguage.value == "ar") "تم تحديد موقعك تلقائياً بنجاح ($label)" else "GPS location detected successfully ($label)"
-                                _eventFlow.emit(msg)
-                            }
+            locationProvider.currentLocation { loc ->
+                if (loc != null) {
+                    viewModelScope.launch {
+                        val resolvedName = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                            getCityNameFromLocation(loc.latitude, loc.longitude)
                         }
-                    } else {
-                        // try last known location as fallback
-                        try {
-                            locationClient.lastLocation.addOnSuccessListener { lastLoc: Location? ->
-                                if (lastLoc != null) {
-                                    viewModelScope.launch {
-                                        val resolvedName = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                                            getCityNameFromLocation(lastLoc.latitude, lastLoc.longitude)
-                                        }
-                                        val defaultLabel = if (_appLanguage.value == "ar") "تلقائي (GPS)" else "GPS (Auto)"
-                                        val label = resolvedName ?: defaultLabel
-                                        
-                                        updateLocation(lastLoc.latitude, lastLoc.longitude, label)
-                                        val msg = if (_appLanguage.value == "ar") "تم تحديد موقعك تلقائياً بنجاح ($label)" else "GPS location detected successfully ($label)"
-                                        _eventFlow.emit(msg)
-                                    }
-                                } else {
-                                    val label = if (_appLanguage.value == "ar") "الموقع غير محدد" else "No Location Selected"
-                                    updateLocation(21.4225, 39.8262, label)
-                                    viewModelScope.launch {
-                                        val msg = if (_appLanguage.value == "ar") "تعذر تحديد الموقع الجغرافي، يرجى اختياره يدوياً" else "Could not determine GPS location, please select manually"
-                                        _eventFlow.emit(msg)
-                                    }
-                                }
-                            }.addOnFailureListener {
-                                val label = if (_appLanguage.value == "ar") "الموقع غير محدد" else "No Location Selected"
-                                updateLocation(21.4225, 39.8262, label)
-                                viewModelScope.launch {
-                                    val msg = if (_appLanguage.value == "ar") "تعذر تحديد الموقع الجغرافي، يرجى اختياره يدوياً" else "Could not determine GPS location, please select manually"
-                                    _eventFlow.emit(msg)
-                                }
-                            }
-                        } catch (e: Exception) {
-                            val label = if (_appLanguage.value == "ar") "الموقع غير محدد" else "No Location Selected"
-                            updateLocation(21.4225, 39.8262, label)
-                            viewModelScope.launch {
-                                val msg = if (_appLanguage.value == "ar") "تعذر تحديد الموقع الجغرافي، يرجى اختياره يدوياً" else "Could not determine GPS location, please select manually"
-                                _eventFlow.emit(msg)
-                            }
+                        val defaultLabel = if (_appLanguage.value == "ar") "تلقائي (GPS)" else "GPS (Auto)"
+                        val label = resolvedName ?: defaultLabel
+
+                        updateLocation(loc.latitude, loc.longitude, label)
+
+                        val now = System.currentTimeMillis()
+                        val diffLat = abs(loc.latitude - _currentLocation.value.first)
+                        val diffLng = abs(loc.longitude - _currentLocation.value.second)
+
+                        // Show success message only if it's a significant change or once in a while
+                        if (now - lastGpsSuccessMsgTime > 60000 || diffLat > 0.001 || diffLng > 0.001) {
+                            lastGpsSuccessMsgTime = now
+                            val msg = if (_appLanguage.value == "ar") "تم تحديد موقعك تلقائياً بنجاح ($label)" else "GPS location detected successfully ($label)"
+                            _eventFlow.emit(msg)
                         }
                     }
-                }
-                .addOnFailureListener {
+                } else {
+                    // The system has no fix: fall back to Makkah and ask for a manual choice.
                     val label = if (_appLanguage.value == "ar") "الموقع غير محدد" else "No Location Selected"
                     updateLocation(21.4225, 39.8262, label)
                     viewModelScope.launch {
-                        val msg = if (_appLanguage.value == "ar") "فشل تحديد الموقع الجغرافي، يرجى اختياره يدوياً" else "GPS location failed, please select manually"
+                        val msg = if (_appLanguage.value == "ar") "تعذر تحديد الموقع الجغرافي، يرجى اختياره يدوياً" else "Could not determine GPS location, please select manually"
                         _eventFlow.emit(msg)
                     }
                 }
+            }
         } catch (e: Exception) {
             e.printStackTrace()
             val label = if (_appLanguage.value == "ar") "الموقع غير محدد" else "No Location Selected"
@@ -676,15 +585,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    private fun isLocationEnabled(): Boolean {
-        return try {
-            val locationManager = getApplication<Application>().getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
-            locationManager?.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER) == true ||
-                    locationManager?.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER) == true
-        } catch (e: Exception) {
-            false
-        }
-    }
+    private fun isLocationEnabled(): Boolean = locationProvider.isEnabled()
 
     private fun getCityNameFromLocation(lat: Double, lng: Double): String? {
         return try {
