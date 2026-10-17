@@ -29,4 +29,21 @@ class AppStartupTest {
     val activity = Robolectric.buildActivity(MainActivity::class.java).create().start().resume().get()
     assertFalse("MainActivity was finishing straight after start", activity.isFinishing)
   }
+
+  /**
+   * The same launch in a tablet-sized landscape window.
+   *
+   * With the portrait lock gone, a wide window composes the rail and the single-pane screens for
+   * the first time. This does not prove they look right, but it does prove the wider configuration
+   * composes and the activity survives it.
+   */
+  @Test
+  @Config(sdk = [36], qualifiers = "w1280dp-h800dp-land")
+  fun `main activity starts in a tablet window`() {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    dev.barakah.app.data.QuranData.load(context)
+
+    val activity = Robolectric.buildActivity(MainActivity::class.java).create().start().resume().get()
+    assertFalse("MainActivity was finishing straight after start", activity.isFinishing)
+  }
 }
