@@ -8,7 +8,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
-class ExampleUnitTest {
+class TafseerAssetTest {
   @Test
   fun testLocalTafseerParsing() {
     val file = listOf(
