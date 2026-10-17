@@ -21,5 +21,11 @@ class PrayerRemainingWidgetReceiver : GlanceAppWidgetReceiver() {
                 glanceAppWidget.updateAll(context)
             }
         }
+
+        if (action == android.appwidget.AppWidgetManager.ACTION_APPWIDGET_UPDATE) {
+            // A widget can be added while the app is not running, so the minute tick that keeps the
+            // countdown counting down is started from here and not only from the app itself.
+            dev.barakah.app.notifications.PrayerScheduler.armWidgetTick(context.applicationContext)
+        }
     }
 }
