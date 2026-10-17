@@ -1,13 +1,12 @@
 package dev.barakah.app.widget
 
-import android.content.Context
-import android.view.LayoutInflater
 import android.view.View
-import androidx.test.core.app.ApplicationProvider
+import androidx.activity.ComponentActivity
 import com.github.takahirom.roborazzi.captureRoboImage
 import dev.barakah.app.R
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
@@ -34,10 +33,12 @@ class WidgetPreviewScreenshotTest {
     }
 
     private fun capture(layoutId: Int, path: String) {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val view = LayoutInflater.from(context).inflate(layoutId, null)
-        val density = context.resources.displayMetrics.density
-        val width = (220 * density).toInt()
+        // The view has to be inflated from an Activity: Roborazzi finds the Activity through the
+        // context when it renders, and refuses a view that only has an application behind it.
+        val activity = Robolectric.buildActivity(ComponentActivity::class.java).setup().get()
+        val view = activity.layoutInflater.inflate(layoutId, null)
+        val density = activity.resources.displayMetrics.density
+        val width = (200 * density).toInt()
         val height = (140 * density).toInt()
         view.measure(
             View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
