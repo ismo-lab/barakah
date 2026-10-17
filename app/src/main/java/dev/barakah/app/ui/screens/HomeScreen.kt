@@ -961,9 +961,49 @@ fun CountdownCardView(
     val countdown by viewModel.nextPrayerCountdown.collectAsStateWithLifecycle()
     val nextPrayerName by viewModel.nextPrayerName.collectAsStateWithLifecycle()
     val isLocationSet by viewModel.isLocationSet.collectAsStateWithLifecycle()
+    val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsStateWithLifecycle()
 
-val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsStateWithLifecycle()
+    val labelText = if (!isLocationSet) {
+        if (isAr) "الصلاة القادمة: --" else "NEXT: --"
+    } else {
+        if (isAr) "الصلاة القادمة: ${translatePrayer(nextPrayerName)}" else "NEXT: $nextPrayerName".uppercase()
+    }
 
+    val countdownText = remember(countdown, isAr, useWesternNumbersInArabic, isLocationSet) {
+        if (!isLocationSet) {
+            "--:--:--".localize(isAr, useWesternNumbersInArabic)
+        } else {
+            try {
+                val parts = countdown.replace("-", "").split(":")
+                if (parts.size == 3) {
+                    val locale = java.util.Locale.US
+                    val h = parts[0].toInt()
+                    val m = parts[1].toInt()
+                    val s = parts[2].toInt()
+                    val base = java.lang.String.format(locale, "%02d:%02d:%02d", h, m, s)
+                    val prefix = if (countdown.startsWith("-")) "-" else ""
+                    (prefix + base).localize(isAr, useWesternNumbersInArabic)
+                } else {
+                    countdown.localize(isAr, useWesternNumbersInArabic)
+                }
+            } catch (e: Exception) {
+                countdown.localize(isAr, useWesternNumbersInArabic)
+            }
+        }
+    }
+
+    CountdownCardContent(labelText, countdownText)
+}
+
+/**
+ * The countdown card as it is drawn, with the two lines it shows handed in.
+ *
+ * The countdown changes every second, so an image of this could only ever be compared against a
+ * reference if the values come from outside instead of from a clock behind a ViewModel. Splitting
+ * the drawing from the reading is what lets it be held still for a screenshot test.
+ */
+@Composable
+fun CountdownCardContent(labelText: String, countdownText: String) {
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
     val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
     val isShortScreen = configuration.screenHeightDp < 600
@@ -999,11 +1039,7 @@ val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsSt
                 horizontalAlignment = androidx.compose.ui.Alignment.Start
             ) {
                 androidx.compose.material3.Text(
-                    text = if (!isLocationSet) {
-                        if (isAr) "الصلاة القادمة: --" else "NEXT: --"
-                    } else {
-                        if (isAr) "الصلاة القادمة: ${translatePrayer(nextPrayerName)}" else "NEXT: $nextPrayerName".uppercase()
-                    },
+                    text = labelText,
                     style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
                     color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f),
                     fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
@@ -1011,31 +1047,8 @@ val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsSt
                     modifier = Modifier.padding(bottom = 2.dp)
                 )
 
-                val formattedCountdown = remember(countdown, isAr, useWesternNumbersInArabic, isLocationSet) {
-                    if (!isLocationSet) {
-                        "--:--:--".localize(isAr, useWesternNumbersInArabic)
-                    } else {
-                        try {
-                            val parts = countdown.replace("-", "").split(":")
-                            if (parts.size == 3) {
-                                val locale = java.util.Locale.US
-                                val h = parts[0].toInt()
-                                val m = parts[1].toInt()
-                                val s = parts[2].toInt()
-                                val base = java.lang.String.format(locale, "%02d:%02d:%02d", h, m, s)
-                                val prefix = if (countdown.startsWith("-")) "-" else ""
-                                (prefix + base).localize(isAr, useWesternNumbersInArabic)
-                            } else {
-                                countdown.localize(isAr, useWesternNumbersInArabic)
-                            }
-                        } catch (e: Exception) {
-                            countdown.localize(isAr, useWesternNumbersInArabic)
-                        }
-                    }
-                }
-
                 androidx.compose.material3.Text(
-                    text = formattedCountdown,
+                    text = countdownText,
                     style = androidx.compose.material3.MaterialTheme.typography.displayLarge.copy(
                         fontSize = if (isShortScreen || isLandscape) 32.sp else 44.sp,
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
