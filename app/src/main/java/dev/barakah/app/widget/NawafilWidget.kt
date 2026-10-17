@@ -24,6 +24,7 @@ import dev.barakah.app.MainActivity
 import dev.barakah.app.data.AppPrefs
 import dev.barakah.app.data.LocationDefaults
 import dev.barakah.app.widget.WidgetRefreshState
+import dev.barakah.app.util.ClockTime
 import dev.barakah.app.util.PrayerCalculator
 import dev.barakah.app.util.localize
 import java.util.*
@@ -82,21 +83,8 @@ class NawafilWidget : GlanceAppWidget() {
                 adjIsha = adjIsha
             )
 
-            fun calculateOffsetTime(timeStr: String, offsetMinutes: Int): String {
-                return try {
-                    val parts = timeStr.trim().split(":")
-                    val h = parts[0].toInt()
-                    val min = parts[1].split(" ")[0].trim().toInt()
-                    val cal = Calendar.getInstance(TimeZone.getTimeZone(timeZoneId)).apply {
-                        set(Calendar.HOUR_OF_DAY, h)
-                        set(Calendar.MINUTE, min)
-                        add(Calendar.MINUTE, offsetMinutes)
-                    }
-                    String.format(Locale.US, "%02d:%02d", cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
-                } catch (e: Exception) {
-                    ""
-                }
-            }
+            fun calculateOffsetTime(timeStr: String, offsetMinutes: Int): String =
+                ClockTime.offset(timeStr, offsetMinutes, TimeZone.getTimeZone(timeZoneId))
 
             // Calculate 4 Nawafil times
             val duhaRaw = calculateOffsetTime(times.sunrise, 20)
@@ -108,27 +96,8 @@ class NawafilWidget : GlanceAppWidget() {
 
             fun formatTimeStr(timeStr: String): String {
                 if (!isLocationSet) return "--:--".localize(isAr, useWesternNumbersInArabic)
-                return try {
-                    val parts = timeStr.trim().split(":")
-                    val h = parts[0].toInt()
-                    val min = parts[1].split(" ")[0].trim().toInt()
-                
-                    val locale = java.util.Locale.US
-                    val formatted = if (is24Hour) {
-                        java.lang.String.format(locale, "%02d:%02d", h, min)
-                    } else {
-                        val hour12 = if (h % 12 == 0) 12 else h % 12
-                        val amPm = if (h < 12) {
-                            if (isAr) "ص" else "AM"
-                        } else {
-                            if (isAr) "م" else "PM"
-                        }
-                        java.lang.String.format(locale, "%d:%02d %s", hour12, min, amPm)
-                    }
-                    formatted.localize(isAr, useWesternNumbersInArabic)
-                } catch (e: Exception) {
-                    timeStr.localize(isAr, useWesternNumbersInArabic)
-                }
+                // The four-column layout drops the leading zero to fit.
+                return ClockTime.format(timeStr, is24Hour, isAr, useWesternNumbersInArabic, padHour = false)
             }
         
         

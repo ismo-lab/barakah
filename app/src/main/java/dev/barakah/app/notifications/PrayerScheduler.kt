@@ -6,6 +6,7 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import dev.barakah.app.util.ClockTime
 import dev.barakah.app.util.PrayerCalculator
 import java.util.Calendar
 import java.util.TimeZone
@@ -125,18 +126,18 @@ object PrayerScheduler {
 
             // Pre-Adhan alerts (15 minutes before)
             val notifyBeforeAdhan = prefs.getBoolean(AppPrefs.NOTIFY_BEFORE_ADHAN, true)
-            scheduleAlarm(context, "Pre-Fajr", calculateOffsetTime(times.fajr, -15, timeZone), 1011, notifyBeforeAdhan && isEnabled("Fajr"), timeZone)
-            scheduleAlarm(context, "Pre-Dhuhr", calculateOffsetTime(times.dhuhr, -15, timeZone), 1012, notifyBeforeAdhan && isEnabled("Dhuhr"), timeZone)
-            scheduleAlarm(context, "Pre-Asr", calculateOffsetTime(times.asr, -15, timeZone), 1013, notifyBeforeAdhan && isEnabled("Asr"), timeZone)
-            scheduleAlarm(context, "Pre-Maghrib", calculateOffsetTime(times.maghrib, -15, timeZone), 1014, notifyBeforeAdhan && isEnabled("Maghrib"), timeZone)
-            scheduleAlarm(context, "Pre-Isha", calculateOffsetTime(times.isha, -15, timeZone), 1015, notifyBeforeAdhan && isEnabled("Isha"), timeZone)
+            scheduleAlarm(context, "Pre-Fajr", ClockTime.offset(times.fajr, -15, timeZone), 1011, notifyBeforeAdhan && isEnabled("Fajr"), timeZone)
+            scheduleAlarm(context, "Pre-Dhuhr", ClockTime.offset(times.dhuhr, -15, timeZone), 1012, notifyBeforeAdhan && isEnabled("Dhuhr"), timeZone)
+            scheduleAlarm(context, "Pre-Asr", ClockTime.offset(times.asr, -15, timeZone), 1013, notifyBeforeAdhan && isEnabled("Asr"), timeZone)
+            scheduleAlarm(context, "Pre-Maghrib", ClockTime.offset(times.maghrib, -15, timeZone), 1014, notifyBeforeAdhan && isEnabled("Maghrib"), timeZone)
+            scheduleAlarm(context, "Pre-Isha", ClockTime.offset(times.isha, -15, timeZone), 1015, notifyBeforeAdhan && isEnabled("Isha"), timeZone)
 
             if (showNawafil) {
                 // Secondary / Nawafil
-                val duhaTime = calculateOffsetTime(times.sunrise, 20, timeZone)
-                val witrTime = calculateOffsetTime(times.isha, 30, timeZone)
-                val tahajjudTime = calculateOffsetTime(times.fajr, -90, timeZone)
-                val qiyamTime = calculateOffsetTime(times.fajr, -150, timeZone)
+                val duhaTime = ClockTime.offset(times.sunrise, 20, timeZone)
+                val witrTime = ClockTime.offset(times.isha, 30, timeZone)
+                val tahajjudTime = ClockTime.offset(times.fajr, -90, timeZone)
+                val qiyamTime = ClockTime.offset(times.fajr, -150, timeZone)
                 
                 scheduleAlarm(context, "Duha (Nafilah)", duhaTime, 6, notifyNawafil && isEnabled("Duha (Nafilah)"), timeZone)
                 scheduleAlarm(context, "Witr (Nafilah)", witrTime, 7, notifyNawafil && isEnabled("Witr (Nafilah)"), timeZone)
@@ -151,8 +152,8 @@ object PrayerScheduler {
             val morningOffset = prefs.getInt(AppPrefs.MORNING_ADHKAR_OFFSET, 30)
             val eveningOffset = prefs.getInt(AppPrefs.EVENING_ADHKAR_OFFSET, 30)
 
-            val morningAdhkarTime = calculateOffsetTime(times.fajr, morningOffset, timeZone)
-            val eveningAdhkarTime = calculateOffsetTime(times.asr, eveningOffset, timeZone)
+            val morningAdhkarTime = ClockTime.offset(times.fajr, morningOffset, timeZone)
+            val eveningAdhkarTime = ClockTime.offset(times.asr, eveningOffset, timeZone)
 
             scheduleAlarm(context, "Morning Adhkar", morningAdhkarTime, 10, notifyMorning, timeZone)
             scheduleAlarm(context, "Evening Adhkar", eveningAdhkarTime, 11, notifyEvening, timeZone)
@@ -164,10 +165,10 @@ object PrayerScheduler {
             scheduleAlarm(context, "Daily Support Reminder", "20:00", 12, dailyEnabled, timeZone)
 
             val notifyJumuah = prefs.getBoolean(AppPrefs.NOTIFY_JUMUAH, true)
-            scheduleAlarm(context, "Friday Jumuah", calculateOffsetTime(times.dhuhr, -45, timeZone), 13, notifyJumuah, timeZone)
+            scheduleAlarm(context, "Friday Jumuah", ClockTime.offset(times.dhuhr, -45, timeZone), 13, notifyJumuah, timeZone)
 
             val notifySuhur = prefs.getBoolean(AppPrefs.NOTIFY_SUHUR, false)
-            scheduleAlarm(context, "Suhur Reminder", calculateOffsetTime(times.fajr, -45, timeZone), 14, notifySuhur, timeZone)
+            scheduleAlarm(context, "Suhur Reminder", ClockTime.offset(times.fajr, -45, timeZone), 14, notifySuhur, timeZone)
 
             val notifyIftar = prefs.getBoolean(AppPrefs.NOTIFY_IFTAR, false)
             scheduleAlarm(context, "Iftar Reminder", times.maghrib, 15, notifyIftar, timeZone)
@@ -243,16 +244,7 @@ object PrayerScheduler {
 
         val now = System.currentTimeMillis()
         val nextRefreshAt = prayerTimes.mapNotNull { timeString ->
-            val parts = timeString.trim().split(":")
-            val hour = parts.getOrNull(0)?.toIntOrNull() ?: return@mapNotNull null
-            val minute = parts.getOrNull(1)?.substringBefore(" ")?.toIntOrNull() ?: return@mapNotNull null
-            Calendar.getInstance(timeZone).apply {
-                set(Calendar.HOUR_OF_DAY, hour)
-                set(Calendar.MINUTE, minute)
-                set(Calendar.SECOND, 0)
-                set(Calendar.MILLISECOND, 0)
-                if (timeInMillis <= now) add(Calendar.DAY_OF_YEAR, 1)
-            }.timeInMillis
+            PrayerAlarmTimes.nextOccurrence(timeString, now, timeZone)
         }.minOrNull()
 
         armWidgetTick(context)
@@ -276,51 +268,15 @@ object PrayerScheduler {
         }
     }
 
-    private fun calculateOffsetTime(timeStr: String, offsetMinutes: Int, timeZone: TimeZone): String {
-        return try {
-            val parts = timeStr.trim().split(":")
-            val h = parts[0].toInt()
-            val m = parts[1].split(" ")[0].trim().toInt()
-            val cal = Calendar.getInstance(timeZone).apply {
-                set(Calendar.HOUR_OF_DAY, h)
-                set(Calendar.MINUTE, m)
-                add(Calendar.MINUTE, offsetMinutes)
-            }
-            String.format(java.util.Locale.US, "%02d:%02d", cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
-        } catch (e: Exception) {
-            ""
-        }
-    }
 
     private fun scheduleAlarm(context: Context, name: String, timeStr: String, id: Int, enabled: Boolean, timeZone: TimeZone) {
-        if (timeStr.isEmpty()) return
-        val parts = timeStr.split(":")
-        if (parts.size < 2) return
-        val h = parts[0].toIntOrNull() ?: return
-        val m = parts[1].split(" ")[0].toIntOrNull() ?: return
-        
-        val now = System.currentTimeMillis()
-        val cal = Calendar.getInstance(timeZone).apply {
-            set(Calendar.HOUR_OF_DAY, h)
-            set(Calendar.MINUTE, m)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-        
-        // Only a time that has already passed belongs to tomorrow. Treating the next minute as
-        // gone meant that opening the app in the 60 seconds before a prayer moved that prayer's
-        // alert to the next day, so it was never announced at all. A double notification for the
-        // same prayer is prevented in the receiver, which compares the alarm's own trigger time
-        // with the last one it announced.
-        if (cal.timeInMillis <= now) {
-            cal.add(Calendar.DAY_OF_YEAR, 1)
-        }
+        val triggerAt = PrayerAlarmTimes.nextOccurrence(timeStr, System.currentTimeMillis(), timeZone) ?: return
         
         val intent = Intent(context, PrayerNotificationReceiver::class.java).apply {
             action = "dev.barakah.app.ACTION_PRAYER_NOTIFICATION"
             putExtra("PRAYER_NAME", name)
             putExtra("PRAYER_ID", id)
-            putExtra("SCHEDULED_TIME", cal.timeInMillis)
+            putExtra("SCHEDULED_TIME", triggerAt)
         }
         
         val pendingIntent = PendingIntent.getBroadcast(
@@ -337,19 +293,19 @@ object PrayerScheduler {
         try {
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
                 if (alarmManager.canScheduleExactAlarms()) {
-                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.timeInMillis, pendingIntent)
+                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
                 } else {
-                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.timeInMillis, pendingIntent)
+                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
                 }
             } else {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.timeInMillis, pendingIntent)
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
             }
         } catch (e: SecurityException) {
             try {
-                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.timeInMillis, pendingIntent)
+                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
             } catch (ex: Exception) {
                 try {
-                    alarmManager.set(AlarmManager.RTC_WAKEUP, cal.timeInMillis, pendingIntent)
+                    alarmManager.set(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
                 } catch (ignored: Exception) {}
             }
         } catch (e: Exception) {
