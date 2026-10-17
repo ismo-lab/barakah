@@ -11,6 +11,9 @@ import dev.barakah.app.MainActivity
 import dev.barakah.app.R
 import dev.barakah.app.data.AppPrefs
 import dev.barakah.app.data.NotifHistoryPrefs
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class PrayerNotificationReceiver : BroadcastReceiver() {
     companion object {
@@ -24,8 +27,29 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        val action = intent.action
+        // Posting the notification itself is quick, but the rescheduling that follows it must not be
+        // abandoned when this receiver returns: the process is eligible to be killed the moment
+        // onReceive() does. goAsync() hands the work back to the system and keeps the process alive
+        // until finish() is called.
+        val pendingResult = goAsync()
+        val appContext = context.applicationContext
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                postForPrayerNotification(appContext, intent)
+            } catch (error: Exception) {
+                android.util.Log.e("PrayerNotifReceiver", "Failed to handle prayer notification", error)
+            } finally {
+                try {
+                    PrayerScheduler.scheduleNextPrayersAndWait(appContext)
+                } catch (error: Exception) {
+                    android.util.Log.e("PrayerNotifReceiver", "Failed to reschedule prayer alarms", error)
+                }
+                pendingResult.finish()
+            }
+        }
+    }
 
+    private fun postForPrayerNotification(context: Context, intent: Intent) {
         val prayerName = intent.getStringExtra("PRAYER_NAME") ?: "Prayer"
         val prayerId = intent.getIntExtra("PRAYER_ID", prayerName.hashCode())
         val scheduledTime = intent.getLongExtra("SCHEDULED_TIME", 0L)
@@ -216,7 +240,6 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
                 }
             }
             
-            PrayerScheduler.scheduleNextPrayers(context)
             return
         }
 
@@ -231,7 +254,6 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
         } else if (prayerName == "Friday Jumuah") {
             val isFriday = java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_WEEK) == java.util.Calendar.FRIDAY
             if (!isFriday) {
-                PrayerScheduler.scheduleNextPrayers(context)
                 return
             }
             title = if (isAr) "يوم الجمعة المبارك" else "Blessed Friday (Jumu'ah)"
@@ -306,8 +328,5 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
         } catch (e: Exception) {
             android.util.Log.e("PrayerNotifReceiver", "Failed to post prayer notification: ${e.message}")
         }
-
-        // Reschedule for next days
-        PrayerScheduler.scheduleNextPrayers(context)
     }
 }

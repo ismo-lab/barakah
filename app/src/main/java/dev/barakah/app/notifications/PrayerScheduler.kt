@@ -12,6 +12,7 @@ import java.util.TimeZone
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import dev.barakah.app.data.AppDatabase
@@ -22,8 +23,18 @@ object PrayerScheduler {
     private const val ACTION_REFRESH_WIDGETS = "dev.barakah.app.ACTION_REFRESH_WIDGETS"
     private const val WIDGET_REFRESH_REQUEST_CODE = 2001
 
+    /**
+     * Fire-and-forget entry point, for callers that outlive the call such as the UI. Receivers must
+     * use [scheduleNextPrayersAndWait] instead, so that scheduling finishes before they return and
+     * the process is allowed to be killed.
+     */
     fun scheduleNextPrayers(context: Context) {
-        CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(Dispatchers.IO).launch { scheduleNextPrayersAndWait(context) }
+    }
+
+    /** Schedules every prayer alarm, and returns once they have all been set. */
+    suspend fun scheduleNextPrayersAndWait(context: Context) {
+        coroutineScope {
             val prefs = context.getSharedPreferences(AppPrefs.FILE, Context.MODE_PRIVATE)
             val rawLabel = prefs.getString(AppPrefs.LOC_LABEL, null)
             val isLocationSet = !(rawLabel.isNullOrEmpty() || rawLabel == "Mecca, KSA" || rawLabel == "Mecca (GPS Fallback)" || rawLabel == "مكة المكرمة (تلقائي)" || rawLabel == "الموقع غير محدد" || rawLabel == "No Location Selected")
@@ -43,7 +54,7 @@ object PrayerScheduler {
                         alarmManager.cancel(pendingIntent)
                     }
                 }
-                return@launch
+                return@coroutineScope
             }
 
             val lat = prefs.getFloat(AppPrefs.LOC_LAT, 21.4225f).toDouble()
