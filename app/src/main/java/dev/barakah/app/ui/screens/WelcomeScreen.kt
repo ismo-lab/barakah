@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.barakah.app.data.CityData
+import dev.barakah.app.data.LocationDefaults
 import dev.barakah.app.ui.BarakahViewModel
 import dev.barakah.app.util.localize
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -275,8 +276,8 @@ fun LanguageCard(label: String, isSelected: Boolean, onClick: () -> Unit) {
          OutlinedButton(
              onClick = {
                  viewModel.setLocationMethod("manual")
-                 val defaultLabel = if (isAr) "الموقع غير محدد" else "No Location Selected"
-                 viewModel.updateLocation(21.4225, 39.8262, defaultLabel)
+                 val defaultLabel = LocationDefaults.unsetLabel(isAr)
+                 viewModel.updateLocation(LocationDefaults.LATITUDE, LocationDefaults.LONGITUDE, defaultLabel)
                  onFinish()
              },
              modifier = Modifier.fillMaxWidth().height(56.dp),
