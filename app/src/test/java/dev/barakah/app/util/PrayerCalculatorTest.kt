@@ -132,6 +132,46 @@ class PrayerCalculatorTest {
     }
 
     @Test
+    fun `the high latitude fallbacks keep every time in order`() {
+        // Above the Arctic circle the sun does not cross the horizon on either solstice: sunrise and
+        // maghrib have to be borrowed from a lower latitude, and in June the twilight angles fall
+        // back as well.
+        for (date in listOf(day(2024, 6, 21), day(2024, 12, 21))) {
+            val times = PrayerCalculator.calculate(69.65, 18.96, 1.0, date)
+            val ordered = listOf(times.fajr, times.sunrise, times.dhuhr, times.asr, times.maghrib, times.isha)
+
+            for (i in 0 until ordered.size - 1) {
+                assertTrue(
+                    "expected ${ordered[i]} before ${ordered[i + 1]} in $ordered",
+                    minutes(ordered[i]) < minutes(ordered[i + 1])
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `an unreachable twilight angle stays inside the day`() {
+        // London in June: the sun rises and sets, but it never dips 18 degrees, so Fajr falls back.
+        // The fixed offsets this replaced put Fajr five hours before midday, at 08:03, against a
+        // sunrise at 04:44 - and put Isha at 19:15, before a 21:22 maghrib.
+        val times = PrayerCalculator.calculate(51.5074, -0.1278, 1.0, day(2024, 6, 21))
+
+        assertTrue(
+            "fajr ${times.fajr} should precede sunrise ${times.sunrise}",
+            minutes(times.fajr) < minutes(times.sunrise)
+        )
+        assertTrue(
+            "isha ${times.isha} should follow maghrib ${times.maghrib}",
+            minutes(times.isha) > minutes(times.maghrib)
+        )
+        // A seventh of a seven hour night, so Fajr belongs within an hour or so of sunrise.
+        assertTrue(
+            "fajr ${times.fajr} drifted too far before sunrise ${times.sunrise}",
+            minutes(times.sunrise) - minutes(times.fajr) < 180
+        )
+    }
+
+    @Test
     fun `time zone ids fall back when missing or unknown`() {
         assertEquals("Asia/Riyadh", PrayerCalculator.resolveTimeZoneId(null))
         assertEquals("UTC", PrayerCalculator.resolveTimeZoneId(null, "UTC"))
