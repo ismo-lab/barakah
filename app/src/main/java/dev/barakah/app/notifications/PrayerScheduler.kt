@@ -254,8 +254,12 @@ object PrayerScheduler {
             set(Calendar.MILLISECOND, 0)
         }
         
-        // Ensure alarm is in the future (add 60s buffer to prevent duplicate firing when alarm triggers)
-        if (cal.timeInMillis <= now + 60_000L) {
+        // Only a time that has already passed belongs to tomorrow. Treating the next minute as
+        // gone meant that opening the app in the 60 seconds before a prayer moved that prayer's
+        // alert to the next day, so it was never announced at all. A double notification for the
+        // same prayer is prevented in the receiver, which compares the alarm's own trigger time
+        // with the last one it announced.
+        if (cal.timeInMillis <= now) {
             cal.add(Calendar.DAY_OF_YEAR, 1)
         }
         

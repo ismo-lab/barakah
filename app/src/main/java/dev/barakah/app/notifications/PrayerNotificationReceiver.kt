@@ -70,17 +70,14 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
             return
         }
         
-        // Also skip if current time is way off from scheduled time (e.g. system re-running old alarms)
-        if (scheduledTime != 0L && kotlin.math.abs(now - scheduledTime) > 30 * 60 * 1000L) { // 30 minutes threshold
+        // An alarm that fired very late is not worth announcing - but "late" has to be measured in
+        // hours, not minutes. Anything delayed by Doze or by the inexact fallback was dropped here
+        // and the prayer was never announced at all.
+        if (NotificationTiming.isTooLate(scheduledTime, now)) {
+            android.util.Log.w("PrayerNotifReceiver", "Skipping stale notification for $prayerName")
             return
         }
 
-        // Persist notified time and timestamp
-        prefs.edit()
-            .putLong(NotifHistoryPrefs.lastNotified(prayerId), scheduledTime)
-            .putLong(NotifHistoryPrefs.lastNotifiedAt(prayerId), now)
-            .apply()
-        
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         
         val appPrefs = context.getSharedPreferences(AppPrefs.FILE, Context.MODE_PRIVATE)
@@ -239,7 +236,8 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
                     }
                 }
             }
-            
+
+            markNotified(prefs, prayerId, scheduledTime, now)
             return
         }
 
@@ -325,8 +323,28 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
             
         try {
             notificationManager.notify(notifId, builder.build())
+            markNotified(prefs, prayerId, scheduledTime, now)
         } catch (e: Exception) {
             android.util.Log.e("PrayerNotifReceiver", "Failed to post prayer notification: ${e.message}")
         }
+    }
+
+    /**
+     * Records which scheduled time was announced for this prayer.
+     *
+     * This is written only once a notification has actually been posted. Recording it beforehand
+     * meant a notification that was skipped still consumed the record, so the alert could never be
+     * delivered later.
+     */
+    private fun markNotified(
+        prefs: android.content.SharedPreferences,
+        prayerId: Int,
+        scheduledTime: Long,
+        now: Long
+    ) {
+        prefs.edit()
+            .putLong(NotifHistoryPrefs.lastNotified(prayerId), scheduledTime)
+            .putLong(NotifHistoryPrefs.lastNotifiedAt(prayerId), now)
+            .apply()
     }
 }
