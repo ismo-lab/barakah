@@ -544,7 +544,8 @@ fun QuranScreen(
             Column(
                 modifier = paneModifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
+                    .background(MaterialTheme.colorScheme.background),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // 1. TOP HEADER Reading Actions
                 Surface(
@@ -596,7 +597,9 @@ fun QuranScreen(
 
                 // 3. VERSES LIST READER
                 LazyColumn(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .widthIn(max = 840.dp),
                     contentPadding = PaddingValues(16.dp),
                     state = readerListState
                 ) {

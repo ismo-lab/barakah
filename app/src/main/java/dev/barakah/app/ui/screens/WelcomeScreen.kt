@@ -53,11 +53,13 @@ fun WelcomeScreen(viewModel: BarakahViewModel) {
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
-            .navigationBarsPadding()
+            .navigationBarsPadding(),
+        contentAlignment = Alignment.TopCenter
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .widthIn(max = 680.dp)
                 .padding(if (isShortScreen) 16.dp else 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
