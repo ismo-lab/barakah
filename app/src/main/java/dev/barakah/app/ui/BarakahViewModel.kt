@@ -198,6 +198,16 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     private val _adhanAudioMode = MutableStateFlow(prefs.getString("adhan_audio_mode", "short") ?: "short")
     val adhanAudioMode: StateFlow<String> = _adhanAudioMode
 
+    /**
+     * Which system volume stream the Adhan plays on: "notification" (default) or "alarm".
+     *
+     * "notification" routes to STREAM_NOTIFICATION so the notification slider controls it,
+     * but the Adhan is then suppressed by silent mode and Do Not Disturb. "alarm" routes to
+     * STREAM_ALARM, which ignores both, at the cost of a harder-to-reach volume slider.
+     */
+    private val _adhanAudioStream = MutableStateFlow(prefs.getString("adhan_audio_stream", "notification") ?: "notification")
+    val adhanAudioStream: StateFlow<String> = _adhanAudioStream
+
     // Morning and Evening Adhkar Notifications state flow
     private val _notifyMorningAdhkar = MutableStateFlow(prefs.getBoolean("notify_morning_adhkar", true))
     val notifyMorningAdhkar: StateFlow<Boolean> = _notifyMorningAdhkar
@@ -928,6 +938,12 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         if (value != "full" && value != "short") return
         _adhanAudioMode.value = value
         prefs.edit().putString("adhan_audio_mode", value).apply()
+    }
+
+    fun setAdhanAudioStream(value: String) {
+        if (value != "notification" && value != "alarm") return
+        _adhanAudioStream.value = value
+        prefs.edit().putString("adhan_audio_stream", value).apply()
     }
 
     fun setNotifyMorningAdhkar(value: Boolean) {

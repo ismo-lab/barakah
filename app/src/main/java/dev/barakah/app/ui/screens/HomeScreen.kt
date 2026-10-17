@@ -98,6 +98,7 @@ fun HomeScreen(
     val notifyNawafil by viewModel.notifyNawafil.collectAsState()
     val adhanAudioEnabled by viewModel.adhanAudioEnabled.collectAsState()
     val adhanAudioMode by viewModel.adhanAudioMode.collectAsState()
+    val adhanAudioStream by viewModel.adhanAudioStream.collectAsState()
     val asrMethod by viewModel.asrMethod.collectAsState()
     val ishaMethod by viewModel.ishaMethod.collectAsState()
     val adjFajr by viewModel.adjFajr.collectAsState()
@@ -1034,6 +1035,54 @@ fun HomeScreen(
                                                     text = if (isAr) "أول ١٥ ثانية فقط" else "First 15 seconds",
                                                     style = MaterialTheme.typography.bodyMedium
                                                 )
+                                            }
+
+                                            Text(
+                                                text = if (isAr) "مستوى الصوت المتحكّم به" else "Volume controlled by",
+                                                style = MaterialTheme.typography.labelMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.padding(top = 8.dp)
+                                            )
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth().clickable { viewModel.setAdhanAudioStream("notification") },
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                RadioButton(
+                                                    selected = adhanAudioStream == "notification",
+                                                    onClick = { viewModel.setAdhanAudioStream("notification") }
+                                                )
+                                                Column {
+                                                    Text(
+                                                        text = if (isAr) "صوت التنبيهات (موصى به)" else "Notification volume (recommended)",
+                                                        style = MaterialTheme.typography.bodyMedium
+                                                    )
+                                                    Text(
+                                                        text = if (isAr) "يُكتم في الوضع الصامت وعدم الإزعاج" else "Muted in silent mode and Do Not Disturb",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
+                                            }
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth().clickable { viewModel.setAdhanAudioStream("alarm") },
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                RadioButton(
+                                                    selected = adhanAudioStream == "alarm",
+                                                    onClick = { viewModel.setAdhanAudioStream("alarm") }
+                                                )
+                                                Column {
+                                                    Text(
+                                                        text = if (isAr) "صوت المنبّه" else "Alarm volume",
+                                                        style = MaterialTheme.typography.bodyMedium
+                                                    )
+                                                    Text(
+                                                        text = if (isAr) "يعمل حتى في الوضع الصامت وعدم الإزعاج" else "Plays even in silent mode and Do Not Disturb",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
                                             }
                                         }
                                     }
