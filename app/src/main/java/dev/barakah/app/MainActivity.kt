@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.SystemBarStyle
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -37,6 +38,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
 
+/**
+ * The navigation bar scrims androidx.activity uses by default (it keeps them internal). They only
+ * matter below API 29, where the navigation bar cannot be transparent. The dark one is also what
+ * pre-API-26 devices need, since their navigation icons are always light.
+ */
+private val NAV_BAR_LIGHT_SCRIM = android.graphics.Color.argb(0xe6, 0xFF, 0xFF, 0xFF)
+private val NAV_BAR_DARK_SCRIM = android.graphics.Color.argb(0x80, 0x1b, 0x1b, 0x1b)
+
 class MainActivity : ComponentActivity() {
     private var activityViewModel: BarakahViewModel? = null
 
@@ -58,6 +67,24 @@ class MainActivity : ComponentActivity() {
                 else -> isSystemDark
             }
  
+            // The system bar icons follow the app's theme, not the phone's. By default
+            // enableEdgeToEdge() reads the system's light/dark mode, so a dark app on a light phone
+            // gets dark status bar icons that disappear into our own dark background (and the light
+            // app on a dark phone the reverse). The call in onCreate sets edge-to-edge up before the
+            // first frame; this re-applies the style whenever the in-app theme changes.
+            SideEffect {
+                enableEdgeToEdge(
+                    statusBarStyle = SystemBarStyle.auto(
+                        android.graphics.Color.TRANSPARENT,
+                        android.graphics.Color.TRANSPARENT
+                    ) { darkTheme },
+                    navigationBarStyle = SystemBarStyle.auto(
+                        NAV_BAR_LIGHT_SCRIM,
+                        NAV_BAR_DARK_SCRIM
+                    ) { darkTheme }
+                )
+            }
+
             val layoutDirection = if (appLanguage == "ar") {
                 androidx.compose.ui.unit.LayoutDirection.Rtl
             } else {
