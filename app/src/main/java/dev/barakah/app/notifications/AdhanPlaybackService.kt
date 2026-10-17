@@ -16,6 +16,7 @@ import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import dev.barakah.app.MainActivity
 import dev.barakah.app.R
+import dev.barakah.app.data.AppPrefs
 
 class AdhanPlaybackService : Service() {
     companion object {
@@ -44,14 +45,14 @@ class AdhanPlaybackService : Service() {
             return START_NOT_STICKY
         }
 
-        val prefs = getSharedPreferences("barakah_prefs", MODE_PRIVATE)
-        if (!prefs.getBoolean("adhan_audio_enabled", false)) {
+        val prefs = getSharedPreferences(AppPrefs.FILE, MODE_PRIVATE)
+        if (!prefs.getBoolean(AppPrefs.ADHAN_AUDIO_ENABLED, false)) {
             stopSelf(startId)
             return START_NOT_STICKY
         }
 
         createNotificationChannel()
-        val isAr = prefs.getString("app_lang", "ar") == "ar"
+        val isAr = prefs.getString(AppPrefs.APP_LANG, "ar") == "ar"
         try {
             startForeground(NOTIFICATION_ID, createNotification(prayerName, isAr))
             releasePlayer()
@@ -62,7 +63,7 @@ class AdhanPlaybackService : Service() {
             // Which system volume slider controls the Adhan. "notification" (default) routes to
             // STREAM_NOTIFICATION, so the Adhan is suppressed by silent mode and Do Not Disturb.
             // "alarm" routes to STREAM_ALARM, which plays through both.
-            val useAlarmStream = prefs.getString("adhan_audio_stream", "notification") == "alarm"
+            val useAlarmStream = prefs.getString(AppPrefs.ADHAN_AUDIO_STREAM, "notification") == "alarm"
             newPlayer.setAudioAttributes(
                 AudioAttributes.Builder()
                     .setUsage(
@@ -86,7 +87,7 @@ class AdhanPlaybackService : Service() {
             newPlayer.setOnCompletionListener { stopPlayback() }
             newPlayer.start()
 
-            if (prefs.getString("adhan_audio_mode", "short") != "full") {
+            if (prefs.getString(AppPrefs.ADHAN_AUDIO_MODE, "short") != "full") {
                 handler.postDelayed(stopShortPlayback, SHORT_PLAYBACK_MS)
             }
         } catch (error: Exception) {
@@ -102,7 +103,7 @@ class AdhanPlaybackService : Service() {
             val manager = getSystemService(NotificationManager::class.java)
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                if (getSharedPreferences("barakah_prefs", MODE_PRIVATE).getString("app_lang", "ar") == "ar")
+                if (getSharedPreferences(AppPrefs.FILE, MODE_PRIVATE).getString(AppPrefs.APP_LANG, "ar") == "ar")
                     "تشغيل الأذان"
                 else
                     "Adhan playback",

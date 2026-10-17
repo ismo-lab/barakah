@@ -9,6 +9,8 @@ import android.content.Intent
 import androidx.core.app.NotificationCompat
 import dev.barakah.app.MainActivity
 import dev.barakah.app.R
+import dev.barakah.app.data.AppPrefs
+import dev.barakah.app.data.NotifHistoryPrefs
 
 class PrayerNotificationReceiver : BroadcastReceiver() {
     companion object {
@@ -25,9 +27,9 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
         val scheduledTime = intent.getLongExtra("SCHEDULED_TIME", 0L)
         
         // Prevent duplicate firing by checking if we already notified for this exact scheduled time
-        val prefs = context.getSharedPreferences("notif_history", Context.MODE_PRIVATE)
-        val lastNotifiedTime = prefs.getLong("last_notified_$prayerId", 0L)
-        val lastNotifiedTs = prefs.getLong("last_notified_ts_$prayerId", 0L)
+        val prefs = context.getSharedPreferences(NotifHistoryPrefs.FILE, Context.MODE_PRIVATE)
+        val lastNotifiedTime = prefs.getLong(NotifHistoryPrefs.lastNotified(prayerId), 0L)
+        val lastNotifiedTs = prefs.getLong(NotifHistoryPrefs.lastNotifiedAt(prayerId), 0L)
         val now = System.currentTimeMillis()
         
         // If scheduledTime is provided and matches last notified, skip to avoid duplicates
@@ -47,16 +49,16 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
 
         // Persist notified time and timestamp
         prefs.edit()
-            .putLong("last_notified_$prayerId", scheduledTime)
-            .putLong("last_notified_ts_$prayerId", now)
+            .putLong(NotifHistoryPrefs.lastNotified(prayerId), scheduledTime)
+            .putLong(NotifHistoryPrefs.lastNotifiedAt(prayerId), now)
             .apply()
         
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         
-        val appPrefs = context.getSharedPreferences("barakah_prefs", Context.MODE_PRIVATE)
-        val isAr = appPrefs.getString("app_lang", "ar") == "ar"
+        val appPrefs = context.getSharedPreferences(AppPrefs.FILE, Context.MODE_PRIVATE)
+        val isAr = appPrefs.getString(AppPrefs.APP_LANG, "ar") == "ar"
 
-        if (appPrefs.getBoolean("adhan_audio_enabled", false) &&
+        if (appPrefs.getBoolean(AppPrefs.ADHAN_AUDIO_ENABLED, false) &&
             prayerName in setOf("Fajr", "Dhuhr", "Asr", "Maghrib", "Isha")
         ) {
             val playbackIntent = Intent(context, AdhanPlaybackService::class.java).apply {
@@ -88,8 +90,8 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
         )
 
         if (prayerName == "Daily Support Reminder") {
-            val notifyOccasions = appPrefs.getBoolean("notify_occasions", true)
-            val notifyFasting = appPrefs.getBoolean("notify_fasting", true)
+            val notifyOccasions = appPrefs.getBoolean(AppPrefs.NOTIFY_OCCASIONS, true)
+            val notifyFasting = appPrefs.getBoolean(AppPrefs.NOTIFY_FASTING, true)
             
             if (notifyFasting) {
                 val tomorrow = java.util.Calendar.getInstance().apply { add(java.util.Calendar.DAY_OF_YEAR, 1) }
