@@ -795,9 +795,10 @@ fun HomeSettingsSection(
                                 ) {
                                     OutlinedButton(
                                         onClick = {
-                                            viewModel.setLocationMethod("auto")
+                                            // One request only: switching to auto already fetches,
+                                            // so doing both fetched twice and reported twice.
                                             if (locationPermissionState.status.isGranted) {
-                                                viewModel.triggerGPSManual()
+                                                viewModel.setLocationMethod("auto")
                                             } else {
                                                 locationPermissionState.launchPermissionRequest()
                                             }
