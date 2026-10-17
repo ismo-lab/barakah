@@ -15,6 +15,9 @@
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <!-- Phones stay in portrait. From Android 16 on, large screens ignore that and get the
+         landscape layouts instead, so both of these are deliberate and lint's DiscouragedApi
+         and LockedOrientationActivity are expected here. -->
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -24,12 +27,13 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:resizeableActivity="false"
+        tools:ignore="DiscouragedApi"
         android:theme="@style/Theme.MyApplication">
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:screenOrientation="portrait"
+            tools:ignore="DiscouragedApi,LockedOrientationActivity"
             android:theme="@style/Theme.MyApplication">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

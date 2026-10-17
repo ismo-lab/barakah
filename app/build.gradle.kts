@@ -88,6 +88,17 @@ android {
       signingConfig = signingConfigs.getByName("sharedConfig")
     }
   }
+  lint {
+    // These four only ever say that a newer version exists somewhere, which is true every week
+    // and is not something a build should fail or nag about: Dependabot belongs on the first
+    // three, and Play says the same thing about the target API once a year.
+    disable += setOf(
+      "GradleDependency",
+      "NewerVersionAvailable",
+      "AndroidGradlePluginVersion",
+      "OldTargetApi",
+    )
+  }
   compileOptions {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11

@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.glance.appwidget.GlanceAppWidgetManager
@@ -408,7 +409,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
         // Guarantee app default language is arabic when first open
         if (!prefs.contains(AppPrefs.APP_LANG)) {
-            prefs.edit().putString(AppPrefs.APP_LANG, "ar").apply()
+            prefs.edit { putString(AppPrefs.APP_LANG, "ar") }
         }
 
         if (!_isFirstRun.value && _locationMethod.value != "auto" && _isLocationSet.value && !prefs.contains(AppPrefs.LOC_TIMEZONE)) {
@@ -608,12 +609,12 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             prefs.getString(AppPrefs.LOC_TIMEZONE, null)
         }
         val resolvedTimeZoneId = PrayerCalculator.resolveTimeZoneId(selectedTimeZoneId)
-        prefs.edit()
-            .putFloat(AppPrefs.LOC_LAT, lat.toFloat())
-            .putFloat(AppPrefs.LOC_LNG, lng.toFloat())
-            .putString(AppPrefs.LOC_LABEL, label)
-            .putString(AppPrefs.LOC_TIMEZONE, resolvedTimeZoneId)
-            .commit()
+        prefs.edit {
+            putFloat(AppPrefs.LOC_LAT, lat.toFloat())
+            putFloat(AppPrefs.LOC_LNG, lng.toFloat())
+            putString(AppPrefs.LOC_LABEL, label)
+            putString(AppPrefs.LOC_TIMEZONE, resolvedTimeZoneId)
+        }
         recalculatePrayerTimes()
         if (isSuccessFeedback) {
             viewModelScope.launch {
@@ -625,7 +626,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
     fun setAppLanguage(lang: String) {
         _appLanguage.value = lang
-        prefs.edit().putString(AppPrefs.APP_LANG, lang).commit()
+        prefs.edit { putString(AppPrefs.APP_LANG, lang) }
         _filteredDuas.value = if (lang == "ar") DuaData.duasAr else DuaData.duasEn
         updateWidgetsGlobally()
     }
@@ -680,37 +681,37 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
     fun setAppTheme(theme: String) {
         _appTheme.value = theme
-        prefs.edit().putString(AppPrefs.APP_THEME, theme).apply()
+        prefs.edit { putString(AppPrefs.APP_THEME, theme) }
     }
 
     fun setUseDynamicColor(use: Boolean) {
         _useDynamicColor.value = use
-        prefs.edit().putBoolean(AppPrefs.USE_DYNAMIC_COLOR, use).apply()
+        prefs.edit { putBoolean(AppPrefs.USE_DYNAMIC_COLOR, use) }
     }
 
     fun setAmoledDark(enable: Boolean) {
         _amoledDark.value = enable
-        prefs.edit().putBoolean(AppPrefs.AMOLED_DARK, enable).apply()
+        prefs.edit { putBoolean(AppPrefs.AMOLED_DARK, enable) }
     }
 
     fun setArabicFontSize(size: Float) {
         _arabicFontSize.value = size
-        prefs.edit().putFloat(AppPrefs.ARABIC_FONT_SIZE, size).apply()
+        prefs.edit { putFloat(AppPrefs.ARABIC_FONT_SIZE, size) }
     }
 
     fun setEnglishFontSize(size: Float) {
         _englishFontSize.value = size
-        prefs.edit().putFloat(AppPrefs.ENGLISH_FONT_SIZE, size).apply()
+        prefs.edit { putFloat(AppPrefs.ENGLISH_FONT_SIZE, size) }
     }
 
     fun setQuranFont(font: String) {
         _quranFont.value = font
-        prefs.edit().putString(AppPrefs.QURAN_FONT, font).apply()
+        prefs.edit { putString(AppPrefs.QURAN_FONT, font) }
     }
 
     fun setLocationMethod(method: String) {
         _locationMethod.value = method
-        prefs.edit().putString(AppPrefs.LOCATION_METHOD, method).apply()
+        prefs.edit { putString(AppPrefs.LOCATION_METHOD, method) }
         if (method == "auto") {
             lastGpsOffMsgTime = 0 // Reset to allow immediate feedback when switching to auto
             requestGPSLocation()
@@ -722,18 +723,18 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
     fun setEnableTasbihHaptics(enable: Boolean) {
         _enableTasbihHaptics.value = enable
-        prefs.edit().putBoolean(AppPrefs.ENABLE_TASBIH_HAPTICS, enable).apply()
+        prefs.edit { putBoolean(AppPrefs.ENABLE_TASBIH_HAPTICS, enable) }
     }
 
     fun setUseWesternNumbersInArabic(enable: Boolean) {
         _useWesternNumbersInArabic.value = enable
-        prefs.edit().putBoolean(AppPrefs.USE_WESTERN_NUMBERS_IN_ARABIC, enable).apply()
+        prefs.edit { putBoolean(AppPrefs.USE_WESTERN_NUMBERS_IN_ARABIC, enable) }
         updateWidgetsGlobally()
     }
 
     fun setFirstRunComplete() {
         _isFirstRun.value = false
-        prefs.edit().putBoolean(AppPrefs.IS_FIRST_RUN, false).apply()
+        prefs.edit { putBoolean(AppPrefs.IS_FIRST_RUN, false) }
     }
 
     fun saveLastReading(surahId: Int, ayahNumber: Int, surahName: String) {
@@ -772,7 +773,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
     fun selectMethod(method: PrayerCalculator.CalculationMethod) {
         _calculationMethod.value = method
-        prefs.edit().putString(AppPrefs.CALC_METHOD, method.name).commit()
+        prefs.edit { putString(AppPrefs.CALC_METHOD, method.name) }
         recalculatePrayerTimes()
     }
 
@@ -813,102 +814,102 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
     fun setShowNawafil(value: Boolean) {
         _showNawafil.value = value
-        prefs.edit().putBoolean(AppPrefs.SHOW_NAWAFIL, value).apply()
+        prefs.edit { putBoolean(AppPrefs.SHOW_NAWAFIL, value) }
         recalculatePrayerTimes()
     }
 
     fun setNotifyNawafil(value: Boolean) {
         _notifyNawafil.value = value
-        prefs.edit().putBoolean(AppPrefs.NOTIFY_NAWAFIL, value).apply()
+        prefs.edit { putBoolean(AppPrefs.NOTIFY_NAWAFIL, value) }
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
     }
 
     fun setAdhanAudioEnabled(value: Boolean) {
         _adhanAudioEnabled.value = value
-        prefs.edit().putBoolean(AppPrefs.ADHAN_AUDIO_ENABLED, value).apply()
+        prefs.edit { putBoolean(AppPrefs.ADHAN_AUDIO_ENABLED, value) }
     }
 
     fun setAdhanAudioMode(value: String) {
         if (value != "full" && value != "short") return
         _adhanAudioMode.value = value
-        prefs.edit().putString(AppPrefs.ADHAN_AUDIO_MODE, value).apply()
+        prefs.edit { putString(AppPrefs.ADHAN_AUDIO_MODE, value) }
     }
 
     fun setAdhanAudioStream(value: String) {
         if (value != "notification" && value != "alarm") return
         _adhanAudioStream.value = value
-        prefs.edit().putString(AppPrefs.ADHAN_AUDIO_STREAM, value).apply()
+        prefs.edit { putString(AppPrefs.ADHAN_AUDIO_STREAM, value) }
     }
 
     fun setNotifyMorningAdhkar(value: Boolean) {
         _notifyMorningAdhkar.value = value
-        prefs.edit().putBoolean(AppPrefs.NOTIFY_MORNING_ADHKAR, value).apply()
+        prefs.edit { putBoolean(AppPrefs.NOTIFY_MORNING_ADHKAR, value) }
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
     }
 
     fun setMorningAdhkarOffset(value: Int) {
         _morningAdhkarOffset.value = value
-        prefs.edit().putInt(AppPrefs.MORNING_ADHKAR_OFFSET, value).apply()
+        prefs.edit { putInt(AppPrefs.MORNING_ADHKAR_OFFSET, value) }
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
     }
 
     fun setNotifyEveningAdhkar(value: Boolean) {
         _notifyEveningAdhkar.value = value
-        prefs.edit().putBoolean(AppPrefs.NOTIFY_EVENING_ADHKAR, value).apply()
+        prefs.edit { putBoolean(AppPrefs.NOTIFY_EVENING_ADHKAR, value) }
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
     }
 
     fun setEveningAdhkarOffset(value: Int) {
         _eveningAdhkarOffset.value = value
-        prefs.edit().putInt(AppPrefs.EVENING_ADHKAR_OFFSET, value).apply()
+        prefs.edit { putInt(AppPrefs.EVENING_ADHKAR_OFFSET, value) }
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
     }
 
     fun setNotifyBeforeAdhan(value: Boolean) {
         _notifyBeforeAdhan.value = value
-        prefs.edit().putBoolean(AppPrefs.NOTIFY_BEFORE_ADHAN, value).apply()
+        prefs.edit { putBoolean(AppPrefs.NOTIFY_BEFORE_ADHAN, value) }
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
     }
 
     fun setNotifyOccasions(value: Boolean) {
         _notifyOccasions.value = value
-        prefs.edit().putBoolean(AppPrefs.NOTIFY_OCCASIONS, value).apply()
+        prefs.edit { putBoolean(AppPrefs.NOTIFY_OCCASIONS, value) }
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
     }
 
     fun setNotifyFasting(value: Boolean) {
         _notifyFasting.value = value
-        prefs.edit().putBoolean(AppPrefs.NOTIFY_FASTING, value).apply()
+        prefs.edit { putBoolean(AppPrefs.NOTIFY_FASTING, value) }
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
     }
 
     fun setNotifyJumuah(value: Boolean) {
         _notifyJumuah.value = value
-        prefs.edit().putBoolean(AppPrefs.NOTIFY_JUMUAH, value).apply()
+        prefs.edit { putBoolean(AppPrefs.NOTIFY_JUMUAH, value) }
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
     }
 
     fun setNotifySuhur(value: Boolean) {
         _notifySuhur.value = value
-        prefs.edit().putBoolean(AppPrefs.NOTIFY_SUHUR, value).apply()
+        prefs.edit { putBoolean(AppPrefs.NOTIFY_SUHUR, value) }
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
     }
 
     fun setNotifyIftar(value: Boolean) {
         _notifyIftar.value = value
-        prefs.edit().putBoolean(AppPrefs.NOTIFY_IFTAR, value).apply()
+        prefs.edit { putBoolean(AppPrefs.NOTIFY_IFTAR, value) }
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
     }
 
     fun setAsrMethod(value: String) {
         _asrMethod.value = value
-        prefs.edit().putString(AppPrefs.ASR_METHOD, value).apply()
+        prefs.edit { putString(AppPrefs.ASR_METHOD, value) }
         recalculatePrayerTimes()
     }
 
     fun setIshaMethod(value: String) {
         _ishaMethod.value = value
-        prefs.edit().putString(AppPrefs.ISHA_METHOD, value).apply()
+        prefs.edit { putString(AppPrefs.ISHA_METHOD, value) }
         recalculatePrayerTimes()
     }
 
@@ -916,37 +917,37 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
     fun setAdjFajr(value: Int) {
         adjFajr.value = value
-        prefs.edit().putInt(AppPrefs.ADJ_FAJR, value).apply()
+        prefs.edit { putInt(AppPrefs.ADJ_FAJR, value) }
         recalculatePrayerTimes()
     }
 
     fun setAdjSunrise(value: Int) {
         adjSunrise.value = value
-        prefs.edit().putInt(AppPrefs.ADJ_SUNRISE, value).apply()
+        prefs.edit { putInt(AppPrefs.ADJ_SUNRISE, value) }
         recalculatePrayerTimes()
     }
 
     fun setAdjDhuhr(value: Int) {
         adjDhuhr.value = value
-        prefs.edit().putInt(AppPrefs.ADJ_DHUHR, value).apply()
+        prefs.edit { putInt(AppPrefs.ADJ_DHUHR, value) }
         recalculatePrayerTimes()
     }
 
     fun setAdjAsr(value: Int) {
         adjAsr.value = value
-        prefs.edit().putInt(AppPrefs.ADJ_ASR, value).apply()
+        prefs.edit { putInt(AppPrefs.ADJ_ASR, value) }
         recalculatePrayerTimes()
     }
 
     fun setAdjMaghrib(value: Int) {
         adjMaghrib.value = value
-        prefs.edit().putInt(AppPrefs.ADJ_MAGHRIB, value).apply()
+        prefs.edit { putInt(AppPrefs.ADJ_MAGHRIB, value) }
         recalculatePrayerTimes()
     }
 
     fun setAdjIsha(value: Int) {
         adjIsha.value = value
-        prefs.edit().putInt(AppPrefs.ADJ_ISHA, value).apply()
+        prefs.edit { putInt(AppPrefs.ADJ_ISHA, value) }
         recalculatePrayerTimes()
     }
 

@@ -167,12 +167,9 @@ class AdhanPlaybackService : Service() {
 
     private fun stopPlayback() {
         releasePlayer()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            stopForeground(STOP_FOREGROUND_REMOVE)
-        } else {
-            @Suppress("DEPRECATION")
-            stopForeground(true)
-        }
+        // minSdk is 24, so the deprecated boolean overload this used to fall back to
+        // can never be reached.
+        stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
 
