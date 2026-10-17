@@ -11,6 +11,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import androidx.core.content.ContextCompat
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -27,6 +28,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 class LocationProvider(private val context: Context) {
 
     private companion object {
+        const val TAG = "LocationProvider"
+
         /** A cached fix older than this counts as no fix at all: the phone may have moved since. */
         const val MAX_CACHED_FIX_AGE_MS = 10 * 60 * 1000L
 
@@ -108,7 +111,7 @@ class LocationProvider(private val context: Context) {
                 }
                 return
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e(TAG, "Unable to ask the system for a current location", e)
             }
             onResult(bestLastKnown())
             return
@@ -155,7 +158,7 @@ class LocationProvider(private val context: Context) {
         try {
             manager.requestSingleUpdate(provider, listener, Looper.getMainLooper())
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Unable to request a single location update", e)
             deliver(bestLastKnown())
         }
     }
@@ -196,7 +199,7 @@ class LocationProvider(private val context: Context) {
             manager.requestLocationUpdates(provider, minTimeMs, minDistanceM, listener, Looper.getMainLooper())
         } catch (e: Exception) {
             updatesListener = null
-            e.printStackTrace()
+            Log.e(TAG, "Unable to start listening for location updates", e)
         }
     }
 
@@ -205,7 +208,7 @@ class LocationProvider(private val context: Context) {
         try {
             manager?.removeUpdates(listener)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Unable to stop listening for location updates", e)
         }
         updatesListener = null
     }

@@ -1,10 +1,13 @@
 package dev.barakah.app.util
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import java.util.Calendar
 
 object HijriCalendarHelper {
+
+    private const val TAG = "HijriCalendarHelper"
 
     data class HijriDate(val day: Int, val month: Int, val year: Int)
 
@@ -41,7 +44,7 @@ object HijriCalendarHelper {
                 val date = java.time.LocalDate.of(year, month, day).plusDays(adjustmentDays.toLong())
                 return getHijriDateFor(date)
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e(TAG, "Falling back to the arithmetic Hijri conversion", e)
             }
         }
 

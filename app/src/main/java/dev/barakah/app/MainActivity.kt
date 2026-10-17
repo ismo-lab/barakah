@@ -1,6 +1,7 @@
 package dev.barakah.app
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -45,6 +46,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
  */
 private val NAV_BAR_LIGHT_SCRIM = android.graphics.Color.argb(0xe6, 0xFF, 0xFF, 0xFF)
 private val NAV_BAR_DARK_SCRIM = android.graphics.Color.argb(0x80, 0x1b, 0x1b, 0x1b)
+
+private const val TAG = "MainActivity"
 
 class MainActivity : ComponentActivity() {
     private var activityViewModel: BarakahViewModel? = null
@@ -132,7 +135,7 @@ class MainActivity : ComponentActivity() {
                                             val intent = android.content.Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS)
                                             startActivity(intent)
                                         } catch (e: Exception) {
-                                            e.printStackTrace()
+                                            Log.e(TAG, "Unable to open the location settings screen", e)
                                         }
                                     }
                                 ) {

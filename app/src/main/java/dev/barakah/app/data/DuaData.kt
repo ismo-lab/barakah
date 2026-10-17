@@ -1,6 +1,7 @@
 package dev.barakah.app.data
 
 import android.content.Context
+import android.util.Log
 import dev.barakah.app.R
 import org.json.JSONObject
 
@@ -19,6 +20,9 @@ data class Dua(
 )
 
 object DuaData {
+
+    private const val TAG = "DuaData"
+
     var duasAr: List<Dua> = emptyList()
     var duasEn: List<Dua> = emptyList()
 
@@ -66,7 +70,7 @@ object DuaData {
                 }
                 duasAr = arList
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e(TAG, "Unable to load the Arabic supplications", e)
             }
         }
 
@@ -150,7 +154,7 @@ object DuaData {
 
                 duasEn = finalEnList
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e(TAG, "Unable to load the English supplications", e)
             }
         }
     }
