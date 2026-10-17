@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.barakah.app.data.Dua
 import dev.barakah.app.ui.BarakahViewModel
+import dev.barakah.app.ui.currentWindowWidth
 import dev.barakah.app.util.localize
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
@@ -288,18 +289,13 @@ fun SupplicationsScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        AnimatedContent(
-            targetState = (activeCategory == "Menu"),
-            transitionSpec = {
-                fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(300))
-            },
-            modifier = Modifier.weight(1f),
-            label = "DuaListTransition"
-        ) { isMenu ->
-            if (isMenu) {
+        val twoPane = currentWindowWidth().showsTwoPanes
+
+        // The categories, on their own on a phone and beside the supplications on a wide window.
+        val categoriesPane: @Composable (Modifier) -> Unit = { paneModifier ->
                 LazyColumn(
                     state = menuScrollState,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = paneModifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
@@ -405,10 +401,13 @@ fun SupplicationsScreen(
                         }
                     }
                 }
-            } else {
+            }
+
+        // The supplications themselves, for whichever category is open.
+        val duasPane: @Composable (Modifier) -> Unit = { paneModifier ->
                 if (filteredDuas.isEmpty()) {
                     Box(
-                        modifier = Modifier
+                        modifier = paneModifier
                             .fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
@@ -429,7 +428,7 @@ fun SupplicationsScreen(
                     }
                 } else {
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = paneModifier.fillMaxSize(),
                         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
@@ -636,6 +635,69 @@ fun SupplicationsScreen(
                     }
                 }
             }
+
+        if (twoPane) {
+            Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                categoriesPane(Modifier.width(320.dp).fillMaxHeight())
+                VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                if (activeCategory == "Menu") {
+                    DuaPanePlaceholder(
+                        isAr = isAr,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                    )
+                } else {
+                    duasPane(
+                        Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                    )
+                }
+            }
+        } else {
+            AnimatedContent(
+                targetState = (activeCategory == "Menu"),
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(300))
+                },
+                modifier = Modifier.weight(1f),
+                label = "DuaListTransition"
+            ) { isMenu ->
+                if (isMenu) {
+                    categoriesPane(Modifier.fillMaxSize())
+                } else {
+                    duasPane(Modifier.fillMaxSize())
+                }
+            }
+        }
+    }
+}
+
+/** What the supplications pane shows on a wide window before a category is chosen. */
+@Composable
+private fun DuaPanePlaceholder(
+    isAr: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                imageVector = Icons.Outlined.Star,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.size(48.dp)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = if (isAr) "اختر تصنيفاً من القائمة" else "Choose a category from the list",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
