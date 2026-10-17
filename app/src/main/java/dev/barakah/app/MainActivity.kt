@@ -33,6 +33,7 @@ import androidx.navigation.NavHostController
 import dev.barakah.app.ui.BarakahViewModel
 import dev.barakah.app.ui.screens.*
 import dev.barakah.app.ui.theme.BarakahTheme
+import dev.barakah.app.util.AppNightMode
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
@@ -53,6 +54,9 @@ class MainActivity : ComponentActivity() {
     private var activityViewModel: BarakahViewModel? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // The splash is drawn by the system before this activity exists, so the app's theme goes to
+        // the system on the way in as well as whenever the setting changes.
+        AppNightMode.applyStored(this)
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {

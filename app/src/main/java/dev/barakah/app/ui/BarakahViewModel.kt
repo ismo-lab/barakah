@@ -20,6 +20,7 @@ import dev.barakah.app.widget.PrayerWidget
 import dev.barakah.app.widget.PrayerRemainingWidget
 import dev.barakah.app.widget.NawafilWidget
 import dev.barakah.app.widget.refreshWidgetInstances
+import dev.barakah.app.util.AppNightMode
 import dev.barakah.app.util.LocationProvider
 import dev.barakah.app.util.PrayerCalculator
 import dev.barakah.app.util.QiblaManager
@@ -706,6 +707,8 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     fun setAppTheme(theme: String) {
         _appTheme.value = theme
         prefs.edit { putString(AppPrefs.APP_THEME, theme) }
+        // Keeps the system's idea of the app's theme in step, which is what the splash screen uses.
+        AppNightMode.apply(getApplication(), theme)
     }
 
     fun setUseDynamicColor(use: Boolean) {
