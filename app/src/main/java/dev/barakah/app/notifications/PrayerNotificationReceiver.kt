@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
+import androidx.core.content.edit
 import dev.barakah.app.MainActivity
 import dev.barakah.app.R
 import dev.barakah.app.data.AppPrefs
@@ -342,9 +343,9 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
         scheduledTime: Long,
         now: Long
     ) {
-        prefs.edit()
-            .putLong(NotifHistoryPrefs.lastNotified(prayerId), scheduledTime)
-            .putLong(NotifHistoryPrefs.lastNotifiedAt(prayerId), now)
-            .apply()
+        prefs.edit {
+            putLong(NotifHistoryPrefs.lastNotified(prayerId), scheduledTime)
+            putLong(NotifHistoryPrefs.lastNotifiedAt(prayerId), now)
+        }
     }
 }
