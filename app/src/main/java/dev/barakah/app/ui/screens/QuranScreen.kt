@@ -417,7 +417,7 @@ fun QuranScreen(
                             }
                         }
                     }
-                    items(filteredSurahs) { surah ->
+                    items(filteredSurahs, key = { surah -> surah.id }) { surah ->
                         val isBookmarked = bookmarks.any { b -> b.surahId == surah.id }
                         
                         Row(
@@ -628,7 +628,7 @@ fun QuranScreen(
                         }
                     }
 
-                    items(surah.versesList) { verse ->
+                    items(surah.versesList, key = { verse -> verse.index }) { verse ->
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()

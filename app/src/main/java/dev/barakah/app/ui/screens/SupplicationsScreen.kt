@@ -325,7 +325,7 @@ fun SupplicationsScreen(
                             )
                         }
                         
-                        items(filteredCategories) { category ->
+                        items(filteredCategories, key = { category -> category }) { category ->
                             val color = getCategoryColor(category)
                             val icon = getCategoryIcon(category)
                             

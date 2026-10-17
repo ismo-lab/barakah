@@ -582,8 +582,7 @@ fun TasbihScreen(
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(viewModel.commonDhikrList.size) { idx ->
-                            val dhikr = viewModel.commonDhikrList[idx]
+                        items(viewModel.commonDhikrList, key = { dhikr -> dhikr.first }) { dhikr ->
                             val isSelected = activeDhikr.first == dhikr.first
                             
                             Card(
