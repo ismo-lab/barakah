@@ -263,12 +263,11 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
             text = if (isAr) "حان وقت صلاة $dispName." else "It's time for $dispName prayer."
         }
 
-        // Use BidiFormatter to correctly format RTL strings without layout clipping on Android 16/15
-        if (isAr) {
-            val bidi = androidx.core.text.BidiFormatter.getInstance()
-            title = bidi.unicodeWrap(title)
-            text = bidi.unicodeWrap(text)
-        }
+        // The notification strings are either fully Arabic (app in Arabic mode) or fully
+        // English, so the platform's own bidirectional algorithm renders them correctly and
+        // BidiFormatter.unicodeWrap() is unnecessary. getInstance() picks the *system*
+        // locale, which is usually LTR, so it wrapped the Arabic in left-to-right override
+        // characters for no benefit.
 
         val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_notification)
