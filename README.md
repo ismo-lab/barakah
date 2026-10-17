@@ -17,14 +17,6 @@
 
 **Get the app:** the latest signed APK is on the [Releases](https://github.com/ismo-lab/barakah/releases) page as `Barakah-v<version>.apk`.
 
-## 🌍 Supported Languages
-
-The interface is English or Arabic, switchable in Settings. Widget labels come from Android
-resources instead, so they follow the device language: Arabic and German are translated, and
-everything else falls back to English.
-
----
-
 ## 🌟 Key Features
 
 * **Home Dashboard**: View real-time prayer schedule trackers, choose voluntary (Nawafil) prayers to track, configure high-fidelity Mecca Al-Haram Adhan background play, and set flexible reminder notifications.
