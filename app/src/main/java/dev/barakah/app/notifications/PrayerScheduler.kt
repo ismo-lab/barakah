@@ -12,6 +12,7 @@ import java.util.TimeZone
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import dev.barakah.app.data.AppDatabase
@@ -22,8 +23,18 @@ object PrayerScheduler {
     private const val ACTION_REFRESH_WIDGETS = "dev.barakah.app.ACTION_REFRESH_WIDGETS"
     private const val WIDGET_REFRESH_REQUEST_CODE = 2001
 
+    /**
+     * Fire-and-forget entry point, for callers that outlive the call such as the UI. Receivers must
+     * use [scheduleNextPrayersAndWait] instead, so that scheduling finishes before they return and
+     * the process is allowed to be killed.
+     */
     fun scheduleNextPrayers(context: Context) {
-        CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(Dispatchers.IO).launch { scheduleNextPrayersAndWait(context) }
+    }
+
+    /** Schedules every prayer alarm, and returns once they have all been set. */
+    suspend fun scheduleNextPrayersAndWait(context: Context) {
+        coroutineScope {
             val prefs = context.getSharedPreferences(AppPrefs.FILE, Context.MODE_PRIVATE)
             val rawLabel = prefs.getString(AppPrefs.LOC_LABEL, null)
             val isLocationSet = !(rawLabel.isNullOrEmpty() || rawLabel == "Mecca, KSA" || rawLabel == "Mecca (GPS Fallback)" || rawLabel == "مكة المكرمة (تلقائي)" || rawLabel == "الموقع غير محدد" || rawLabel == "No Location Selected")
@@ -43,7 +54,7 @@ object PrayerScheduler {
                         alarmManager.cancel(pendingIntent)
                     }
                 }
-                return@launch
+                return@coroutineScope
             }
 
             val lat = prefs.getFloat(AppPrefs.LOC_LAT, 21.4225f).toDouble()
@@ -243,8 +254,12 @@ object PrayerScheduler {
             set(Calendar.MILLISECOND, 0)
         }
         
-        // Ensure alarm is in the future (add 60s buffer to prevent duplicate firing when alarm triggers)
-        if (cal.timeInMillis <= now + 60_000L) {
+        // Only a time that has already passed belongs to tomorrow. Treating the next minute as
+        // gone meant that opening the app in the 60 seconds before a prayer moved that prayer's
+        // alert to the next day, so it was never announced at all. A double notification for the
+        // same prayer is prevented in the receiver, which compares the alarm's own trigger time
+        // with the last one it announced.
+        if (cal.timeInMillis <= now) {
             cal.add(Calendar.DAY_OF_YEAR, 1)
         }
         

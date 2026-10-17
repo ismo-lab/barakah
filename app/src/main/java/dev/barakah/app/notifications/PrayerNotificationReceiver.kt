@@ -11,17 +11,45 @@ import dev.barakah.app.MainActivity
 import dev.barakah.app.R
 import dev.barakah.app.data.AppPrefs
 import dev.barakah.app.data.NotifHistoryPrefs
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class PrayerNotificationReceiver : BroadcastReceiver() {
     companion object {
         const val ID_PRAYER = 1000
         const val ID_ADHKAR = 1001
         const val ID_DAILY = 1002
+
+        private const val PRAYER_CHANNEL_ID = "prayer_channel"
+        private const val ADHAN_CHANNEL_ID = "adhan_channel"
+        private val PRIMARY_PRAYERS = setOf("Fajr", "Dhuhr", "Asr", "Maghrib", "Isha")
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        val action = intent.action
+        // Posting the notification itself is quick, but the rescheduling that follows it must not be
+        // abandoned when this receiver returns: the process is eligible to be killed the moment
+        // onReceive() does. goAsync() hands the work back to the system and keeps the process alive
+        // until finish() is called.
+        val pendingResult = goAsync()
+        val appContext = context.applicationContext
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                postForPrayerNotification(appContext, intent)
+            } catch (error: Exception) {
+                android.util.Log.e("PrayerNotifReceiver", "Failed to handle prayer notification", error)
+            } finally {
+                try {
+                    PrayerScheduler.scheduleNextPrayersAndWait(appContext)
+                } catch (error: Exception) {
+                    android.util.Log.e("PrayerNotifReceiver", "Failed to reschedule prayer alarms", error)
+                }
+                pendingResult.finish()
+            }
+        }
+    }
 
+    private fun postForPrayerNotification(context: Context, intent: Intent) {
         val prayerName = intent.getStringExtra("PRAYER_NAME") ?: "Prayer"
         val prayerId = intent.getIntExtra("PRAYER_ID", prayerName.hashCode())
         val scheduledTime = intent.getLongExtra("SCHEDULED_TIME", 0L)
@@ -42,25 +70,24 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
             return
         }
         
-        // Also skip if current time is way off from scheduled time (e.g. system re-running old alarms)
-        if (scheduledTime != 0L && kotlin.math.abs(now - scheduledTime) > 30 * 60 * 1000L) { // 30 minutes threshold
+        // An alarm that fired very late is not worth announcing - but "late" has to be measured in
+        // hours, not minutes. Anything delayed by Doze or by the inexact fallback was dropped here
+        // and the prayer was never announced at all.
+        if (NotificationTiming.isTooLate(scheduledTime, now)) {
+            android.util.Log.w("PrayerNotifReceiver", "Skipping stale notification for $prayerName")
             return
         }
 
-        // Persist notified time and timestamp
-        prefs.edit()
-            .putLong(NotifHistoryPrefs.lastNotified(prayerId), scheduledTime)
-            .putLong(NotifHistoryPrefs.lastNotifiedAt(prayerId), now)
-            .apply()
-        
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         
         val appPrefs = context.getSharedPreferences(AppPrefs.FILE, Context.MODE_PRIVATE)
         val isAr = appPrefs.getString(AppPrefs.APP_LANG, "ar") == "ar"
 
-        if (appPrefs.getBoolean(AppPrefs.ADHAN_AUDIO_ENABLED, false) &&
-            prayerName in setOf("Fajr", "Dhuhr", "Asr", "Maghrib", "Isha")
-        ) {
+        // Only the five prayers play the Adhan, and only when adhan audio is enabled.
+        val playsAdhan = prayerName in PRIMARY_PRAYERS &&
+            appPrefs.getBoolean(AppPrefs.ADHAN_AUDIO_ENABLED, false)
+
+        if (playsAdhan) {
             val playbackIntent = Intent(context, AdhanPlaybackService::class.java).apply {
                 putExtra(AdhanPlaybackService.EXTRA_PRAYER_NAME, prayerName)
             }
@@ -75,11 +102,21 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
             }
         }
 
-        val channelId = "prayer_channel"
+        // A channel owns its sound on Android 8+, so the prayers that play the Adhan are posted to a
+        // second, silent channel: the Adhan is the alert, and the notification must not add a tone on
+        // top of it. Every other reminder keeps the audible channel.
+        val channelId = if (playsAdhan) ADHAN_CHANNEL_ID else PRAYER_CHANNEL_ID
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             val channelName = if (isAr) "مواقيت الصلاة والذكر" else "Prayer Times & Remembrance"
-            val channel = NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_HIGH)
-            notificationManager.createNotificationChannel(channel)
+            notificationManager.createNotificationChannel(
+                NotificationChannel(PRAYER_CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_HIGH)
+            )
+
+            val adhanChannelName = if (isAr) "الأذان" else "Adhan"
+            notificationManager.createNotificationChannel(
+                NotificationChannel(ADHAN_CHANNEL_ID, adhanChannelName, NotificationManager.IMPORTANCE_HIGH)
+                    .apply { setSound(null, null) }
+            )
         }
         
         val activityIntent = Intent(context, MainActivity::class.java).apply {
@@ -199,8 +236,8 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
                     }
                 }
             }
-            
-            PrayerScheduler.scheduleNextPrayers(context)
+
+            markNotified(prefs, prayerId, scheduledTime, now)
             return
         }
 
@@ -215,7 +252,6 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
         } else if (prayerName == "Friday Jumuah") {
             val isFriday = java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_WEEK) == java.util.Calendar.FRIDAY
             if (!isFriday) {
-                PrayerScheduler.scheduleNextPrayers(context)
                 return
             }
             title = if (isAr) "يوم الجمعة المبارك" else "Blessed Friday (Jumu'ah)"
@@ -287,11 +323,28 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
             
         try {
             notificationManager.notify(notifId, builder.build())
+            markNotified(prefs, prayerId, scheduledTime, now)
         } catch (e: Exception) {
             android.util.Log.e("PrayerNotifReceiver", "Failed to post prayer notification: ${e.message}")
         }
+    }
 
-        // Reschedule for next days
-        PrayerScheduler.scheduleNextPrayers(context)
+    /**
+     * Records which scheduled time was announced for this prayer.
+     *
+     * This is written only once a notification has actually been posted. Recording it beforehand
+     * meant a notification that was skipped still consumed the record, so the alert could never be
+     * delivered later.
+     */
+    private fun markNotified(
+        prefs: android.content.SharedPreferences,
+        prayerId: Int,
+        scheduledTime: Long,
+        now: Long
+    ) {
+        prefs.edit()
+            .putLong(NotifHistoryPrefs.lastNotified(prayerId), scheduledTime)
+            .putLong(NotifHistoryPrefs.lastNotifiedAt(prayerId), now)
+            .apply()
     }
 }
