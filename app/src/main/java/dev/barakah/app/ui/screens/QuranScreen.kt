@@ -42,6 +42,8 @@ import dev.barakah.app.R
 import dev.barakah.app.util.PrayerCalculator
 import dev.barakah.app.data.Surah
 import dev.barakah.app.ui.BarakahViewModel
+import dev.barakah.app.ui.theme.quranFontFamilyFor
+import dev.barakah.app.ui.theme.quranLineHeightFor
 import dev.barakah.app.util.localize
 import kotlinx.coroutines.launch
 
@@ -74,7 +76,10 @@ fun QuranScreen(
     // Fonts collected directly from centralized viewModel
     val arabicFontSize by viewModel.arabicFontSize.collectAsState()
     val englishFontSize by viewModel.englishFontSize.collectAsState()
-    val quranFontFamily = FontFamily.Default
+    val quranFont by viewModel.quranFont.collectAsState()
+    // Only Quran text uses the selected face; the surrounding UI keeps the system font.
+    val quranFontFamily = quranFontFamilyFor(quranFont)
+    val quranLineHeight = quranLineHeightFor(quranFont)
     val appLanguage by viewModel.appLanguage.collectAsState()
     val isAr = appLanguage == "ar"
     val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
@@ -474,7 +479,9 @@ fun QuranScreen(
                                             style = MaterialTheme.typography.titleLarge,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.primary,
-                                            fontFamily = quranFontFamily
+                                            fontFamily = quranFontFamily,
+                                            // Amiri's line box is ~2.45em, so titleLarge's own 26sp would clip it
+                                            lineHeight = (MaterialTheme.typography.titleLarge.fontSize.value * quranLineHeight).sp
                                         )
                                         Text(
                                             text = surah.translation,
@@ -674,7 +681,7 @@ fun QuranScreen(
                                     fontSize = arabicFontSize.sp,
                                     fontFamily = quranFontFamily,
                                     textDirection = TextDirection.Rtl,
-                                    lineHeight = (arabicFontSize * 1.5).sp,
+                                    lineHeight = (arabicFontSize * quranLineHeight).sp,
                                     textAlign = TextAlign.Right
                                 ),
                                 color = MaterialTheme.colorScheme.onBackground,

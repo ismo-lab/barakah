@@ -46,6 +46,10 @@ import kotlinx.coroutines.delay
 import dev.barakah.app.util.PrayerCalculator
 import dev.barakah.app.util.TimeUtils
 import dev.barakah.app.util.localize
+import dev.barakah.app.ui.theme.QURAN_FONT_AMIRI
+import dev.barakah.app.ui.theme.QURAN_FONT_SYSTEM
+import dev.barakah.app.ui.theme.quranFontFamilyFor
+import dev.barakah.app.ui.theme.quranLineHeightFor
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -87,12 +91,14 @@ fun HomeScreen(
     val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsState()
     val fontAr by viewModel.arabicFontSize.collectAsState()
     val fontEn by viewModel.englishFontSize.collectAsState()
+    val quranFont by viewModel.quranFont.collectAsState()
     val locationMethod by viewModel.locationMethod.collectAsState()
 
     val showNawafil by viewModel.showNawafil.collectAsState()
     val notifyNawafil by viewModel.notifyNawafil.collectAsState()
     val adhanAudioEnabled by viewModel.adhanAudioEnabled.collectAsState()
     val adhanAudioMode by viewModel.adhanAudioMode.collectAsState()
+    val adhanAudioStream by viewModel.adhanAudioStream.collectAsState()
     val asrMethod by viewModel.asrMethod.collectAsState()
     val ishaMethod by viewModel.ishaMethod.collectAsState()
     val adjFajr by viewModel.adjFajr.collectAsState()
@@ -1030,6 +1036,54 @@ fun HomeScreen(
                                                     style = MaterialTheme.typography.bodyMedium
                                                 )
                                             }
+
+                                            Text(
+                                                text = if (isAr) "مستوى الصوت المتحكّم به" else "Volume controlled by",
+                                                style = MaterialTheme.typography.labelMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.padding(top = 8.dp)
+                                            )
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth().clickable { viewModel.setAdhanAudioStream("notification") },
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                RadioButton(
+                                                    selected = adhanAudioStream == "notification",
+                                                    onClick = { viewModel.setAdhanAudioStream("notification") }
+                                                )
+                                                Column {
+                                                    Text(
+                                                        text = if (isAr) "صوت التنبيهات (موصى به)" else "Notification volume (recommended)",
+                                                        style = MaterialTheme.typography.bodyMedium
+                                                    )
+                                                    Text(
+                                                        text = if (isAr) "يُكتم في الوضع الصامت وعدم الإزعاج" else "Muted in silent mode and Do Not Disturb",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
+                                            }
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth().clickable { viewModel.setAdhanAudioStream("alarm") },
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                RadioButton(
+                                                    selected = adhanAudioStream == "alarm",
+                                                    onClick = { viewModel.setAdhanAudioStream("alarm") }
+                                                )
+                                                Column {
+                                                    Text(
+                                                        text = if (isAr) "صوت المنبّه" else "Alarm volume",
+                                                        style = MaterialTheme.typography.bodyMedium
+                                                    )
+                                                    Text(
+                                                        text = if (isAr) "يعمل حتى في الوضع الصامت وعدم الإزعاج" else "Plays even in silent mode and Do Not Disturb",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
+                                            }
                                         }
                                     }
 
@@ -1739,6 +1793,41 @@ fun HomeScreen(
                                         Text(text = "${fontEn.toInt()}sp", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, modifier = Modifier.width(40.dp), textAlign = TextAlign.End)
                                     }
 
+                                    // Face used for Quran text. The Quran screen is the only
+                                    // place it applies; every other screen keeps the system font.
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = if (isAr) "خط المصحف: " else "Quran font: ",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            modifier = Modifier.width(100.dp)
+                                        )
+                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            FilterChip(
+                                                selected = quranFont == QURAN_FONT_SYSTEM,
+                                                onClick = { viewModel.setQuranFont(QURAN_FONT_SYSTEM) },
+                                                label = {
+                                                    Text(
+                                                        text = if (isAr) "الافتراضي" else "System",
+                                                        style = MaterialTheme.typography.labelMedium
+                                                    )
+                                                }
+                                            )
+                                            FilterChip(
+                                                selected = quranFont == QURAN_FONT_AMIRI,
+                                                onClick = { viewModel.setQuranFont(QURAN_FONT_AMIRI) },
+                                                label = {
+                                                    Text(
+                                                        text = if (isAr) "الخط العثماني" else "Amiri Quran",
+                                                        style = MaterialTheme.typography.labelMedium
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    }
+
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Box(
                                         modifier = Modifier
@@ -1769,8 +1858,13 @@ fun HomeScreen(
                                             Text(
                                                 text = "بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ",
                                                 fontSize = fontAr.sp,
+                                                fontFamily = quranFontFamilyFor(quranFont),
                                                 fontWeight = FontWeight.Bold,
                                                 color = MaterialTheme.colorScheme.onSurface,
+                                                // Explicit on purpose: without it this Text inherits
+                                                // bodyLarge's 24sp lineHeight and clips the harakat as
+                                                // soon as the slider goes above 24sp.
+                                                lineHeight = (fontAr * quranLineHeightFor(quranFont)).sp,
                                                 textAlign = TextAlign.Center,
                                                 modifier = Modifier.fillMaxWidth()
                                             )

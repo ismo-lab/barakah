@@ -59,10 +59,20 @@ class AdhanPlaybackService : Service() {
             val newPlayer = MediaPlayer()
             player = newPlayer
             newPlayer.setWakeMode(this, PowerManager.PARTIAL_WAKE_LOCK)
+            // Which system volume slider controls the Adhan. "notification" (default) routes to
+            // STREAM_NOTIFICATION, so the Adhan is suppressed by silent mode and Do Not Disturb.
+            // "alarm" routes to STREAM_ALARM, which plays through both.
+            val useAlarmStream = prefs.getString("adhan_audio_stream", "notification") == "alarm"
             newPlayer.setAudioAttributes(
                 AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_ALARM)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .setUsage(
+                        if (useAlarmStream) AudioAttributes.USAGE_ALARM
+                        else AudioAttributes.USAGE_NOTIFICATION_EVENT
+                    )
+                    .setContentType(
+                        if (useAlarmStream) AudioAttributes.CONTENT_TYPE_MUSIC
+                        else AudioAttributes.CONTENT_TYPE_SONIFICATION
+                    )
                     .build()
             )
             resources.openRawResourceFd(audioResource).use { descriptor ->
