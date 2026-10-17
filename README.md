@@ -10,9 +10,12 @@
   <img src="https://img.shields.io/badge/UI-Jetpack_Compose-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white" alt="Jetpack Compose" />
   <img src="https://img.shields.io/badge/Privacy-100%25-4CAF50?style=flat-square&logo=shield-halved&logoColor=white" alt="Privacy First" />
   <img src="https://img.shields.io/badge/License-GPL--3.0-blue?style=flat-square" alt="License" />
+  <a href="https://github.com/ismo-lab/barakah/actions/workflows/android.yml"><img src="https://github.com/ismo-lab/barakah/actions/workflows/android.yml/badge.svg" alt="Android CI" /></a>
 </p>
 
 **Barakah** is a privacy-respecting, fully Free and Open Source (FOSS) Islamic companion application crafted specifically for Android. By pairing Material 3 aesthetics with local offline-first reliability, **Barakah** serves as an eye-safe, advertisement-free spiritual toolkit for daily routines.
+
+**Get the app:** the latest signed APK is on the [Releases](https://github.com/ismo-lab/barakah/releases) page as `Barakah-v<version>.apk`.
 
 ## 🌍 Supported Languages
 
@@ -63,6 +66,7 @@ runner's fonts and SDK image; dispatch the workflow with `record_screenshots` to
 
 ## 🔒 Privacy Guarantee
 
+* **No Network Permission**: Barakah does not declare `android.permission.INTERNET`, so it has no way to send anything anywhere, even in principle. The Quran, tafseer, supplications and the city catalog are all bundled in the APK.
 * **Zero Telemetry**: No user tracking, analytics nodes, or telemetry collection processes.
 * **Offline Processing**: Real-time astronomical coordinates and physical tracking parameters remain completely local on-device.
 * **Forever Ad-Free & Free**: Absolutely zero ads, monetization models, or dark UI design patterns.
