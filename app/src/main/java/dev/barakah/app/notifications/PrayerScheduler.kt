@@ -24,6 +24,14 @@ object PrayerScheduler {
     private const val WIDGET_REFRESH_REQUEST_CODE = 2001
 
     /**
+     * The one-minute widget tick, which exists to keep the countdown widget counting down. It is
+     * public because the refresh receiver has to tell it apart from the prayer-boundary refresh.
+     */
+    const val ACTION_WIDGET_TICK = "dev.barakah.app.ACTION_WIDGET_TICK"
+    private const val WIDGET_TICK_REQUEST_CODE = 2002
+    private const val WIDGET_TICK_INTERVAL_MS = 60_000L
+
+    /**
      * Fire-and-forget entry point, for callers that outlive the call such as the UI. Receivers must
      * use [scheduleNextPrayersAndWait] instead, so that scheduling finishes before they return and
      * the process is allowed to be killed.
@@ -165,29 +173,69 @@ object PrayerScheduler {
         }
     }
 
-    private fun widgetRefreshPendingIntent(context: Context): PendingIntent {
+    private fun widgetPendingIntent(context: Context, requestCode: Int, action: String): PendingIntent {
         val intent = Intent(context, dev.barakah.app.widget.PrayerWidgetRefreshReceiver::class.java).apply {
-            action = ACTION_REFRESH_WIDGETS
+            this.action = action
         }
         return PendingIntent.getBroadcast(
             context,
-            WIDGET_REFRESH_REQUEST_CODE,
+            requestCode,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
     }
 
-    private fun cancelWidgetRefresh(context: Context) {
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
-        alarmManager.cancel(widgetRefreshPendingIntent(context))
-    }
+    private fun widgetRefreshPendingIntent(context: Context): PendingIntent =
+        widgetPendingIntent(context, WIDGET_REFRESH_REQUEST_CODE, ACTION_REFRESH_WIDGETS)
 
-    private fun scheduleWidgetRefresh(context: Context, prayerTimes: List<String>, timeZone: TimeZone) {
+    private fun widgetTickPendingIntent(context: Context): PendingIntent =
+        widgetPendingIntent(context, WIDGET_TICK_REQUEST_CODE, ACTION_WIDGET_TICK)
+
+    private fun hasCountdownWidget(context: Context): Boolean {
         val remainingWidget = ComponentName(
             context,
             dev.barakah.app.widget.PrayerRemainingWidgetReceiver::class.java
         )
-        if (AppWidgetManager.getInstance(context).getAppWidgetIds(remainingWidget).isEmpty()) {
+        return AppWidgetManager.getInstance(context).getAppWidgetIds(remainingWidget).isNotEmpty()
+    }
+
+    private fun cancelWidgetRefresh(context: Context) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+        alarmManager.cancel(widgetRefreshPendingIntent(context))
+        alarmManager.cancel(widgetTickPendingIntent(context))
+    }
+
+    /**
+     * Arms the next one-minute tick that keeps the countdown widget counting down.
+     *
+     * The tick is inexact and does not wake the device (RTC rather than RTC_WAKEUP), so it costs
+     * nothing while the phone is asleep - when nobody can see the widget - and is delivered
+     * promptly while the phone is awake, which is the only time the countdown is on screen. The
+     * exact alarm for the next prayer still refreshes the widget from sleep. The refresh receiver
+     * arms the following tick after each one, so the chain runs for as long as the widget is on a
+     * home screen, and ends by itself when the last one is removed.
+     */
+    fun armWidgetTick(context: Context) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+        val pendingIntent = widgetTickPendingIntent(context)
+        if (!hasCountdownWidget(context)) {
+            alarmManager.cancel(pendingIntent)
+            return
+        }
+
+        try {
+            alarmManager.set(
+                AlarmManager.RTC,
+                System.currentTimeMillis() + WIDGET_TICK_INTERVAL_MS,
+                pendingIntent
+            )
+        } catch (error: Exception) {
+            android.util.Log.e("PrayerScheduler", "Failed to schedule the widget tick", error)
+        }
+    }
+
+    private fun scheduleWidgetRefresh(context: Context, prayerTimes: List<String>, timeZone: TimeZone) {
+        if (!hasCountdownWidget(context)) {
             cancelWidgetRefresh(context)
             return
         }
@@ -204,7 +252,11 @@ object PrayerScheduler {
                 set(Calendar.MILLISECOND, 0)
                 if (timeInMillis <= now) add(Calendar.DAY_OF_YEAR, 1)
             }.timeInMillis
-        }.minOrNull() ?: return
+        }.minOrNull()
+
+        armWidgetTick(context)
+
+        if (nextRefreshAt == null) return
 
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
         val pendingIntent = widgetRefreshPendingIntent(context)
