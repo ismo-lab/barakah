@@ -1,21 +1,33 @@
 package dev.barakah.app.util
 
 import android.os.Build
+import androidx.annotation.RequiresApi
 import java.util.Calendar
 
 object HijriCalendarHelper {
 
     data class HijriDate(val day: Int, val month: Int, val year: Int)
 
+    /**
+     * The Umm al-Qura conversion for an explicit date, so it can be exercised against known
+     * dates instead of whenever a test happens to run.
+     *
+     * Uses java.time, so only call this on API 26 and up.
+     */
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun getHijriDateFor(localDate: java.time.LocalDate): HijriDate {
+        val hijriDate = java.time.chrono.HijrahDate.from(localDate)
+        return HijriDate(
+            day = hijriDate.get(java.time.temporal.ChronoField.DAY_OF_MONTH),
+            month = hijriDate.get(java.time.temporal.ChronoField.MONTH_OF_YEAR),
+            year = hijriDate.get(java.time.temporal.ChronoField.YEAR)
+        )
+    }
+
     fun getTodayHijriDate(): HijriDate {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             try {
-                val todayLocalDate = java.time.LocalDate.now()
-                val hijriDate = java.time.chrono.HijrahDate.from(todayLocalDate)
-                val day = hijriDate.get(java.time.temporal.ChronoField.DAY_OF_MONTH)
-                val month = hijriDate.get(java.time.temporal.ChronoField.MONTH_OF_YEAR)
-                val year = hijriDate.get(java.time.temporal.ChronoField.YEAR)
-                return HijriDate(day, month, year)
+                return getHijriDateFor(java.time.LocalDate.now())
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -61,12 +73,7 @@ object HijriCalendarHelper {
         
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             try {
-                val tomorrowLocalDate = java.time.LocalDate.now().plusDays(1)
-                val hijriDate = java.time.chrono.HijrahDate.from(tomorrowLocalDate)
-                val day = hijriDate.get(java.time.temporal.ChronoField.DAY_OF_MONTH)
-                val month = hijriDate.get(java.time.temporal.ChronoField.MONTH_OF_YEAR)
-                val year = hijriDate.get(java.time.temporal.ChronoField.YEAR)
-                return HijriDate(day, month, year)
+                return getHijriDateFor(java.time.LocalDate.now().plusDays(1))
             } catch (e: Exception) {
                 e.printStackTrace()
             }

@@ -21,6 +21,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import dev.barakah.app.MainActivity
+import dev.barakah.app.data.AppPrefs
 import dev.barakah.app.widget.WidgetRefreshState
 import dev.barakah.app.util.PrayerCalculator
 import dev.barakah.app.util.localize
@@ -31,35 +32,35 @@ class NawafilWidget : GlanceAppWidget() {
         provideContent {
             val refreshToken = currentState<Preferences>()[WidgetRefreshState.refreshToken] ?: 0L
             // Glance can reuse an active session and recompose this block without rerunning provideGlance.
-            val prefs = context.getSharedPreferences("barakah_prefs", Context.MODE_PRIVATE)
-            val isAr = prefs.getString("app_lang", "ar") == "ar"
+            val prefs = context.getSharedPreferences(AppPrefs.FILE, Context.MODE_PRIVATE)
+            val isAr = prefs.getString(AppPrefs.APP_LANG, "ar") == "ar"
             val defaultLabel = if (isAr) "الموقع غير محدد" else "No Location Selected"
-            val lat = prefs.getFloat("loc_lat", 21.4225f).toDouble()
-            val lng = prefs.getFloat("loc_lng", 39.8262f).toDouble()
-            val rawLabel = prefs.getString("loc_label", null)
+            val lat = prefs.getFloat(AppPrefs.LOC_LAT, 21.4225f).toDouble()
+            val lng = prefs.getFloat(AppPrefs.LOC_LNG, 39.8262f).toDouble()
+            val rawLabel = prefs.getString(AppPrefs.LOC_LABEL, null)
             val label = if (rawLabel.isNullOrEmpty() || rawLabel == "Mecca, KSA" || rawLabel == "Mecca (GPS Fallback)" || rawLabel == "مكة المكرمة (تلقائي)") defaultLabel else rawLabel
             val isLocationSet = !(rawLabel.isNullOrEmpty() || rawLabel == "Mecca, KSA" || rawLabel == "Mecca (GPS Fallback)" || rawLabel == "مكة المكرمة (تلقائي)" || rawLabel == "الموقع غير محدد" || rawLabel == "No Location Selected")
-            val useWesternNumbersInArabic = prefs.getBoolean("use_western_numbers_in_arabic", false)
+            val useWesternNumbersInArabic = prefs.getBoolean(AppPrefs.USE_WESTERN_NUMBERS_IN_ARABIC, false)
         
-            val isAutoLocation = prefs.getString("location_method", "manual") == "auto"
-            val selectedTimeZoneId = if (isAutoLocation) TimeZone.getDefault().id else prefs.getString("loc_timezone", null)
+            val isAutoLocation = prefs.getString(AppPrefs.LOCATION_METHOD, "manual") == "auto"
+            val selectedTimeZoneId = if (isAutoLocation) TimeZone.getDefault().id else prefs.getString(AppPrefs.LOC_TIMEZONE, null)
             val timeZoneId = PrayerCalculator.resolveTimeZoneId(selectedTimeZoneId)
             val calendar = Calendar.getInstance(TimeZone.getTimeZone(timeZoneId))
             val offsetHours = PrayerCalculator.getTimeZoneOffset(timeZoneId, calendar)
         
-            val asrMethod = prefs.getString("asr_method", "standard") ?: "standard"
-            val ishaMethod = prefs.getString("isha_method", "standard") ?: "standard"
+            val asrMethod = prefs.getString(AppPrefs.ASR_METHOD, "standard") ?: "standard"
+            val ishaMethod = prefs.getString(AppPrefs.ISHA_METHOD, "standard") ?: "standard"
         
             // Custom offsets (in minutes)
-            val adjFajr = prefs.getInt("adj_fajr", 0)
-            val adjSunrise = prefs.getInt("adj_sunrise", 0)
-            val adjDhuhr = prefs.getInt("adj_dhuhr", 0)
-            val adjAsr = prefs.getInt("adj_asr", 0)
-            val adjMaghrib = prefs.getInt("adj_maghrib", 0)
-            val adjIsha = prefs.getInt("adj_isha", 0)
+            val adjFajr = prefs.getInt(AppPrefs.ADJ_FAJR, 0)
+            val adjSunrise = prefs.getInt(AppPrefs.ADJ_SUNRISE, 0)
+            val adjDhuhr = prefs.getInt(AppPrefs.ADJ_DHUHR, 0)
+            val adjAsr = prefs.getInt(AppPrefs.ADJ_ASR, 0)
+            val adjMaghrib = prefs.getInt(AppPrefs.ADJ_MAGHRIB, 0)
+            val adjIsha = prefs.getInt(AppPrefs.ADJ_ISHA, 0)
 
             val m = try {
-                PrayerCalculator.CalculationMethod.valueOf(prefs.getString("calc_method", "MWL") ?: "MWL")
+                PrayerCalculator.CalculationMethod.valueOf(prefs.getString(AppPrefs.CALC_METHOD, "MWL") ?: "MWL")
             } catch(e: Exception) {
                 PrayerCalculator.CalculationMethod.MWL
             }

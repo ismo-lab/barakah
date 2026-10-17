@@ -15,6 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import dev.barakah.app.data.AppDatabase
+import dev.barakah.app.data.AppPrefs
 import dev.barakah.app.data.AppRepository
 
 object PrayerScheduler {
@@ -23,8 +24,8 @@ object PrayerScheduler {
 
     fun scheduleNextPrayers(context: Context) {
         CoroutineScope(Dispatchers.IO).launch {
-            val prefs = context.getSharedPreferences("barakah_prefs", Context.MODE_PRIVATE)
-            val rawLabel = prefs.getString("loc_label", null)
+            val prefs = context.getSharedPreferences(AppPrefs.FILE, Context.MODE_PRIVATE)
+            val rawLabel = prefs.getString(AppPrefs.LOC_LABEL, null)
             val isLocationSet = !(rawLabel.isNullOrEmpty() || rawLabel == "Mecca, KSA" || rawLabel == "Mecca (GPS Fallback)" || rawLabel == "مكة المكرمة (تلقائي)" || rawLabel == "الموقع غير محدد" || rawLabel == "No Location Selected")
 
             if (!isLocationSet) {
@@ -45,30 +46,30 @@ object PrayerScheduler {
                 return@launch
             }
 
-            val lat = prefs.getFloat("loc_lat", 21.4225f).toDouble()
-            val lng = prefs.getFloat("loc_lng", 39.8262f).toDouble()
+            val lat = prefs.getFloat(AppPrefs.LOC_LAT, 21.4225f).toDouble()
+            val lng = prefs.getFloat(AppPrefs.LOC_LNG, 39.8262f).toDouble()
             
-            val isAutoLocation = prefs.getString("location_method", "manual") == "auto"
-            val selectedTimeZoneId = if (isAutoLocation) TimeZone.getDefault().id else prefs.getString("loc_timezone", null)
+            val isAutoLocation = prefs.getString(AppPrefs.LOCATION_METHOD, "manual") == "auto"
+            val selectedTimeZoneId = if (isAutoLocation) TimeZone.getDefault().id else prefs.getString(AppPrefs.LOC_TIMEZONE, null)
             val timeZoneId = PrayerCalculator.resolveTimeZoneId(selectedTimeZoneId)
             val timeZone = TimeZone.getTimeZone(timeZoneId)
             val calendar = Calendar.getInstance(timeZone)
             val offsetHours = PrayerCalculator.getTimeZoneOffset(timeZoneId, calendar)
             
-            val asrMethod = prefs.getString("asr_method", "standard") ?: "standard"
-            val ishaMethod = prefs.getString("isha_method", "standard") ?: "standard"
+            val asrMethod = prefs.getString(AppPrefs.ASR_METHOD, "standard") ?: "standard"
+            val ishaMethod = prefs.getString(AppPrefs.ISHA_METHOD, "standard") ?: "standard"
             val m = try {
-                PrayerCalculator.CalculationMethod.valueOf(prefs.getString("calc_method", "MWL") ?: "MWL")
+                PrayerCalculator.CalculationMethod.valueOf(prefs.getString(AppPrefs.CALC_METHOD, "MWL") ?: "MWL")
             } catch(e: Exception) {
                 PrayerCalculator.CalculationMethod.MWL
             }
 
-            val adjFajr = prefs.getInt("adj_fajr", 0)
-            val adjSunrise = prefs.getInt("adj_sunrise", 0)
-            val adjDhuhr = prefs.getInt("adj_dhuhr", 0)
-            val adjAsr = prefs.getInt("adj_asr", 0)
-            val adjMaghrib = prefs.getInt("adj_maghrib", 0)
-            val adjIsha = prefs.getInt("adj_isha", 0)
+            val adjFajr = prefs.getInt(AppPrefs.ADJ_FAJR, 0)
+            val adjSunrise = prefs.getInt(AppPrefs.ADJ_SUNRISE, 0)
+            val adjDhuhr = prefs.getInt(AppPrefs.ADJ_DHUHR, 0)
+            val adjAsr = prefs.getInt(AppPrefs.ADJ_ASR, 0)
+            val adjMaghrib = prefs.getInt(AppPrefs.ADJ_MAGHRIB, 0)
+            val adjIsha = prefs.getInt(AppPrefs.ADJ_ISHA, 0)
             
             val times = PrayerCalculator.calculate(
                 lat, lng, offsetHours, calendar, 
@@ -92,8 +93,8 @@ object PrayerScheduler {
             val db = AppDatabase.getDatabase(context)
             val settings = db.prayerAlertDao().getAllAlertSettings().first()
             val isEnabled = { name: String -> settings.find { it.prayerName == name }?.isEnabled != false }
-            val showNawafil = prefs.getBoolean("show_nawafil", false)
-            val notifyNawafil = prefs.getBoolean("notify_nawafil", true)
+            val showNawafil = prefs.getBoolean(AppPrefs.SHOW_NAWAFIL, false)
+            val notifyNawafil = prefs.getBoolean(AppPrefs.NOTIFY_NAWAFIL, true)
             
             // Primary Prayers
             scheduleAlarm(context, "Fajr", times.fajr, 1, isEnabled("Fajr"), timeZone)
@@ -103,7 +104,7 @@ object PrayerScheduler {
             scheduleAlarm(context, "Isha", times.isha, 5, isEnabled("Isha"), timeZone)
 
             // Pre-Adhan alerts (15 minutes before)
-            val notifyBeforeAdhan = prefs.getBoolean("notify_before_adhan", true)
+            val notifyBeforeAdhan = prefs.getBoolean(AppPrefs.NOTIFY_BEFORE_ADHAN, true)
             scheduleAlarm(context, "Pre-Fajr", calculateOffsetTime(times.fajr, -15, timeZone), 1011, notifyBeforeAdhan && isEnabled("Fajr"), timeZone)
             scheduleAlarm(context, "Pre-Dhuhr", calculateOffsetTime(times.dhuhr, -15, timeZone), 1012, notifyBeforeAdhan && isEnabled("Dhuhr"), timeZone)
             scheduleAlarm(context, "Pre-Asr", calculateOffsetTime(times.asr, -15, timeZone), 1013, notifyBeforeAdhan && isEnabled("Asr"), timeZone)
@@ -124,11 +125,11 @@ object PrayerScheduler {
             }
 
             // Morning and Evening Adhkar Notifications
-            val notifyMorning = prefs.getBoolean("notify_morning_adhkar", true)
-            val notifyEvening = prefs.getBoolean("notify_evening_adhkar", true)
+            val notifyMorning = prefs.getBoolean(AppPrefs.NOTIFY_MORNING_ADHKAR, true)
+            val notifyEvening = prefs.getBoolean(AppPrefs.NOTIFY_EVENING_ADHKAR, true)
 
-            val morningOffset = prefs.getInt("morning_adhkar_offset", 30)
-            val eveningOffset = prefs.getInt("evening_adhkar_offset", 30)
+            val morningOffset = prefs.getInt(AppPrefs.MORNING_ADHKAR_OFFSET, 30)
+            val eveningOffset = prefs.getInt(AppPrefs.EVENING_ADHKAR_OFFSET, 30)
 
             val morningAdhkarTime = calculateOffsetTime(times.fajr, morningOffset, timeZone)
             val eveningAdhkarTime = calculateOffsetTime(times.asr, eveningOffset, timeZone)
@@ -137,18 +138,18 @@ object PrayerScheduler {
             scheduleAlarm(context, "Evening Adhkar", eveningAdhkarTime, 11, notifyEvening, timeZone)
 
             // Daily Check at 20:00 for tomorrow's fasting / occasions (a day before)
-            val notifyOccasions = prefs.getBoolean("notify_occasions", true)
-            val notifyFasting = prefs.getBoolean("notify_fasting", true)
+            val notifyOccasions = prefs.getBoolean(AppPrefs.NOTIFY_OCCASIONS, true)
+            val notifyFasting = prefs.getBoolean(AppPrefs.NOTIFY_FASTING, true)
             val dailyEnabled = notifyOccasions || notifyFasting
             scheduleAlarm(context, "Daily Support Reminder", "20:00", 12, dailyEnabled, timeZone)
 
-            val notifyJumuah = prefs.getBoolean("notify_jumuah", true)
+            val notifyJumuah = prefs.getBoolean(AppPrefs.NOTIFY_JUMUAH, true)
             scheduleAlarm(context, "Friday Jumuah", calculateOffsetTime(times.dhuhr, -45, timeZone), 13, notifyJumuah, timeZone)
 
-            val notifySuhur = prefs.getBoolean("notify_suhur", false)
+            val notifySuhur = prefs.getBoolean(AppPrefs.NOTIFY_SUHUR, false)
             scheduleAlarm(context, "Suhur Reminder", calculateOffsetTime(times.fajr, -45, timeZone), 14, notifySuhur, timeZone)
 
-            val notifyIftar = prefs.getBoolean("notify_iftar", false)
+            val notifyIftar = prefs.getBoolean(AppPrefs.NOTIFY_IFTAR, false)
             scheduleAlarm(context, "Iftar Reminder", times.maghrib, 15, notifyIftar, timeZone)
         }
     }

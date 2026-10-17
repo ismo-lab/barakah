@@ -1,17 +1,9 @@
 import java.net.URL
 import java.net.HttpURLConnection
 import java.net.URI
-import java.util.Date
-import java.util.Locale
-import java.text.SimpleDateFormat
 import java.util.Properties
-import java.io.FileInputStream
-import java.io.FileOutputStream
 import java.util.Base64
 import java.io.File
-import java.util.zip.GZIPOutputStream
-
-// Dynamic keystore extraction happens on-demand during configuration phase in signingConfigs below
 
 plugins {
   alias(libs.plugins.android.application)
@@ -63,67 +55,11 @@ android {
 
   signingConfigs {
     create("sharedConfig") {
-      val keystoreFile = file("keystore.jks")
-      val rootKeystore = rootProject.file("debug.keystore")
-      val base64File = rootProject.file("debug.keystore.base64")
-      
-      // 1. If base64 persistent keystore exists, decode it first so all environments share the exact same key
-      if (base64File.exists() && base64File.length() > 0) {
-        try {
-          val rawContent = base64File.readText().trim()
-          if (rawContent.isNotEmpty()) {
-            val decodedBytes = Base64.getMimeDecoder().decode(rawContent)
-            keystoreFile.writeBytes(decodedBytes)
-            if (!rootKeystore.exists() || rootKeystore.length() == 0L) {
-              rootKeystore.writeBytes(decodedBytes)
-            }
-            println("Dynamic keystore extraction successful from debug.keystore.base64: ${keystoreFile.length()} bytes")
-          }
-        } catch (e: Exception) {
-          println("Dynamic keystore extraction from debug.keystore.base64 failed: ${e.message}")
-        }
-      } else if (rootKeystore.exists() && rootKeystore.length() > 0) {
-        try {
-          rootKeystore.copyTo(keystoreFile, overwrite = true)
-          val bytes = rootKeystore.readBytes()
-          base64File.writeText(Base64.getEncoder().encodeToString(bytes))
-          println("Dynamic keystore copy successful from debug.keystore and saved to base64: ${keystoreFile.length()} bytes")
-        } catch (e: Exception) {
-          println("Dynamic keystore copy from debug.keystore failed: ${e.message}")
-        }
-      }
-
-      if (!keystoreFile.exists() || keystoreFile.length() == 0L) {
-        try {
-          println("WARNING: debug.keystore.base64 not found or extraction failed. Generating fallback debug keystore...")
-          val process = ProcessBuilder(
-            "keytool", "-genkey", "-v",
-            "-keystore", keystoreFile.absolutePath,
-            "-storepass", "android",
-            "-alias", "androiddebugkey",
-            "-keypass", "android",
-            "-keyalg", "RSA",
-            "-keysize", "2048",
-            "-validity", "10000",
-            "-dname", "CN=Android Debug,O=Android,C=US"
-          ).start()
-          val exitCode = process.waitFor()
-          if (exitCode == 0) {
-            println("Fallback debug keystore generated successfully: ${keystoreFile.length()} bytes")
-            val bytes = keystoreFile.readBytes()
-            base64File.writeText(Base64.getEncoder().encodeToString(bytes))
-            if (!rootKeystore.exists()) {
-              rootKeystore.writeBytes(bytes)
-            }
-          } else {
-            println("Fallback debug keystore generation failed with exit code $exitCode")
-          }
-        } catch (e: Exception) {
-          println("Failed to generate fallback debug keystore: ${e.message}")
-        }
-      }
-      
-      storeFile = keystoreFile
+      // The keystore file is prepared before packaging rather than here: CI decodes the
+      // secret in a workflow step and the prepareSigningKeystore task below covers local
+      // builds. Doing it during configuration meant writing files and shelling out to
+      // keytool on every sync.
+      storeFile = file("keystore.jks")
       storePassword = signingStorePassword
       keyAlias = signingKeyAlias
       keyPassword = signingKeyPassword
@@ -163,6 +99,74 @@ secrets {
   defaultPropertiesFileName = ".env.example"
 }
 
+/**
+ * Materialises app/keystore.jks so both build variants can be signed.
+ *
+ * In CI the keystore is decoded from the BARAKAH_KEYSTORE_BASE64 secret by the workflow
+ * before Gradle runs, so this task finds the file already there and does nothing. A local
+ * build falls back to debug.keystore.base64, then debug.keystore, and only generates a
+ * throwaway debug key when neither exists - such an APK will not install over a build from
+ * another machine, which is why it says so loudly.
+ */
+val prepareSigningKeystore = tasks.register("prepareSigningKeystore") {
+  group = "signing"
+  description = "Writes app/keystore.jks from debug.keystore.base64 or debug.keystore."
+
+  val keystoreFile = file("keystore.jks")
+  val base64File = rootProject.file("debug.keystore.base64")
+  val rootKeystore = rootProject.file("debug.keystore")
+  outputs.file(keystoreFile)
+
+  doLast {
+    if (keystoreFile.exists() && keystoreFile.length() > 0L) {
+      println("Signing keystore already present at ${keystoreFile.absolutePath}")
+      return@doLast
+    }
+
+    if (base64File.exists() && base64File.length() > 0L) {
+      try {
+        keystoreFile.writeBytes(Base64.getMimeDecoder().decode(base64File.readText().trim()))
+        println("Signing keystore written from debug.keystore.base64 (${keystoreFile.length()} bytes)")
+        return@doLast
+      } catch (e: Exception) {
+        println("Could not decode debug.keystore.base64: ${e.message}")
+      }
+    }
+
+    if (rootKeystore.exists() && rootKeystore.length() > 0L) {
+      rootKeystore.copyTo(keystoreFile, overwrite = true)
+      if (!base64File.exists()) {
+        base64File.writeText(Base64.getEncoder().encodeToString(rootKeystore.readBytes()))
+      }
+      println("Signing keystore copied from debug.keystore (${keystoreFile.length()} bytes)")
+      return@doLast
+    }
+
+    println(
+      """
+      WARNING: neither debug.keystore.base64 nor debug.keystore is present, so a throwaway
+      key is being generated at app/keystore.jks. This APK will NOT install over a build
+      made anywhere else, because Android rejects an update whose signing key changed.
+      """.trimIndent()
+    )
+    val exitCode = ProcessBuilder(
+      "keytool", "-genkey", "-v",
+      "-keystore", keystoreFile.absolutePath,
+      "-storepass", "android",
+      "-alias", "androiddebugkey",
+      "-keypass", "android",
+      "-keyalg", "RSA",
+      "-keysize", "2048",
+      "-validity", "10000",
+      "-dname", "CN=Android Debug,O=Android,C=US"
+    ).inheritIO().start().waitFor()
+
+    if (exitCode != 0) {
+      throw GradleException("keytool could not generate a fallback keystore (exit code $exitCode)")
+    }
+  }
+}
+
 // Some unused dependencies are commented out below instead of being removed.
 // This makes it easy to add them back in the future if needed.
 dependencies {
@@ -182,7 +186,9 @@ dependencies {
   implementation(libs.androidx.core.ktx)
   implementation(libs.androidx.glance.appwidget)
   implementation(libs.androidx.glance.material3)
-  // implementation(libs.androidx.datastore.preferences)
+  // The widgets read Glance's Preferences type directly, so declare what they use
+  // instead of leaning on Glance's transitive copy.
+  implementation(libs.androidx.datastore.preferences)
   implementation(libs.androidx.lifecycle.runtime.compose)
   implementation(libs.androidx.lifecycle.runtime.ktx)
   implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -190,14 +196,8 @@ dependencies {
   implementation(libs.androidx.room.ktx)
   implementation(libs.androidx.room.runtime)
   // implementation(libs.coil.compose)
-  implementation(libs.converter.moshi)
   implementation(libs.kotlinx.coroutines.android)
   implementation(libs.kotlinx.coroutines.core)
-  implementation(libs.logging.interceptor)
-  implementation(libs.moshi.kotlin)
-  implementation(libs.okhttp)
-  implementation(libs.play.services.location)
-  implementation(libs.retrofit)
   testImplementation(libs.androidx.compose.ui.test.junit4)
   testImplementation(libs.androidx.core)
   testImplementation(libs.androidx.junit)
@@ -215,7 +215,6 @@ dependencies {
   debugImplementation(libs.androidx.compose.ui.test.manifest)
   debugImplementation(libs.androidx.compose.ui.tooling)
   "ksp"(libs.androidx.room.compiler)
-  "ksp"(libs.moshi.kotlin.codegen)
 }
 
 tasks.register("downloadHisn") {
@@ -311,8 +310,10 @@ tasks.register("downloadEnglishTafseer") {
   }
 }
 
+// The tafsir assets are committed, so the build no longer reaches out to jsdelivr and
+// GitHub while building. Run the download tasks by hand when refreshing that data.
 tasks.named("preBuild") {
-  dependsOn("downloadArabicTafseer", "downloadEnglishTafseer")
+  dependsOn(prepareSigningKeystore)
 }
 
 // Tasks for professional Version Management as per official Android documentation

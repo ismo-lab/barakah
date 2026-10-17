@@ -6,7 +6,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.location.Location
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -19,10 +18,9 @@ import dev.barakah.app.widget.PrayerWidget
 import dev.barakah.app.widget.PrayerRemainingWidget
 import dev.barakah.app.widget.NawafilWidget
 import dev.barakah.app.widget.refreshWidgetInstances
+import dev.barakah.app.util.LocationProvider
 import dev.barakah.app.util.PrayerCalculator
 import dev.barakah.app.util.QiblaManager
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -52,41 +50,41 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         application.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
     }
 
-    private val prefs = application.getSharedPreferences("barakah_prefs", Context.MODE_PRIVATE)
+    private val prefs = application.getSharedPreferences(AppPrefs.FILE, Context.MODE_PRIVATE)
 
     // First Run state
-    private val _isFirstRun = MutableStateFlow(prefs.getBoolean("is_first_run", true))
+    private val _isFirstRun = MutableStateFlow(prefs.getBoolean(AppPrefs.IS_FIRST_RUN, true))
     val isFirstRun: StateFlow<Boolean> = _isFirstRun
 
     // Language state: "ar" or "en"
-    private val _appLanguage = MutableStateFlow(prefs.getString("app_lang", "ar") ?: "ar")
+    private val _appLanguage = MutableStateFlow(prefs.getString(AppPrefs.APP_LANG, "ar") ?: "ar")
     val appLanguage: StateFlow<String> = _appLanguage
 
     // Theme state: "dark", "light", "system"
-    private val _appTheme = MutableStateFlow(prefs.getString("app_theme", "system") ?: "system")
+    private val _appTheme = MutableStateFlow(prefs.getString(AppPrefs.APP_THEME, "system") ?: "system")
     val appTheme: StateFlow<String> = _appTheme
 
     // Dynamic color state: boolean (default true)
-    private val _useDynamicColor = MutableStateFlow(prefs.getBoolean("use_dynamic_color", true))
+    private val _useDynamicColor = MutableStateFlow(prefs.getBoolean(AppPrefs.USE_DYNAMIC_COLOR, true))
     val useDynamicColor: StateFlow<Boolean> = _useDynamicColor
 
     // AMOLED Dark state: boolean (default true)
-    private val _amoledDark = MutableStateFlow(prefs.getBoolean("amoled_dark", true))
+    private val _amoledDark = MutableStateFlow(prefs.getBoolean(AppPrefs.AMOLED_DARK, true))
     val amoledDark: StateFlow<Boolean> = _amoledDark
 
     // Font states:
-    private val _arabicFontSize = MutableStateFlow(prefs.getFloat("arabic_font_size", 24f))
+    private val _arabicFontSize = MutableStateFlow(prefs.getFloat(AppPrefs.ARABIC_FONT_SIZE, 24f))
     val arabicFontSize: StateFlow<Float> = _arabicFontSize
 
-    private val _englishFontSize = MutableStateFlow(prefs.getFloat("english_font_size", 16f))
+    private val _englishFontSize = MutableStateFlow(prefs.getFloat(AppPrefs.ENGLISH_FONT_SIZE, 16f))
     val englishFontSize: StateFlow<Float> = _englishFontSize
 
     // Face used for Quran text only: "system" (default) or "amiri" (Uthmani script)
-    private val _quranFont = MutableStateFlow(prefs.getString("quran_font", "system") ?: "system")
+    private val _quranFont = MutableStateFlow(prefs.getString(AppPrefs.QURAN_FONT, "system") ?: "system")
     val quranFont: StateFlow<String> = _quranFont
 
     // Selected location method: "auto" or "manual"
-    private val _locationMethod = MutableStateFlow(prefs.getString("location_method", "manual") ?: "manual")
+    private val _locationMethod = MutableStateFlow(prefs.getString(AppPrefs.LOCATION_METHOD, "manual") ?: "manual")
     val locationMethod: StateFlow<String> = _locationMethod
 
     private val _showGpsSettingsPrompt = MutableStateFlow(false)
@@ -103,99 +101,51 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    private var locationCallback: com.google.android.gms.location.LocationCallback? = null
     private val widgetRefreshScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val widgetRefreshMutex = Mutex()
 
     @SuppressLint("MissingPermission")
     fun startLocationUpdates() {
-        if (locationCallback != null) return // Already running
+        locationProvider.startUpdates(minTimeMs = 300_000L, minDistanceM = 200f) { location ->
+            val now = System.currentTimeMillis()
+            val diffLat = abs(location.latitude - _currentLocation.value.first)
+            val diffLng = abs(location.longitude - _currentLocation.value.second)
 
-        try {
-            val context = getApplication<Application>()
-            val fineGranted = androidx.core.content.ContextCompat.checkSelfPermission(
-                context,
-                android.Manifest.permission.ACCESS_FINE_LOCATION
-            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-            val coarseGranted = androidx.core.content.ContextCompat.checkSelfPermission(
-                context,
-                android.Manifest.permission.ACCESS_COARSE_LOCATION
-            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+            if (diffLat > 0.001 || diffLng > 0.001) {
+                viewModelScope.launch {
+                    val resolvedName = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        getCityNameFromLocation(location.latitude, location.longitude)
+                    }
+                    val defaultLabel = if (_appLanguage.value == "ar") "تلقائي (GPS)" else "GPS (Auto)"
+                    val label = resolvedName ?: defaultLabel
 
-            if (!fineGranted && !coarseGranted) return
+                    updateLocation(location.latitude, location.longitude, label)
 
-            val locationRequest = com.google.android.gms.location.LocationRequest.Builder(
-                Priority.PRIORITY_BALANCED_POWER_ACCURACY,
-                300000L // 5 minutes
-            ).apply {
-                setMinUpdateIntervalMillis(60000L) // 1 minute
-                setMinUpdateDistanceMeters(200f) // 200 meters
-            }.build()
-
-            val callback = object : com.google.android.gms.location.LocationCallback() {
-                override fun onLocationResult(locationResult: com.google.android.gms.location.LocationResult) {
-                    val loc = locationResult.lastLocation ?: return
-                    val now = System.currentTimeMillis()
-                    val diffLat = abs(loc.latitude - _currentLocation.value.first)
-                    val diffLng = abs(loc.longitude - _currentLocation.value.second)
-
-                    if (diffLat > 0.001 || diffLng > 0.001) {
-                        viewModelScope.launch {
-                            val resolvedName = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                                getCityNameFromLocation(loc.latitude, loc.longitude)
-                            }
-                            val defaultLabel = if (_appLanguage.value == "ar") "تلقائي (GPS)" else "GPS (Auto)"
-                            val label = resolvedName ?: defaultLabel
-
-                            updateLocation(loc.latitude, loc.longitude, label)
-
-                            if (now - lastGpsSuccessMsgTime > 60000) {
-                                lastGpsSuccessMsgTime = now
-                                val msg = if (_appLanguage.value == "ar") "تم تحديث موقعك تلقائياً بنجاح ($label)" else "GPS location updated successfully ($label)"
-                                _eventFlow.emit(msg)
-                            }
-                        }
+                    if (now - lastGpsSuccessMsgTime > 60000) {
+                        lastGpsSuccessMsgTime = now
+                        val msg = if (_appLanguage.value == "ar") "تم تحديث موقعك تلقائياً بنجاح ($label)" else "GPS location updated successfully ($label)"
+                        _eventFlow.emit(msg)
                     }
                 }
             }
-
-            locationCallback = callback
-            locationClient.requestLocationUpdates(
-                locationRequest,
-                callback,
-                android.os.Looper.getMainLooper()
-            ).addOnFailureListener {
-                if (locationCallback == callback) {
-                    locationCallback = null
-                }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
     }
 
     fun stopLocationUpdates() {
-        locationCallback?.let { callback ->
-            try {
-                locationClient.removeLocationUpdates(callback)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-            locationCallback = null
-        }
+        locationProvider.stopUpdates()
     }
 
     // Nawafil state flow
-    private val _showNawafil = MutableStateFlow(prefs.getBoolean("show_nawafil", false))
+    private val _showNawafil = MutableStateFlow(prefs.getBoolean(AppPrefs.SHOW_NAWAFIL, false))
     val showNawafil: StateFlow<Boolean> = _showNawafil
 
-    private val _notifyNawafil = MutableStateFlow(prefs.getBoolean("notify_nawafil", true))
+    private val _notifyNawafil = MutableStateFlow(prefs.getBoolean(AppPrefs.NOTIFY_NAWAFIL, true))
     val notifyNawafil: StateFlow<Boolean> = _notifyNawafil
 
-    private val _adhanAudioEnabled = MutableStateFlow(prefs.getBoolean("adhan_audio_enabled", false))
+    private val _adhanAudioEnabled = MutableStateFlow(prefs.getBoolean(AppPrefs.ADHAN_AUDIO_ENABLED, false))
     val adhanAudioEnabled: StateFlow<Boolean> = _adhanAudioEnabled
 
-    private val _adhanAudioMode = MutableStateFlow(prefs.getString("adhan_audio_mode", "short") ?: "short")
+    private val _adhanAudioMode = MutableStateFlow(prefs.getString(AppPrefs.ADHAN_AUDIO_MODE, "short") ?: "short")
     val adhanAudioMode: StateFlow<String> = _adhanAudioMode
 
     /**
@@ -205,48 +155,48 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
      * but the Adhan is then suppressed by silent mode and Do Not Disturb. "alarm" routes to
      * STREAM_ALARM, which ignores both, at the cost of a harder-to-reach volume slider.
      */
-    private val _adhanAudioStream = MutableStateFlow(prefs.getString("adhan_audio_stream", "notification") ?: "notification")
+    private val _adhanAudioStream = MutableStateFlow(prefs.getString(AppPrefs.ADHAN_AUDIO_STREAM, "notification") ?: "notification")
     val adhanAudioStream: StateFlow<String> = _adhanAudioStream
 
     // Morning and Evening Adhkar Notifications state flow
-    private val _notifyMorningAdhkar = MutableStateFlow(prefs.getBoolean("notify_morning_adhkar", true))
+    private val _notifyMorningAdhkar = MutableStateFlow(prefs.getBoolean(AppPrefs.NOTIFY_MORNING_ADHKAR, true))
     val notifyMorningAdhkar: StateFlow<Boolean> = _notifyMorningAdhkar
 
-    private val _notifyEveningAdhkar = MutableStateFlow(prefs.getBoolean("notify_evening_adhkar", true))
+    private val _notifyEveningAdhkar = MutableStateFlow(prefs.getBoolean(AppPrefs.NOTIFY_EVENING_ADHKAR, true))
     val notifyEveningAdhkar: StateFlow<Boolean> = _notifyEveningAdhkar
 
     // Custom offsets (in minutes) for Morning and Evening Adhkar reminders
-    private val _morningAdhkarOffset = MutableStateFlow(prefs.getInt("morning_adhkar_offset", 30))
+    private val _morningAdhkarOffset = MutableStateFlow(prefs.getInt(AppPrefs.MORNING_ADHKAR_OFFSET, 30))
     val morningAdhkarOffset: StateFlow<Int> = _morningAdhkarOffset
 
-    private val _eveningAdhkarOffset = MutableStateFlow(prefs.getInt("evening_adhkar_offset", 30))
+    private val _eveningAdhkarOffset = MutableStateFlow(prefs.getInt(AppPrefs.EVENING_ADHKAR_OFFSET, 30))
     val eveningAdhkarOffset: StateFlow<Int> = _eveningAdhkarOffset
 
     // Pre-Adhan notifications (15-min before), Occasions, and Fasting notifications state flows
-    private val _notifyBeforeAdhan = MutableStateFlow(prefs.getBoolean("notify_before_adhan", true))
+    private val _notifyBeforeAdhan = MutableStateFlow(prefs.getBoolean(AppPrefs.NOTIFY_BEFORE_ADHAN, true))
     val notifyBeforeAdhan: StateFlow<Boolean> = _notifyBeforeAdhan
 
-    private val _notifyOccasions = MutableStateFlow(prefs.getBoolean("notify_occasions", true))
+    private val _notifyOccasions = MutableStateFlow(prefs.getBoolean(AppPrefs.NOTIFY_OCCASIONS, true))
     val notifyOccasions: StateFlow<Boolean> = _notifyOccasions
 
-    private val _notifyFasting = MutableStateFlow(prefs.getBoolean("notify_fasting", true))
+    private val _notifyFasting = MutableStateFlow(prefs.getBoolean(AppPrefs.NOTIFY_FASTING, true))
     val notifyFasting: StateFlow<Boolean> = _notifyFasting
 
-    private val _notifyJumuah = MutableStateFlow(prefs.getBoolean("notify_jumuah", true))
+    private val _notifyJumuah = MutableStateFlow(prefs.getBoolean(AppPrefs.NOTIFY_JUMUAH, true))
     val notifyJumuah: StateFlow<Boolean> = _notifyJumuah
 
-    private val _notifySuhur = MutableStateFlow(prefs.getBoolean("notify_suhur", false))
+    private val _notifySuhur = MutableStateFlow(prefs.getBoolean(AppPrefs.NOTIFY_SUHUR, false))
     val notifySuhur: StateFlow<Boolean> = _notifySuhur
 
-    private val _notifyIftar = MutableStateFlow(prefs.getBoolean("notify_iftar", false))
+    private val _notifyIftar = MutableStateFlow(prefs.getBoolean(AppPrefs.NOTIFY_IFTAR, false))
     val notifyIftar: StateFlow<Boolean> = _notifyIftar
 
     // Tasbih haptic feedback state: boolean (default true)
-    private val _enableTasbihHaptics = MutableStateFlow(prefs.getBoolean("enable_tasbih_haptics", true))
+    private val _enableTasbihHaptics = MutableStateFlow(prefs.getBoolean(AppPrefs.ENABLE_TASBIH_HAPTICS, true))
     val enableTasbihHaptics: StateFlow<Boolean> = _enableTasbihHaptics
 
     // Digit style: Western vs Eastern Arabic numbers when in Arabic locale
-    private val _useWesternNumbersInArabic = MutableStateFlow(prefs.getBoolean("use_western_numbers_in_arabic", false))
+    private val _useWesternNumbersInArabic = MutableStateFlow(prefs.getBoolean(AppPrefs.USE_WESTERN_NUMBERS_IN_ARABIC, false))
     val useWesternNumbersInArabic: StateFlow<Boolean> = _useWesternNumbersInArabic
 
     // Settings dialog visibility
@@ -258,19 +208,19 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     }
 
     // Juristic / School states
-    private val _asrMethod = MutableStateFlow(prefs.getString("asr_method", "standard") ?: "standard")
+    private val _asrMethod = MutableStateFlow(prefs.getString(AppPrefs.ASR_METHOD, "standard") ?: "standard")
     val asrMethod: StateFlow<String> = _asrMethod
 
-    private val _ishaMethod = MutableStateFlow(prefs.getString("isha_method", "standard") ?: "standard")
+    private val _ishaMethod = MutableStateFlow(prefs.getString(AppPrefs.ISHA_METHOD, "standard") ?: "standard")
     val ishaMethod: StateFlow<String> = _ishaMethod
 
     // Manual adjustments
-    val adjFajr = MutableStateFlow(prefs.getInt("adj_fajr", 0))
-    val adjSunrise = MutableStateFlow(prefs.getInt("adj_sunrise", 0))
-    val adjDhuhr = MutableStateFlow(prefs.getInt("adj_dhuhr", 0))
-    val adjAsr = MutableStateFlow(prefs.getInt("adj_asr", 0))
-    val adjMaghrib = MutableStateFlow(prefs.getInt("adj_maghrib", 0))
-    val adjIsha = MutableStateFlow(prefs.getInt("adj_isha", 0))
+    val adjFajr = MutableStateFlow(prefs.getInt(AppPrefs.ADJ_FAJR, 0))
+    val adjSunrise = MutableStateFlow(prefs.getInt(AppPrefs.ADJ_SUNRISE, 0))
+    val adjDhuhr = MutableStateFlow(prefs.getInt(AppPrefs.ADJ_DHUHR, 0))
+    val adjAsr = MutableStateFlow(prefs.getInt(AppPrefs.ADJ_ASR, 0))
+    val adjMaghrib = MutableStateFlow(prefs.getInt(AppPrefs.ADJ_MAGHRIB, 0))
+    val adjIsha = MutableStateFlow(prefs.getInt(AppPrefs.ADJ_ISHA, 0))
 
     // Cached parsed prayer seconds to eliminate 1s loop allocations
     private var CachedFajrSec = 0
@@ -283,17 +233,17 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     // 1. LOCATION STATE
     private val _currentLocation = MutableStateFlow<Pair<Double, Double>>(
         Pair(
-            prefs.getFloat("loc_lat", 21.4225f).toDouble(),
-            prefs.getFloat("loc_lng", 39.8262f).toDouble()
+            prefs.getFloat(AppPrefs.LOC_LAT, 21.4225f).toDouble(),
+            prefs.getFloat(AppPrefs.LOC_LNG, 39.8262f).toDouble()
         )
     )
     val currentLocation: StateFlow<Pair<Double, Double>> = _currentLocation
 
     private val _locationLabel = MutableStateFlow(
         run {
-            val label = prefs.getString("loc_label", "")
+            val label = prefs.getString(AppPrefs.LOC_LABEL, "")
             if (label.isNullOrEmpty() || label == "Mecca, KSA" || label == "Mecca (GPS Fallback)" || label == "مكة المكرمة (تلقائي)") {
-                if (prefs.getString("app_lang", "ar") == "ar") "الموقع غير محدد" else "No Location Selected"
+                if (prefs.getString(AppPrefs.APP_LANG, "ar") == "ar") "الموقع غير محدد" else "No Location Selected"
             } else {
                 label
             }
@@ -312,7 +262,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     private val _eventFlow = MutableSharedFlow<String>()
     val eventFlow: SharedFlow<String> = _eventFlow.asSharedFlow()
 
-    private val locationClient = LocationServices.getFusedLocationProviderClient(application)
+    private val locationProvider = LocationProvider(application)
 
     // Manual cities fallback config
     data class City(val name: String, val lat: Double, val lng: Double)
@@ -330,7 +280,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     private val _calculationMethod = MutableStateFlow(
         run {
             try {
-                PrayerCalculator.CalculationMethod.valueOf(prefs.getString("calc_method", "MWL") ?: "MWL")
+                PrayerCalculator.CalculationMethod.valueOf(prefs.getString(AppPrefs.CALC_METHOD, "MWL") ?: "MWL")
             } catch(e: Exception) {
                 PrayerCalculator.CalculationMethod.MWL
             }
@@ -341,24 +291,24 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     // 2. PRAYER TIMES STATE initialized dynamically with stored values and proper TZ offset from launch
     private val _prayerTimes = MutableStateFlow(
         run {
-            val lat = prefs.getFloat("loc_lat", 21.4225f).toDouble()
-            val lng = prefs.getFloat("loc_lng", 39.8262f).toDouble()
+            val lat = prefs.getFloat(AppPrefs.LOC_LAT, 21.4225f).toDouble()
+            val lng = prefs.getFloat(AppPrefs.LOC_LNG, 39.8262f).toDouble()
             val m = try {
-                PrayerCalculator.CalculationMethod.valueOf(prefs.getString("calc_method", "MWL") ?: "MWL")
+                PrayerCalculator.CalculationMethod.valueOf(prefs.getString(AppPrefs.CALC_METHOD, "MWL") ?: "MWL")
             } catch(e: Exception) {
                 PrayerCalculator.CalculationMethod.MWL
             }
-            val asrM = prefs.getString("asr_method", "standard") ?: "standard"
-            val ishaM = prefs.getString("isha_method", "standard") ?: "standard"
-            val adjF = prefs.getInt("adj_fajr", 0)
-            val adjS = prefs.getInt("adj_sunrise", 0)
-            val adjD = prefs.getInt("adj_dhuhr", 0)
-            val adjA = prefs.getInt("adj_asr", 0)
-            val adjM = prefs.getInt("adj_maghrib", 0)
-            val adjI = prefs.getInt("adj_isha", 0)
-            val isAutoLocation = prefs.getString("location_method", "manual") == "auto"
+            val asrM = prefs.getString(AppPrefs.ASR_METHOD, "standard") ?: "standard"
+            val ishaM = prefs.getString(AppPrefs.ISHA_METHOD, "standard") ?: "standard"
+            val adjF = prefs.getInt(AppPrefs.ADJ_FAJR, 0)
+            val adjS = prefs.getInt(AppPrefs.ADJ_SUNRISE, 0)
+            val adjD = prefs.getInt(AppPrefs.ADJ_DHUHR, 0)
+            val adjA = prefs.getInt(AppPrefs.ADJ_ASR, 0)
+            val adjM = prefs.getInt(AppPrefs.ADJ_MAGHRIB, 0)
+            val adjI = prefs.getInt(AppPrefs.ADJ_ISHA, 0)
+            val isAutoLocation = prefs.getString(AppPrefs.LOCATION_METHOD, "manual") == "auto"
             val timeZoneId = PrayerCalculator.resolveTimeZoneId(
-                if (isAutoLocation) TimeZone.getDefault().id else prefs.getString("loc_timezone", null)
+                if (isAutoLocation) TimeZone.getDefault().id else prefs.getString(AppPrefs.LOC_TIMEZONE, null)
             )
             val cal = Calendar.getInstance(TimeZone.getTimeZone(timeZoneId))
             val offsetHours = PrayerCalculator.getTimeZoneOffset(timeZoneId, cal)
@@ -464,16 +414,16 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         }
 
         // Guarantee app default language is arabic when first open
-        if (!prefs.contains("app_lang")) {
-            prefs.edit().putString("app_lang", "ar").apply()
+        if (!prefs.contains(AppPrefs.APP_LANG)) {
+            prefs.edit().putString(AppPrefs.APP_LANG, "ar").apply()
         }
 
-        if (!_isFirstRun.value && _locationMethod.value != "auto" && _isLocationSet.value && !prefs.contains("loc_timezone")) {
+        if (!_isFirstRun.value && _locationMethod.value != "auto" && _isLocationSet.value && !prefs.contains(AppPrefs.LOC_TIMEZONE)) {
             viewModelScope.launch {
                 val latitude = _currentLocation.value.first
                 val longitude = _currentLocation.value.second
                 val migratedTimeZone = CityData.nearestTimeZoneId(application, latitude, longitude)
-                if (migratedTimeZone != null && !prefs.contains("loc_timezone")) {
+                if (migratedTimeZone != null && !prefs.contains(AppPrefs.LOC_TIMEZONE)) {
                     updateLocation(latitude, longitude, _locationLabel.value, timeZoneId = migratedTimeZone)
                 }
             }
@@ -592,79 +542,38 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
                     }
                 }
             }
-            locationClient.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, null)
-                .addOnSuccessListener { loc: Location? ->
-                    if (loc != null) {
-                        viewModelScope.launch {
-                            val resolvedName = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                                getCityNameFromLocation(loc.latitude, loc.longitude)
-                            }
-                            val defaultLabel = if (_appLanguage.value == "ar") "تلقائي (GPS)" else "GPS (Auto)"
-                            val label = resolvedName ?: defaultLabel
-                            
-                            updateLocation(loc.latitude, loc.longitude, label)
-                            
-                            val now = System.currentTimeMillis()
-                            val diffLat = abs(loc.latitude - _currentLocation.value.first)
-                            val diffLng = abs(loc.longitude - _currentLocation.value.second)
-                            
-                            // Show success message only if it's a significant change or once in a while
-                            if (now - lastGpsSuccessMsgTime > 60000 || diffLat > 0.001 || diffLng > 0.001) {
-                                lastGpsSuccessMsgTime = now
-                                val msg = if (_appLanguage.value == "ar") "تم تحديد موقعك تلقائياً بنجاح ($label)" else "GPS location detected successfully ($label)"
-                                _eventFlow.emit(msg)
-                            }
+            locationProvider.currentLocation { loc ->
+                if (loc != null) {
+                    viewModelScope.launch {
+                        val resolvedName = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                            getCityNameFromLocation(loc.latitude, loc.longitude)
                         }
-                    } else {
-                        // try last known location as fallback
-                        try {
-                            locationClient.lastLocation.addOnSuccessListener { lastLoc: Location? ->
-                                if (lastLoc != null) {
-                                    viewModelScope.launch {
-                                        val resolvedName = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                                            getCityNameFromLocation(lastLoc.latitude, lastLoc.longitude)
-                                        }
-                                        val defaultLabel = if (_appLanguage.value == "ar") "تلقائي (GPS)" else "GPS (Auto)"
-                                        val label = resolvedName ?: defaultLabel
-                                        
-                                        updateLocation(lastLoc.latitude, lastLoc.longitude, label)
-                                        val msg = if (_appLanguage.value == "ar") "تم تحديد موقعك تلقائياً بنجاح ($label)" else "GPS location detected successfully ($label)"
-                                        _eventFlow.emit(msg)
-                                    }
-                                } else {
-                                    val label = if (_appLanguage.value == "ar") "الموقع غير محدد" else "No Location Selected"
-                                    updateLocation(21.4225, 39.8262, label)
-                                    viewModelScope.launch {
-                                        val msg = if (_appLanguage.value == "ar") "تعذر تحديد الموقع الجغرافي، يرجى اختياره يدوياً" else "Could not determine GPS location, please select manually"
-                                        _eventFlow.emit(msg)
-                                    }
-                                }
-                            }.addOnFailureListener {
-                                val label = if (_appLanguage.value == "ar") "الموقع غير محدد" else "No Location Selected"
-                                updateLocation(21.4225, 39.8262, label)
-                                viewModelScope.launch {
-                                    val msg = if (_appLanguage.value == "ar") "تعذر تحديد الموقع الجغرافي، يرجى اختياره يدوياً" else "Could not determine GPS location, please select manually"
-                                    _eventFlow.emit(msg)
-                                }
-                            }
-                        } catch (e: Exception) {
-                            val label = if (_appLanguage.value == "ar") "الموقع غير محدد" else "No Location Selected"
-                            updateLocation(21.4225, 39.8262, label)
-                            viewModelScope.launch {
-                                val msg = if (_appLanguage.value == "ar") "تعذر تحديد الموقع الجغرافي، يرجى اختياره يدوياً" else "Could not determine GPS location, please select manually"
-                                _eventFlow.emit(msg)
-                            }
+                        val defaultLabel = if (_appLanguage.value == "ar") "تلقائي (GPS)" else "GPS (Auto)"
+                        val label = resolvedName ?: defaultLabel
+
+                        updateLocation(loc.latitude, loc.longitude, label)
+
+                        val now = System.currentTimeMillis()
+                        val diffLat = abs(loc.latitude - _currentLocation.value.first)
+                        val diffLng = abs(loc.longitude - _currentLocation.value.second)
+
+                        // Show success message only if it's a significant change or once in a while
+                        if (now - lastGpsSuccessMsgTime > 60000 || diffLat > 0.001 || diffLng > 0.001) {
+                            lastGpsSuccessMsgTime = now
+                            val msg = if (_appLanguage.value == "ar") "تم تحديد موقعك تلقائياً بنجاح ($label)" else "GPS location detected successfully ($label)"
+                            _eventFlow.emit(msg)
                         }
                     }
-                }
-                .addOnFailureListener {
+                } else {
+                    // The system has no fix: fall back to Makkah and ask for a manual choice.
                     val label = if (_appLanguage.value == "ar") "الموقع غير محدد" else "No Location Selected"
                     updateLocation(21.4225, 39.8262, label)
                     viewModelScope.launch {
-                        val msg = if (_appLanguage.value == "ar") "فشل تحديد الموقع الجغرافي، يرجى اختياره يدوياً" else "GPS location failed, please select manually"
+                        val msg = if (_appLanguage.value == "ar") "تعذر تحديد الموقع الجغرافي، يرجى اختياره يدوياً" else "Could not determine GPS location, please select manually"
                         _eventFlow.emit(msg)
                     }
                 }
+            }
         } catch (e: Exception) {
             e.printStackTrace()
             val label = if (_appLanguage.value == "ar") "الموقع غير محدد" else "No Location Selected"
@@ -676,15 +585,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    private fun isLocationEnabled(): Boolean {
-        return try {
-            val locationManager = getApplication<Application>().getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
-            locationManager?.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER) == true ||
-                    locationManager?.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER) == true
-        } catch (e: Exception) {
-            false
-        }
-    }
+    private fun isLocationEnabled(): Boolean = locationProvider.isEnabled()
 
     private fun getCityNameFromLocation(lat: Double, lng: Double): String? {
         return try {
@@ -711,14 +612,14 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         val selectedTimeZoneId = timeZoneId ?: if (_locationMethod.value == "auto") {
             TimeZone.getDefault().id
         } else {
-            prefs.getString("loc_timezone", null)
+            prefs.getString(AppPrefs.LOC_TIMEZONE, null)
         }
         val resolvedTimeZoneId = PrayerCalculator.resolveTimeZoneId(selectedTimeZoneId)
         prefs.edit()
-            .putFloat("loc_lat", lat.toFloat())
-            .putFloat("loc_lng", lng.toFloat())
-            .putString("loc_label", label)
-            .putString("loc_timezone", resolvedTimeZoneId)
+            .putFloat(AppPrefs.LOC_LAT, lat.toFloat())
+            .putFloat(AppPrefs.LOC_LNG, lng.toFloat())
+            .putString(AppPrefs.LOC_LABEL, label)
+            .putString(AppPrefs.LOC_TIMEZONE, resolvedTimeZoneId)
             .commit()
         recalculatePrayerTimes()
         if (isSuccessFeedback) {
@@ -731,7 +632,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
     fun setAppLanguage(lang: String) {
         _appLanguage.value = lang
-        prefs.edit().putString("app_lang", lang).commit()
+        prefs.edit().putString(AppPrefs.APP_LANG, lang).commit()
         _filteredDuas.value = if (lang == "ar") DuaData.duasAr else DuaData.duasEn
         updateWidgetsGlobally()
     }
@@ -786,37 +687,37 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
     fun setAppTheme(theme: String) {
         _appTheme.value = theme
-        prefs.edit().putString("app_theme", theme).apply()
+        prefs.edit().putString(AppPrefs.APP_THEME, theme).apply()
     }
 
     fun setUseDynamicColor(use: Boolean) {
         _useDynamicColor.value = use
-        prefs.edit().putBoolean("use_dynamic_color", use).apply()
+        prefs.edit().putBoolean(AppPrefs.USE_DYNAMIC_COLOR, use).apply()
     }
 
     fun setAmoledDark(enable: Boolean) {
         _amoledDark.value = enable
-        prefs.edit().putBoolean("amoled_dark", enable).apply()
+        prefs.edit().putBoolean(AppPrefs.AMOLED_DARK, enable).apply()
     }
 
     fun setArabicFontSize(size: Float) {
         _arabicFontSize.value = size
-        prefs.edit().putFloat("arabic_font_size", size).apply()
+        prefs.edit().putFloat(AppPrefs.ARABIC_FONT_SIZE, size).apply()
     }
 
     fun setEnglishFontSize(size: Float) {
         _englishFontSize.value = size
-        prefs.edit().putFloat("english_font_size", size).apply()
+        prefs.edit().putFloat(AppPrefs.ENGLISH_FONT_SIZE, size).apply()
     }
 
     fun setQuranFont(font: String) {
         _quranFont.value = font
-        prefs.edit().putString("quran_font", font).apply()
+        prefs.edit().putString(AppPrefs.QURAN_FONT, font).apply()
     }
 
     fun setLocationMethod(method: String) {
         _locationMethod.value = method
-        prefs.edit().putString("location_method", method).apply()
+        prefs.edit().putString(AppPrefs.LOCATION_METHOD, method).apply()
         if (method == "auto") {
             lastGpsOffMsgTime = 0 // Reset to allow immediate feedback when switching to auto
             requestGPSLocation()
@@ -828,18 +729,18 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
     fun setEnableTasbihHaptics(enable: Boolean) {
         _enableTasbihHaptics.value = enable
-        prefs.edit().putBoolean("enable_tasbih_haptics", enable).apply()
+        prefs.edit().putBoolean(AppPrefs.ENABLE_TASBIH_HAPTICS, enable).apply()
     }
 
     fun setUseWesternNumbersInArabic(enable: Boolean) {
         _useWesternNumbersInArabic.value = enable
-        prefs.edit().putBoolean("use_western_numbers_in_arabic", enable).apply()
+        prefs.edit().putBoolean(AppPrefs.USE_WESTERN_NUMBERS_IN_ARABIC, enable).apply()
         updateWidgetsGlobally()
     }
 
     fun setFirstRunComplete() {
         _isFirstRun.value = false
-        prefs.edit().putBoolean("is_first_run", false).apply()
+        prefs.edit().putBoolean(AppPrefs.IS_FIRST_RUN, false).apply()
     }
 
     fun saveLastReading(surahId: Int, ayahNumber: Int, surahName: String) {
@@ -878,7 +779,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
     fun selectMethod(method: PrayerCalculator.CalculationMethod) {
         _calculationMethod.value = method
-        prefs.edit().putString("calc_method", method.name).commit()
+        prefs.edit().putString(AppPrefs.CALC_METHOD, method.name).commit()
         recalculatePrayerTimes()
     }
 
@@ -912,109 +813,109 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         val selectedTimeZoneId = if (_locationMethod.value == "auto") {
             TimeZone.getDefault().id
         } else {
-            prefs.getString("loc_timezone", null)
+            prefs.getString(AppPrefs.LOC_TIMEZONE, null)
         }
         return PrayerCalculator.resolveTimeZoneId(selectedTimeZoneId)
     }
 
     fun setShowNawafil(value: Boolean) {
         _showNawafil.value = value
-        prefs.edit().putBoolean("show_nawafil", value).apply()
+        prefs.edit().putBoolean(AppPrefs.SHOW_NAWAFIL, value).apply()
         recalculatePrayerTimes()
     }
 
     fun setNotifyNawafil(value: Boolean) {
         _notifyNawafil.value = value
-        prefs.edit().putBoolean("notify_nawafil", value).apply()
+        prefs.edit().putBoolean(AppPrefs.NOTIFY_NAWAFIL, value).apply()
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
     }
 
     fun setAdhanAudioEnabled(value: Boolean) {
         _adhanAudioEnabled.value = value
-        prefs.edit().putBoolean("adhan_audio_enabled", value).apply()
+        prefs.edit().putBoolean(AppPrefs.ADHAN_AUDIO_ENABLED, value).apply()
     }
 
     fun setAdhanAudioMode(value: String) {
         if (value != "full" && value != "short") return
         _adhanAudioMode.value = value
-        prefs.edit().putString("adhan_audio_mode", value).apply()
+        prefs.edit().putString(AppPrefs.ADHAN_AUDIO_MODE, value).apply()
     }
 
     fun setAdhanAudioStream(value: String) {
         if (value != "notification" && value != "alarm") return
         _adhanAudioStream.value = value
-        prefs.edit().putString("adhan_audio_stream", value).apply()
+        prefs.edit().putString(AppPrefs.ADHAN_AUDIO_STREAM, value).apply()
     }
 
     fun setNotifyMorningAdhkar(value: Boolean) {
         _notifyMorningAdhkar.value = value
-        prefs.edit().putBoolean("notify_morning_adhkar", value).apply()
+        prefs.edit().putBoolean(AppPrefs.NOTIFY_MORNING_ADHKAR, value).apply()
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
     }
 
     fun setMorningAdhkarOffset(value: Int) {
         _morningAdhkarOffset.value = value
-        prefs.edit().putInt("morning_adhkar_offset", value).apply()
+        prefs.edit().putInt(AppPrefs.MORNING_ADHKAR_OFFSET, value).apply()
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
     }
 
     fun setNotifyEveningAdhkar(value: Boolean) {
         _notifyEveningAdhkar.value = value
-        prefs.edit().putBoolean("notify_evening_adhkar", value).apply()
+        prefs.edit().putBoolean(AppPrefs.NOTIFY_EVENING_ADHKAR, value).apply()
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
     }
 
     fun setEveningAdhkarOffset(value: Int) {
         _eveningAdhkarOffset.value = value
-        prefs.edit().putInt("evening_adhkar_offset", value).apply()
+        prefs.edit().putInt(AppPrefs.EVENING_ADHKAR_OFFSET, value).apply()
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
     }
 
     fun setNotifyBeforeAdhan(value: Boolean) {
         _notifyBeforeAdhan.value = value
-        prefs.edit().putBoolean("notify_before_adhan", value).apply()
+        prefs.edit().putBoolean(AppPrefs.NOTIFY_BEFORE_ADHAN, value).apply()
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
     }
 
     fun setNotifyOccasions(value: Boolean) {
         _notifyOccasions.value = value
-        prefs.edit().putBoolean("notify_occasions", value).apply()
+        prefs.edit().putBoolean(AppPrefs.NOTIFY_OCCASIONS, value).apply()
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
     }
 
     fun setNotifyFasting(value: Boolean) {
         _notifyFasting.value = value
-        prefs.edit().putBoolean("notify_fasting", value).apply()
+        prefs.edit().putBoolean(AppPrefs.NOTIFY_FASTING, value).apply()
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
     }
 
     fun setNotifyJumuah(value: Boolean) {
         _notifyJumuah.value = value
-        prefs.edit().putBoolean("notify_jumuah", value).apply()
+        prefs.edit().putBoolean(AppPrefs.NOTIFY_JUMUAH, value).apply()
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
     }
 
     fun setNotifySuhur(value: Boolean) {
         _notifySuhur.value = value
-        prefs.edit().putBoolean("notify_suhur", value).apply()
+        prefs.edit().putBoolean(AppPrefs.NOTIFY_SUHUR, value).apply()
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
     }
 
     fun setNotifyIftar(value: Boolean) {
         _notifyIftar.value = value
-        prefs.edit().putBoolean("notify_iftar", value).apply()
+        prefs.edit().putBoolean(AppPrefs.NOTIFY_IFTAR, value).apply()
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
     }
 
     fun setAsrMethod(value: String) {
         _asrMethod.value = value
-        prefs.edit().putString("asr_method", value).apply()
+        prefs.edit().putString(AppPrefs.ASR_METHOD, value).apply()
         recalculatePrayerTimes()
     }
 
     fun setIshaMethod(value: String) {
         _ishaMethod.value = value
-        prefs.edit().putString("isha_method", value).apply()
+        prefs.edit().putString(AppPrefs.ISHA_METHOD, value).apply()
         recalculatePrayerTimes()
     }
 
@@ -1022,37 +923,37 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
     fun setAdjFajr(value: Int) {
         adjFajr.value = value
-        prefs.edit().putInt("adj_fajr", value).apply()
+        prefs.edit().putInt(AppPrefs.ADJ_FAJR, value).apply()
         recalculatePrayerTimes()
     }
 
     fun setAdjSunrise(value: Int) {
         adjSunrise.value = value
-        prefs.edit().putInt("adj_sunrise", value).apply()
+        prefs.edit().putInt(AppPrefs.ADJ_SUNRISE, value).apply()
         recalculatePrayerTimes()
     }
 
     fun setAdjDhuhr(value: Int) {
         adjDhuhr.value = value
-        prefs.edit().putInt("adj_dhuhr", value).apply()
+        prefs.edit().putInt(AppPrefs.ADJ_DHUHR, value).apply()
         recalculatePrayerTimes()
     }
 
     fun setAdjAsr(value: Int) {
         adjAsr.value = value
-        prefs.edit().putInt("adj_asr", value).apply()
+        prefs.edit().putInt(AppPrefs.ADJ_ASR, value).apply()
         recalculatePrayerTimes()
     }
 
     fun setAdjMaghrib(value: Int) {
         adjMaghrib.value = value
-        prefs.edit().putInt("adj_maghrib", value).apply()
+        prefs.edit().putInt(AppPrefs.ADJ_MAGHRIB, value).apply()
         recalculatePrayerTimes()
     }
 
     fun setAdjIsha(value: Int) {
         adjIsha.value = value
-        prefs.edit().putInt("adj_isha", value).apply()
+        prefs.edit().putInt(AppPrefs.ADJ_ISHA, value).apply()
         recalculatePrayerTimes()
     }
 
@@ -1063,7 +964,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         setArabicFontSize(24f)
         setEnglishFontSize(16f)
         setLocationMethod("manual")
-        val defaultLabel = if (prefs.getString("app_lang", "ar") == "ar") "الموقع غير محدد" else "No Location Selected"
+        val defaultLabel = if (prefs.getString(AppPrefs.APP_LANG, "ar") == "ar") "الموقع غير محدد" else "No Location Selected"
         updateLocation(21.4225, 39.8262, defaultLabel, false)
         setAsrMethod("standard")
         setIshaMethod("standard")
