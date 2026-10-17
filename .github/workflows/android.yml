@@ -109,18 +109,37 @@ jobs:
         BARAKAH_KEYSTORE_PASSWORD: ${{ secrets.BARAKAH_KEYSTORE_PASSWORD }}
         BARAKAH_KEY_ALIAS: ${{ secrets.BARAKAH_KEY_ALIAS }}
         BARAKAH_KEY_PASSWORD: ${{ secrets.BARAKAH_KEY_PASSWORD }}
-      run: ./gradlew assembleDebug --stacktrace
+      # The release variant, not debug. Debug APKs are flagged debuggable, skip every
+      # optimisation, and drag in Compose tooling. Both variants are signed with the
+      # same key, so this still installs straight over an older build.
+      run: ./gradlew assembleRelease --stacktrace
 
     - name: Rename compiled APK
       run: |
-        cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Barakah-v${{ env.VERSION_NAME }}.apk
+        cp app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/Barakah-v${{ env.VERSION_NAME }}.apk
         echo "Prepared Barakah-v${{ env.VERSION_NAME }}.apk"
+
+    # A release APK can be produced unsigned or debuggable without failing the build,
+    # and either would still install on a phone, so check the artifact before it ships.
+    - name: Check the APK is signed and not debuggable
+      run: |
+        APK=app/build/outputs/apk/release/Barakah-v${{ env.VERSION_NAME }}.apk
+        BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+        echo "Using build-tools: $BUILD_TOOLS"
+        test -x "$BUILD_TOOLS/apksigner"
+        test -x "$BUILD_TOOLS/aapt2"
+        "$BUILD_TOOLS/apksigner" verify --print-certs "$APK"
+        if "$BUILD_TOOLS/aapt2" dump badging "$APK" | grep -q application-debuggable; then
+          echo "ERROR: the APK is marked debuggable"
+          exit 1
+        fi
+        echo "Signed, and not debuggable."
 
     - name: Upload build artifact
       uses: actions/upload-artifact@v4
       with:
         name: Barakah-APK
-        path: app/build/outputs/apk/debug/Barakah-v${{ env.VERSION_NAME }}.apk
+        path: app/build/outputs/apk/release/Barakah-v${{ env.VERSION_NAME }}.apk
         retention-days: 30
 
     - name: Create Release
@@ -131,7 +150,7 @@ jobs:
         name: "${{ env.VERSION_NAME }}"
         body: |
           ${{ github.event.head_commit.message }}
-        files: app/build/outputs/apk/debug/Barakah-v${{ env.VERSION_NAME }}.apk
+        files: app/build/outputs/apk/release/Barakah-v${{ env.VERSION_NAME }}.apk
 
   # Reports test failures without ever blocking the APK build above.
   tests:
