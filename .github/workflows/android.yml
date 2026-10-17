@@ -196,12 +196,11 @@ jobs:
   # references, a manifest attribute that does nothing. assembleRelease already runs the fatal
   # subset (lintVitalRelease), so this job is here for the rest of it.
   #
-  # Reporting only for now: it must not block anything until its findings have been read and
-  # either fixed or deliberately turned off, so it is marked continue-on-error and the report is
-  # uploaded either way.
+  # Lint findings were read before this job was allowed to fail anything: what was real is fixed
+  # and what is deliberate is annotated where it applies, so the report is expected to be empty
+  # and anything new in it is worth a look. Errors fail the build; warnings are only reported.
   lint:
     runs-on: ubuntu-latest
-    continue-on-error: true
     env:
       JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
 
