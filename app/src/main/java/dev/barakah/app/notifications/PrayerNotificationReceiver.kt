@@ -17,6 +17,10 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
         const val ID_PRAYER = 1000
         const val ID_ADHKAR = 1001
         const val ID_DAILY = 1002
+
+        private const val PRAYER_CHANNEL_ID = "prayer_channel"
+        private const val ADHAN_CHANNEL_ID = "adhan_channel"
+        private val PRIMARY_PRAYERS = setOf("Fajr", "Dhuhr", "Asr", "Maghrib", "Isha")
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -58,9 +62,11 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
         val appPrefs = context.getSharedPreferences(AppPrefs.FILE, Context.MODE_PRIVATE)
         val isAr = appPrefs.getString(AppPrefs.APP_LANG, "ar") == "ar"
 
-        if (appPrefs.getBoolean(AppPrefs.ADHAN_AUDIO_ENABLED, false) &&
-            prayerName in setOf("Fajr", "Dhuhr", "Asr", "Maghrib", "Isha")
-        ) {
+        // Only the five prayers play the Adhan, and only when adhan audio is enabled.
+        val playsAdhan = prayerName in PRIMARY_PRAYERS &&
+            appPrefs.getBoolean(AppPrefs.ADHAN_AUDIO_ENABLED, false)
+
+        if (playsAdhan) {
             val playbackIntent = Intent(context, AdhanPlaybackService::class.java).apply {
                 putExtra(AdhanPlaybackService.EXTRA_PRAYER_NAME, prayerName)
             }
@@ -75,11 +81,21 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
             }
         }
 
-        val channelId = "prayer_channel"
+        // A channel owns its sound on Android 8+, so the prayers that play the Adhan are posted to a
+        // second, silent channel: the Adhan is the alert, and the notification must not add a tone on
+        // top of it. Every other reminder keeps the audible channel.
+        val channelId = if (playsAdhan) ADHAN_CHANNEL_ID else PRAYER_CHANNEL_ID
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             val channelName = if (isAr) "مواقيت الصلاة والذكر" else "Prayer Times & Remembrance"
-            val channel = NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_HIGH)
-            notificationManager.createNotificationChannel(channel)
+            notificationManager.createNotificationChannel(
+                NotificationChannel(PRAYER_CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_HIGH)
+            )
+
+            val adhanChannelName = if (isAr) "الأذان" else "Adhan"
+            notificationManager.createNotificationChannel(
+                NotificationChannel(ADHAN_CHANNEL_ID, adhanChannelName, NotificationManager.IMPORTANCE_HIGH)
+                    .apply { setSound(null, null) }
+            )
         }
         
         val activityIntent = Intent(context, MainActivity::class.java).apply {
