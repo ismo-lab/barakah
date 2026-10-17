@@ -27,6 +27,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -42,7 +43,9 @@ private const val TAG = "BarakahViewModel"
 class BarakahViewModel(application: Application) : AndroidViewModel(application) {
 
     private val db = AppDatabase.getDatabase(application)
-    val repository = AppRepository(db)
+
+    /** The data layer is an implementation detail; the screens only see StateFlows. */
+    private val repository = AppRepository(db)
 
     // Hardware managers
     private val sensorManager = QiblaManager(application)
@@ -1354,6 +1357,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         sensorManager.stop()
         qiblaWatchdogJob?.cancel()
         countdownJob?.cancel()
+        widgetRefreshScope.cancel()
         stopLocationUpdates()
         try {
             getApplication<Application>().unregisterReceiver(gpsStatusReceiver)
