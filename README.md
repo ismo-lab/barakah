@@ -61,18 +61,6 @@ runner's fonts and SDK image; dispatch the workflow with `record_screenshots` to
 
 ---
 
-## 🎨 Design Spec & Aesthetics
-
-* **Material 3** with a light and a dark scheme, Material You dynamic colour on Android 12 and
-  above, and an optional pure-black (AMOLED) dark theme.
-* **The theme is the app's choice, not the phone's**: light, dark or follow-system is set in
-  Settings, and the status and navigation bar icons follow whatever is chosen.
-* **Arabic-first typography**: the Amiri Quran face is applied to Quran text alone, so the rest of
-  the interface stays on the system font and stays legible at small sizes.
-* **Arabic-Indic numerals** by default in Arabic, with a setting to use Western digits instead.
-
----
-
 ## 🔒 Privacy Guarantee
 
 * **Zero Telemetry**: No user tracking, analytics nodes, or telemetry collection processes.
