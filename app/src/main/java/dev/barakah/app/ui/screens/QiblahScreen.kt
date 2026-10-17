@@ -102,7 +102,6 @@ fun QiblahScreen(
     val shortestDiff = if (exactDiff > 180f) 360f - exactDiff else exactDiff
 
     var isAligned by remember { mutableStateOf(false) }
-    var showDiagnostics by remember { mutableStateOf(false) }
 
     LaunchedEffect(shortestDiff, hasLiveHeading) {
         if (!hasLiveHeading) {
@@ -440,7 +439,6 @@ fun QiblahScreen(
                             textAlign = TextAlign.Center,
                             color = statusColor
                         )
-                        CompassDiagnosticsLink(isAr = isAr, onOpen = { showDiagnostics = true })
                     }
                 }
             }
@@ -725,23 +723,10 @@ fun QiblahScreen(
                             textAlign = TextAlign.Center,
                             color = statusColor
                         )
-                        CompassDiagnosticsLink(isAr = isAr, onOpen = { showDiagnostics = true })
                     }
                 }
             }
         }
         }
-    }
-
-    if (showDiagnostics) {
-        CompassDiagnosticsDialog(
-            isAr = isAr,
-            status = compassStatus,
-            heading = compassAzimuth,
-            tiltDegrees = compassTilt,
-            qiblaBearing = qiblaBearing,
-            locationLabel = locationLabel,
-            onDismiss = { showDiagnostics = false }
-        )
     }
 }
