@@ -8,6 +8,11 @@ on:
   # Lets you trigger a build from the Actions tab or the GitHub mobile app,
   # without needing to push a commit first.
   workflow_dispatch:
+    inputs:
+      record_screenshots:
+        description: Re-record the screenshot references instead of comparing against them
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -181,7 +186,7 @@ jobs:
     - name: Run unit and screenshot tests
       env:
         DYNAMIC_VERSION: "ci"
-      run: ./gradlew test --stacktrace
+      run: ./gradlew test --stacktrace -Proborazzi.test.record=true
 
     - name: Upload test report
       if: always()
@@ -189,6 +194,17 @@ jobs:
       with:
         name: test-report
         path: app/build/reports/tests/
+        retention-days: 14
+
+    # The reference images are committed, so this folder is normally empty. It is where a
+    # recording run leaves the ones it just made, for downloading and committing.
+    - name: Upload screenshots
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: screenshots
+        path: app/src/test/screenshots/
+        if-no-files-found: ignore
         retention-days: 14
 
   # Lint finds the class of problem that compiles and runs fine but is still wrong: a permission
