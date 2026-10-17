@@ -24,26 +24,42 @@ object HijriCalendarHelper {
         )
     }
 
-    fun getTodayHijriDate(): HijriDate {
+    /**
+     * The one conversion the whole app goes through: Umm al-Qura where the platform has it, and
+     * the arithmetic fallback on older devices.
+     *
+     * Keep every caller on this. The date shown on the home screen, the day an occasion reminder
+     * fires and the date listed for that occasion used to use two different calendars, so the app
+     * could show one Eid date and remind on another.
+     *
+     * [adjustmentDays] shifts the result by that many days, which is how a user lines the
+     * calculated date up with the moon sighting their community follows.
+     */
+    private fun hijriFor(year: Int, month: Int, day: Int, adjustmentDays: Int): HijriDate {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             try {
-                return getHijriDateFor(java.time.LocalDate.now())
+                val date = java.time.LocalDate.of(year, month, day).plusDays(adjustmentDays.toLong())
+                return getHijriDateFor(date)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
-        
-        val today = Calendar.getInstance()
-        val day = today.get(Calendar.DAY_OF_MONTH)
-        val month = today.get(Calendar.MONTH) + 1
-        val year = today.get(Calendar.YEAR)
-        
-        val jd = getJulianDay(year, month, day)
-        return getHijriFromJulian(jd)
+
+        return getHijriFromJulian(getJulianDay(year, month, day) + adjustmentDays)
     }
 
-    fun getTodayHijriDateString(isAr: Boolean = false): String {
-        val hijri = getTodayHijriDate()
+    fun getTodayHijriDate(adjustmentDays: Int = 0): HijriDate {
+        val today = Calendar.getInstance()
+        return hijriFor(
+            today.get(Calendar.YEAR),
+            today.get(Calendar.MONTH) + 1,
+            today.get(Calendar.DAY_OF_MONTH),
+            adjustmentDays
+        )
+    }
+
+    fun getTodayHijriDateString(isAr: Boolean = false, adjustmentDays: Int = 0): String {
+        val hijri = getTodayHijriDate(adjustmentDays)
         val monthNamesAr = listOf(
             "", "محرم", "صفر", "ربيع الأول", "ربيع الآخر", 
             "جمادى الأولى", "جمادى الآخرة", "رجب", "شعبان", 
@@ -68,25 +84,14 @@ object HijriCalendarHelper {
         }
     }
 
-    fun getTomorrowHijriDate(): HijriDate {
+    fun getTomorrowHijriDate(adjustmentDays: Int = 0): HijriDate {
         val tomorrow = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, 1) }
-        
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            try {
-                return getHijriDateFor(java.time.LocalDate.now().plusDays(1))
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-        
-        // Fallback approximate conversion for older Android versions
-        val day = tomorrow.get(Calendar.DAY_OF_MONTH)
-        val month = tomorrow.get(Calendar.MONTH) + 1
-        val year = tomorrow.get(Calendar.YEAR)
-        
-        // Simple astronomical formula fallback (Kuwaiti algorithm)
-        val jd = getJulianDay(year, month, day)
-        return getHijriFromJulian(jd)
+        return hijriFor(
+            tomorrow.get(Calendar.YEAR),
+            tomorrow.get(Calendar.MONTH) + 1,
+            tomorrow.get(Calendar.DAY_OF_MONTH),
+            adjustmentDays
+        )
     }
 
     private fun getJulianDay(year: Int, month: Int, day: Int): Int {
@@ -141,7 +146,7 @@ object HijriCalendarHelper {
         return HijriDate(hijriDay, hijriMonth, hijriYear)
     }
 
-    fun getGregorianEquivalent(hijriMonth: Int, hijriDay: Int, isAr: Boolean): String {
+    fun getGregorianEquivalent(hijriMonth: Int, hijriDay: Int, isAr: Boolean, adjustmentDays: Int = 0): String {
         val today = Calendar.getInstance()
         val currentYear = today.get(Calendar.YEAR)
         val currentMonth = today.get(Calendar.MONTH) + 1
@@ -162,8 +167,7 @@ object HijriCalendarHelper {
                     else -> 31
                 }
                 for (day in startDayVal..daysInMonth) {
-                    val jd = getJulianDay(year, month, day)
-                    val hijri = getHijriFromJulian(jd)
+                    val hijri = hijriFor(year, month, day, adjustmentDays)
                     if (hijri.month == hijriMonth && hijri.day == hijriDay) {
                         return if (isAr) {
                             "$day ${monthNamesAr[month]} $year"
@@ -184,8 +188,7 @@ object HijriCalendarHelper {
                     else -> 31
                 }
                 for (day in 1..daysInMonth) {
-                    val jd = getJulianDay(year, month, day)
-                    val hijri = getHijriFromJulian(jd)
+                    val hijri = hijriFor(year, month, day, adjustmentDays)
                     if (hijri.month == hijriMonth && hijri.day == hijriDay) {
                         return if (isAr) {
                             "$day ${monthNamesAr[month]} $year"
@@ -199,9 +202,18 @@ object HijriCalendarHelper {
         return ""
     }
 
-    fun getGregorianEquivalentRange(hijriMonth: Int, startDay: Int, endDay: Int, isAr: Boolean): String {
-        val startStr = getGregorianEquivalent(hijriMonth, startDay, isAr)
-        val endStr = getGregorianEquivalent(hijriMonth, endDay, isAr)
+    fun getGregorianEquivalentRange(hijriMonth: Int, startDay: Int, endDay: Int, isAr: Boolean, adjustmentDays: Int = 0): String {
+        val startStr = getGregorianEquivalent(hijriMonth, startDay, isAr, adjustmentDays)
+
+        // A Hijri month can be 29 days long, in which case the requested last day does not exist
+        // that year. End the range on the last day that does, instead of dropping the range.
+        var lastDayValue = endDay
+        var endStr = getGregorianEquivalent(hijriMonth, lastDayValue, isAr, adjustmentDays)
+        while (endStr.isEmpty() && lastDayValue > startDay) {
+            lastDayValue -= 1
+            endStr = getGregorianEquivalent(hijriMonth, lastDayValue, isAr, adjustmentDays)
+        }
+
         return if (startStr.isNotEmpty() && endStr.isNotEmpty()) {
             if (isAr) {
                 "من $startStr إلى $endStr"

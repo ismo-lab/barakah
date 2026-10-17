@@ -42,6 +42,12 @@ object AppPrefs {
     const val ADJ_MAGHRIB = "adj_maghrib"
     const val ADJ_ISHA = "adj_isha"
 
+    /**
+     * Days to shift the calculated Hijri date by, so the calendar can be lined up with the moon
+     * sighting the user's community follows. 0 keeps the plain Umm al-Qura date.
+     */
+    const val HIJRI_ADJUSTMENT = "hijri_adjustment"
+
     // Adhan and notifications
     const val ADHAN_AUDIO_ENABLED = "adhan_audio_enabled"
     const val ADHAN_AUDIO_MODE = "adhan_audio_mode"

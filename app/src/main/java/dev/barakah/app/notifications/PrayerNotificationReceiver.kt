@@ -162,7 +162,11 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
             }
             
             if (notifyOccasions) {
-                val tomorrowHijri = dev.barakah.app.util.HijriCalendarHelper.getTomorrowHijriDate()
+                // The same adjustment the screens apply, so the reminder lands on the day the user
+                // sees listed rather than the plain calculated one.
+                val tomorrowHijri = dev.barakah.app.util.HijriCalendarHelper.getTomorrowHijriDate(
+                    appPrefs.getInt(AppPrefs.HIJRI_ADJUSTMENT, 0)
+                )
                 val hDay = tomorrowHijri.day
                 val hMonth = tomorrowHijri.month
                 

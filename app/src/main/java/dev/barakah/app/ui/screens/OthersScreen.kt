@@ -57,11 +57,11 @@ data class IslamicOccasion(
     val iconEn: String = "🌟"
 )
 
-fun getMiladiDateString(item: IslamicOccasion, isAr: Boolean): String {
+fun getMiladiDateString(item: IslamicOccasion, isAr: Boolean, adjustmentDays: Int = 0): String {
     return if (item.hDay == -1) {
-        dev.barakah.app.util.HijriCalendarHelper.getGregorianEquivalentRange(item.hMonth, 21, 30, isAr)
+        dev.barakah.app.util.HijriCalendarHelper.getGregorianEquivalentRange(item.hMonth, 21, 30, isAr, adjustmentDays)
     } else {
-        dev.barakah.app.util.HijriCalendarHelper.getGregorianEquivalent(item.hMonth, item.hDay, isAr)
+        dev.barakah.app.util.HijriCalendarHelper.getGregorianEquivalent(item.hMonth, item.hDay, isAr, adjustmentDays)
     }
 }
 
@@ -75,6 +75,7 @@ fun OthersScreen(
     val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
     val isAr = appLanguage == "ar"
     val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsStateWithLifecycle()
+    val hijriAdjustment by viewModel.hijriAdjustment.collectAsStateWithLifecycle()
     
     val context = LocalContext.current
     val vibrator = remember { context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? Vibrator }
@@ -322,6 +323,7 @@ fun OthersScreen(
                         isAr = isAr,
                         occasions = occasions,
                         useWesternNumbersInArabic = useWesternNumbersInArabic,
+                        hijriAdjustment = hijriAdjustment,
                         onOccasionClick = { occasion ->
                             triggerVibration()
                             selectedOccasionForDetail = occasion
@@ -436,7 +438,7 @@ fun OthersScreen(
                         color = MaterialTheme.colorScheme.primary
                     )
                     Spacer(modifier = Modifier.height(4.dp))
-                    val miladi = getMiladiDateString(holiday, isAr)
+                    val miladi = getMiladiDateString(holiday, isAr, hijriAdjustment)
                     val formattedDate = if (miladi.isNotEmpty()) {
                         if (isAr) {
                             "التاريخ الهجري: ${holiday.hijriDateAr} • الموافق $miladi م"
@@ -637,6 +639,7 @@ fun CalendarAndOccasionsPane(
     isAr: Boolean,
     occasions: List<IslamicOccasion>,
     useWesternNumbersInArabic: Boolean = false,
+    hijriAdjustment: Int = 0,
     onOccasionClick: (IslamicOccasion) -> Unit
 ) {
     LazyColumn(
@@ -656,6 +659,20 @@ fun CalendarAndOccasionsPane(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+            )
+        }
+
+        // The dates under each occasion are calculated, not sighted, so they can be a day out from
+        // what is announced locally -- and the setting next to them is how that gets fixed.
+        item {
+            Text(
+                text = (if (isAr) {
+                    "تواريخ محسوبة — قد تختلف بيوم، ويمكن ضبطها من الإعدادات."
+                } else {
+                    "Calculated dates — may differ by a day; adjustable in Settings."
+                }).localize(isAr, useWesternNumbersInArabic),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
             )
         }
 
@@ -699,7 +716,7 @@ fun CalendarAndOccasionsPane(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(2.dp))
-                        val miladi = getMiladiDateString(item, isAr)
+                        val miladi = getMiladiDateString(item, isAr, hijriAdjustment)
                         val displayDate = if (miladi.isNotEmpty()) {
                             if (isAr) "${item.hijriDateAr} • الموافق $miladi م" else "${item.hijriDateEn} • Eq: $miladi"
                         } else {

@@ -223,6 +223,9 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     val adjMaghrib = MutableStateFlow(prefs.getInt(AppPrefs.ADJ_MAGHRIB, 0))
     val adjIsha = MutableStateFlow(prefs.getInt(AppPrefs.ADJ_ISHA, 0))
 
+    /** Days to shift the calculated Hijri date by, so it can follow the local moon sighting. */
+    val hijriAdjustment = MutableStateFlow(prefs.getInt(AppPrefs.HIJRI_ADJUSTMENT, 0))
+
     // Cached parsed prayer seconds to eliminate 1s loop allocations
     private var CachedFajrSec = 0
     private var CachedSunriseSec = 0
@@ -497,7 +500,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    private var lastGpsOffMsgTime = 0L
+    private var lastGpsFailMsgTime = 0L
     private var lastGpsSuccessMsgTime = 0L
 
     // LOCATION ACTIONS
@@ -515,26 +518,24 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             ) == android.content.pm.PackageManager.PERMISSION_GRANTED
 
             if (!fineGranted && !coarseGranted) {
-                val label = LocationDefaults.unsetLabel(_appLanguage.value == "ar")
-                updateLocation(LocationDefaults.LATITUDE, LocationDefaults.LONGITUDE, label)
-                viewModelScope.launch {
-                    val msg = if (_appLanguage.value == "ar") "لم يتم منح صلاحية تحديد الموقع، يرجى تحديد موقعك" else "Location permission not granted, please select your location"
-                    _eventFlow.emit(msg)
+                fallBackToPlaceholderIfUnset()
+                val now = System.currentTimeMillis()
+                if (now - lastGpsFailMsgTime > 30000) {
+                    lastGpsFailMsgTime = now
+                    viewModelScope.launch {
+                        val msg = if (_appLanguage.value == "ar") "لم يتم منح صلاحية تحديد الموقع، يرجى تحديد موقعك" else "Location permission not granted, please select your location"
+                        _eventFlow.emit(msg)
+                    }
                 }
                 return
             }
 
-            val isGpsEnabled = isLocationEnabled()
-            if (!isGpsEnabled) {
+            // With location services off there is nothing that can answer the request, so asking
+            // would only put a second failure on top of this prompt. Whatever location is already
+            // stored is left alone.
+            if (!isLocationEnabled()) {
                 _showGpsSettingsPrompt.value = true
-                val now = System.currentTimeMillis()
-                if (now - lastGpsOffMsgTime > 30000) { // Only once every 30 seconds
-                    lastGpsOffMsgTime = now
-                    viewModelScope.launch {
-                        val msg = if (_appLanguage.value == "ar") "يرجى تفعيل خدمة تحديد الموقع (GPS)" else "Please turn on your device GPS / Location services"
-                        _eventFlow.emit(msg)
-                    }
-                }
+                return
             }
             locationProvider.currentLocation { loc ->
                 if (loc != null) {
@@ -559,24 +560,41 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
                         }
                     }
                 } else {
-                    // The system has no fix: fall back to Makkah and ask for a manual choice.
-                    val label = LocationDefaults.unsetLabel(_appLanguage.value == "ar")
-                    updateLocation(LocationDefaults.LATITUDE, LocationDefaults.LONGITUDE, label)
-                    viewModelScope.launch {
-                        val msg = if (_appLanguage.value == "ar") "تعذر تحديد الموقع الجغرافي، يرجى اختياره يدوياً" else "Could not determine GPS location, please select manually"
-                        _eventFlow.emit(msg)
+                    // No fix: keep a location that already worked, and report the failure at most
+                    // once every 30 seconds.
+                    fallBackToPlaceholderIfUnset()
+                    val now = System.currentTimeMillis()
+                    if (now - lastGpsFailMsgTime > 30000) {
+                        lastGpsFailMsgTime = now
+                        viewModelScope.launch {
+                            val msg = if (_appLanguage.value == "ar") "تعذر تحديد الموقع الجغرافي، يرجى اختياره يدوياً" else "Could not determine GPS location, please select manually"
+                            _eventFlow.emit(msg)
+                        }
                     }
                 }
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            val label = LocationDefaults.unsetLabel(_appLanguage.value == "ar")
-            updateLocation(LocationDefaults.LATITUDE, LocationDefaults.LONGITUDE, label)
+            fallBackToPlaceholderIfUnset()
             viewModelScope.launch {
                 val msg = if (_appLanguage.value == "ar") "حدث خطأ أثناء تحديد الموقع، يرجى اختياره يدوياً" else "GPS error occurred, please select manually"
                 _eventFlow.emit(msg)
             }
         }
+    }
+
+    /**
+     * What a failed fix leaves behind: an existing location untouched, and the placeholder only
+     * when nothing was ever chosen. Blanking a location that already worked is how a phone that
+     * was briefly offline lost its city.
+     */
+    private fun fallBackToPlaceholderIfUnset() {
+        if (_isLocationSet.value) return
+        updateLocation(
+            LocationDefaults.LATITUDE,
+            LocationDefaults.LONGITUDE,
+            LocationDefaults.unsetLabel(_appLanguage.value == "ar")
+        )
     }
 
     private fun isLocationEnabled(): Boolean = locationProvider.isEnabled()
@@ -713,7 +731,9 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         _locationMethod.value = method
         prefs.edit { putString(AppPrefs.LOCATION_METHOD, method) }
         if (method == "auto") {
-            lastGpsOffMsgTime = 0 // Reset to allow immediate feedback when switching to auto
+            // An explicit switch to auto is answered the first time, rather than being swallowed by
+            // the throttle on an earlier attempt.
+            lastGpsFailMsgTime = 0
             requestGPSLocation()
             startLocationUpdates()
         } else {
@@ -743,12 +763,6 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             repository.saveLastReadingState(state)
             _lastReadingState.value = state
         }
-    }
-
-    fun triggerGPSManual() {
-        lastGpsOffMsgTime = 0
-        lastGpsSuccessMsgTime = 0
-        requestGPSLocation()
     }
 
     fun toggleDuaBookmark(duaId: String) {
@@ -951,6 +965,15 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         recalculatePrayerTimes()
     }
 
+    /**
+     * Shifts the Hijri date by [value] days. Prayer times are unaffected, so nothing has to be
+     * rescheduled; the screens that show the date observe [hijriAdjustment] and redraw.
+     */
+    fun setHijriAdjustment(value: Int) {
+        hijriAdjustment.value = value
+        prefs.edit { putInt(AppPrefs.HIJRI_ADJUSTMENT, value) }
+    }
+
     fun resetToDefaults() {
         setAppTheme("system")
         setUseDynamicColor(true)
@@ -970,6 +993,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         setAdjAsr(0)
         setAdjMaghrib(0)
         setAdjIsha(0)
+        setHijriAdjustment(0)
     }
 
 

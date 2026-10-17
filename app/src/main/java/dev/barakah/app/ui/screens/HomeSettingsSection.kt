@@ -101,6 +101,7 @@ fun HomeSettingsSection(
     val adjAsr by viewModel.adjAsr.collectAsStateWithLifecycle()
     val adjMaghrib by viewModel.adjMaghrib.collectAsStateWithLifecycle()
     val adjIsha by viewModel.adjIsha.collectAsStateWithLifecycle()
+    val hijriAdjustment by viewModel.hijriAdjustment.collectAsStateWithLifecycle()
 
     val adhanAudioEnabled by viewModel.adhanAudioEnabled.collectAsStateWithLifecycle()
     val adhanAudioMode by viewModel.adhanAudioMode.collectAsStateWithLifecycle()
@@ -794,9 +795,10 @@ fun HomeSettingsSection(
                                 ) {
                                     OutlinedButton(
                                         onClick = {
-                                            viewModel.setLocationMethod("auto")
+                                            // One request only: switching to auto already fetches,
+                                            // so doing both fetched twice and reported twice.
                                             if (locationPermissionState.status.isGranted) {
-                                                viewModel.triggerGPSManual()
+                                                viewModel.setLocationMethod("auto")
                                             } else {
                                                 locationPermissionState.launchPermissionRequest()
                                             }
@@ -1083,6 +1085,97 @@ fun HomeSettingsSection(
                                         }
                                     }
                                 }
+                            }
+                        }
+                    }
+
+                    // Card: Hijri date adjustment
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.DateRange, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = if (isAr) "التاريخ الهجري" else "Hijri Date",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+
+                                Text(
+                                    text = if (isAr) "التاريخ محسوب، فإن اختلف عن رؤية الهلال في بلدك فاضبطه هنا" else "The date is calculated. If it differs from the moon sighting where you are, shift it here.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f))
+                                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = if (isAr) "الإزاحة" else "Adjustment",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        IconButton(
+                                            onClick = { viewModel.setHijriAdjustment(hijriAdjustment - 1) },
+                                            enabled = hijriAdjustment > -2,
+                                            modifier = Modifier.size(32.dp)
+                                        ) {
+                                            Icon(Icons.Default.Remove, contentDescription = if (isAr) "يوم أقل" else "One day earlier", modifier = Modifier.size(16.dp))
+                                        }
+                                        val adjustmentLabel = when {
+                                            hijriAdjustment == 0 -> if (isAr) "محسوب" else "Calculated"
+                                            hijriAdjustment > 0 -> "+$hijriAdjustment " + (if (isAr) "يوم" else "d")
+                                            else -> "$hijriAdjustment " + (if (isAr) "يوم" else "d")
+                                        }
+                                        Text(
+                                            text = adjustmentLabel.localize(isAr, useWesternNumbersInArabic),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.Bold,
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier.width(70.dp)
+                                        )
+                                        IconButton(
+                                            onClick = { viewModel.setHijriAdjustment(hijriAdjustment + 1) },
+                                            enabled = hijriAdjustment < 2,
+                                            modifier = Modifier.size(32.dp)
+                                        ) {
+                                            Icon(Icons.Default.Add, contentDescription = if (isAr) "يوم أكثر" else "One day later", modifier = Modifier.size(16.dp))
+                                        }
+                                    }
+                                }
+
+                                // Show what the shift does, rather than leaving the arrows as guesswork.
+                                val previewDate = dev.barakah.app.util.HijriCalendarHelper
+                                    .getTodayHijriDateString(isAr, hijriAdjustment)
+                                Text(
+                                    text = ((if (isAr) "اليوم: " else "Today: ") + previewDate)
+                                        .localize(isAr, useWesternNumbersInArabic),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    textAlign = TextAlign.End
+                                )
                             }
                         }
                     }
