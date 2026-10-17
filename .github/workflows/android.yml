@@ -114,16 +114,13 @@ jobs:
     - name: Rename compiled APK
       run: |
         cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Barakah-v${{ env.VERSION_NAME }}.apk
-        # Constant filename so this permalink always serves the newest build:
-        # https://github.com/ismo-lab/barakah/releases/latest/download/Barakah.apk
-        cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Barakah.apk
-        echo "Prepared Barakah-v${{ env.VERSION_NAME }}.apk and Barakah.apk"
+        echo "Prepared Barakah-v${{ env.VERSION_NAME }}.apk"
 
     - name: Upload build artifact
       uses: actions/upload-artifact@v4
       with:
         name: Barakah-APK
-        path: app/build/outputs/apk/debug/Barakah.apk
+        path: app/build/outputs/apk/debug/Barakah-v${{ env.VERSION_NAME }}.apk
         retention-days: 30
 
     - name: Create Release
@@ -134,9 +131,7 @@ jobs:
         name: "${{ env.VERSION_NAME }}"
         body: |
           ${{ github.event.head_commit.message }}
-        files: |
-          app/build/outputs/apk/debug/Barakah-v${{ env.VERSION_NAME }}.apk
-          app/build/outputs/apk/debug/Barakah.apk
+        files: app/build/outputs/apk/debug/Barakah-v${{ env.VERSION_NAME }}.apk
 
   # Reports test failures without ever blocking the APK build above.
   tests:
