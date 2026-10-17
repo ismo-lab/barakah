@@ -388,6 +388,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     private var countdownJob: Job? = null
     private var lastCheckedDayOfYear = -1
     private var lastCheckedTimeZoneId = ""
+    private var lastCheckedZoneOffsetMillis = Int.MIN_VALUE
 
     private val gpsStatusReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -1171,14 +1172,20 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         val tzId = currentTimeZoneId()
         val now = Calendar.getInstance(TimeZone.getTimeZone(tzId))
         val dayOfYear = now.get(Calendar.DAY_OF_YEAR)
-        
-        // Detect day-change or timezone/DST transitions and trigger live recalculation
+        val zoneOffsetMillis = now.get(Calendar.ZONE_OFFSET) + now.get(Calendar.DST_OFFSET)
+
+        // Detect day-change or timezone/DST transitions and trigger live recalculation. The zone id
+        // alone is not enough: a daylight saving change keeps the id and the day the same and only
+        // moves the offset, so the times would stay an hour out - and the countdown with them - for
+        // the rest of the day.
         if ((lastCheckedDayOfYear != -1 && lastCheckedDayOfYear != dayOfYear) ||
-            (lastCheckedTimeZoneId.isNotEmpty() && lastCheckedTimeZoneId != tzId)) {
+            (lastCheckedTimeZoneId.isNotEmpty() && lastCheckedTimeZoneId != tzId) ||
+            (lastCheckedZoneOffsetMillis != Int.MIN_VALUE && lastCheckedZoneOffsetMillis != zoneOffsetMillis)) {
             recalculatePrayerTimes()
         }
         lastCheckedDayOfYear = dayOfYear
         lastCheckedTimeZoneId = tzId
+        lastCheckedZoneOffsetMillis = zoneOffsetMillis
 
         val currentHour = now.get(Calendar.HOUR_OF_DAY)
         val currentMinute = now.get(Calendar.MINUTE)
