@@ -30,16 +30,16 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
     
     - name: set up JDK 17
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         java-version: '17'
         distribution: 'temurin'
@@ -141,7 +141,7 @@ jobs:
         echo "Signed, and not debuggable."
 
     - name: Upload build artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: Barakah-APK
         path: |
@@ -159,22 +159,26 @@ jobs:
           ${{ github.event.head_commit.message }}
         files: app/build/outputs/apk/release/Barakah-v${{ env.VERSION_NAME }}.apk
 
-  # Reports test failures without ever blocking the APK build above.
+  # Runs the unit and screenshot tests, and blocks the merge: the APK still compiling is not
+  # evidence that the app still works.
+  #
+  # The runner is pinned rather than following ubuntu-latest. The screenshot tests compare against
+  # reference images recorded on a specific image, and ubuntu-latest is due to move from 24.04 to
+  # 26, which would change what gets rendered.
   tests:
-    runs-on: ubuntu-latest
-    continue-on-error: true
+    runs-on: ubuntu-24.04
     env:
       JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     # Robolectric 4.16 sandboxes Android SDK 36 only on Java 21+, whereas the APK
     # itself still builds fine on 17. Keep this job on 21 so the Robolectric and
     # screenshot tests can actually run; the build job above stays on 17.
     - name: set up JDK 21
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         java-version: '21'
         distribution: 'temurin'
@@ -190,7 +194,7 @@ jobs:
 
     - name: Upload test report
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: test-report
         path: app/build/reports/tests/
@@ -200,7 +204,7 @@ jobs:
     # recording run leaves the ones it just made, for downloading and committing.
     - name: Upload screenshots
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: screenshots
         path: app/src/test/screenshots/
@@ -216,17 +220,17 @@ jobs:
   # and what is deliberate is annotated where it applies, so the report is expected to be empty
   # and anything new in it is worth a look. Errors fail the build; warnings are only reported.
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     # Matches the job that builds the APK, so the analysis covers the same variant family.
     - name: set up JDK 17
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         java-version: '17'
         distribution: 'temurin'
@@ -244,7 +248,7 @@ jobs:
 
     - name: Upload lint report
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: lint-report
         path: app/build/reports/lint-results-debug.*
