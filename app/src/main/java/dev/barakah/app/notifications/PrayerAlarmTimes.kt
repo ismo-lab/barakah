@@ -29,6 +29,11 @@ object PrayerAlarmTimes {
     fun nextOccurrence(timeOfDay: String, nowMillis: Long, timeZone: TimeZone): Long? {
         val (hour, minute) = ClockTime.hourAndMinute(timeOfDay) ?: return null
         val at = Calendar.getInstance(timeZone).apply {
+            // The day has to come from the time that was handed in, not from the clock. Leaving it
+            // to the clock made the answer depend on the real date: callers pass the current time,
+            // so it looked right, but any other time - a test, a replay, a scheduled check - got
+            // today's date with the requested hour bolted onto it.
+            timeInMillis = nowMillis
             set(Calendar.HOUR_OF_DAY, hour)
             set(Calendar.MINUTE, minute)
             set(Calendar.SECOND, 0)
