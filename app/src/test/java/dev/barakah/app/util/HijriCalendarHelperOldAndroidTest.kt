@@ -1,5 +1,6 @@
 package dev.barakah.app.util
 
+import android.os.Build
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -29,6 +30,16 @@ import org.robolectric.annotation.Config
 class HijriCalendarHelperOldAndroidTest {
 
     private val datePattern = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH)
+
+    @Test
+    fun `this runs on the android version the fallback is for`() {
+        // The class is only worth anything while `hijriFor` takes its fallback branch, which is
+        // decided by SDK_INT. A Robolectric default or an @Config edit could move this class to a
+        // newer Android, where the java.time path would run and every test below would still pass
+        // while testing the implementation they claim to be an alternative to. So assert the
+        // premise rather than trusting the annotation.
+        assertEquals(24, Build.VERSION.SDK_INT)
+    }
 
     @Test
     fun `a day is followed by the next day`() {
