@@ -34,6 +34,7 @@ import dev.barakah.app.ui.BarakahViewModel
 import dev.barakah.app.ui.screens.*
 import dev.barakah.app.ui.theme.BarakahTheme
 import dev.barakah.app.util.AppNightMode
+import dev.barakah.app.ui.currentWindowWidth
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
@@ -230,19 +231,19 @@ fun MainNavigationContainer(
         )
     )
 
-    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
-    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+    val windowWidth = currentWindowWidth()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     val showSettingsDialog by viewModel.showSettingsDialog.collectAsStateWithLifecycle()
 
     val shouldHideNavigation = showSettingsDialog || currentDestination?.route == "others"
+    val showNavigationRail = windowWidth.showsNavigationRail && !shouldHideNavigation
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         contentWindowInsets = if (shouldHideNavigation) WindowInsets(0, 0, 0, 0) else ScaffoldDefaults.contentWindowInsets,
         bottomBar = {
-            if (!isLandscape && !shouldHideNavigation) {
+            if (!showNavigationRail) {
                 NavigationBar(
                     modifier = Modifier.testTag("bottom_nav_bar")
                 ) {
@@ -282,7 +283,7 @@ fun MainNavigationContainer(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            if (isLandscape && !shouldHideNavigation) {
+            if (showNavigationRail) {
                 NavigationRail(
                     modifier = Modifier
                         .fillMaxHeight()
@@ -322,7 +323,7 @@ fun MainNavigationContainer(
                 }
             }
 
-            val contentModifier = if (isLandscape && !shouldHideNavigation) {
+            val contentModifier = if (showNavigationRail) {
                 Modifier.weight(1f).fillMaxSize()
             } else {
                 Modifier.fillMaxSize()

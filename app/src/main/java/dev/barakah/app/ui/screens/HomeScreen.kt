@@ -42,6 +42,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.barakah.app.ui.BarakahViewModel
+import dev.barakah.app.ui.WindowWidth
+import dev.barakah.app.ui.currentWindowWidth
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import dev.barakah.app.util.NawafilTimes
@@ -69,6 +71,7 @@ fun HomeScreen(
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
     val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
     val isShortScreen = configuration.screenHeightDp < 600
+    val windowWidth = currentWindowWidth()
     val locationLabel by viewModel.locationLabel.collectAsStateWithLifecycle()
     val times by viewModel.prayerTimes.collectAsStateWithLifecycle()
     val isLocationSet by viewModel.isLocationSet.collectAsStateWithLifecycle()
@@ -275,7 +278,14 @@ fun HomeScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .widthIn(max = if (isLandscape) 1200.dp else 680.dp),
+                .widthIn(
+                    max = when {
+                        // A tablet gets a dashboard it can read across, not cards stretched to 1280dp.
+                        windowWidth == WindowWidth.Expanded -> 960.dp
+                        isLandscape -> 1200.dp
+                        else -> 680.dp
+                    }
+                ),
             contentPadding = PaddingValues(
                 start = 16.dp, 
                 end = 16.dp, 

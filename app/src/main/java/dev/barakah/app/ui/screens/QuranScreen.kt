@@ -43,6 +43,7 @@ import dev.barakah.app.R
 import dev.barakah.app.util.PrayerCalculator
 import dev.barakah.app.data.Surah
 import dev.barakah.app.ui.BarakahViewModel
+import dev.barakah.app.ui.currentWindowWidth
 import dev.barakah.app.ui.theme.quranFontFamilyFor
 import dev.barakah.app.ui.theme.quranLineHeightFor
 import dev.barakah.app.util.localize
@@ -108,25 +109,13 @@ fun QuranScreen(
         }
     }
 
-    AnimatedContent(
-        targetState = selectedSurahForReading,
-        transitionSpec = {
-            if (targetState != null) {
-                // Opening reading view
-                (slideInHorizontally { width -> width } + fadeIn(animationSpec = tween(400))).togetherWith(
-                    slideOutHorizontally { width -> -width / 4 } + fadeOut(animationSpec = tween(400))
-                )
-            } else {
-                // Closing reading view
-                (slideInHorizontally { width -> -width / 4 } + fadeIn(animationSpec = tween(400))).togetherWith(
-                    slideOutHorizontally { width -> width } + fadeOut(animationSpec = tween(400))
-                )
-            }.using(SizeTransform(clip = false))
-        },
-        label = "QuranReadingTransition"
-    ) { currentSurah ->
-        val configuration = androidx.compose.ui.platform.LocalConfiguration.current
-        val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+    val twoPane = currentWindowWidth().showsTwoPanes
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+
+    // The catalogue. wideHeader is true only when this pane is wide itself, which is the case on a
+    // landscape phone and never in the side pane of a tablet.
+    val catalogPane: @Composable (Modifier, Boolean) -> Unit = { paneModifier, wideHeader ->
 
         val lastReadBanner: @Composable () -> Unit = {
             Card(
@@ -190,10 +179,9 @@ fun QuranScreen(
             }
         }
 
-        if (currentSurah == null) {
             // MAIN QURAN CATALOG LIST
             Column(
-                modifier = modifier
+                modifier = paneModifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
             ) {
@@ -210,17 +198,17 @@ fun QuranScreen(
                             )
                         )
                         .padding(
-                            top = if (isLandscape) {
+                            top = if (wideHeader) {
                                 WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding() + 8.dp
                             } else {
                                 WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding() + 24.dp
                             }, 
-                            start = if (isLandscape) 16.dp else 24.dp, 
-                            end = if (isLandscape) 16.dp else 24.dp, 
-                            bottom = if (isLandscape) 8.dp else 24.dp
+                            start = if (wideHeader) 16.dp else 24.dp,
+                            end = if (wideHeader) 16.dp else 24.dp,
+                            bottom = if (wideHeader) 8.dp else 24.dp
                         )
                 ) {
-                    if (isLandscape) {
+                    if (wideHeader) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
@@ -254,7 +242,7 @@ fun QuranScreen(
                 }
 
                 // 2. SEARCH BAR & TAB TOGGLE FLAGS
-                if (isLandscape) {
+                if (wideHeader) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -411,7 +399,7 @@ fun QuranScreen(
                     contentPadding = PaddingValues(bottom = 16.dp),
                     state = listState
                 ) {
-                    if (isLandscape) {
+                    if (wideHeader) {
                         item {
                             Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
                                 lastReadBanner()
@@ -518,7 +506,10 @@ fun QuranScreen(
                     }
                 }
             }
-        } else {
+    }
+
+    // The reader. On a phone it replaces the catalogue; on a wide window it sits beside it.
+    val readerPane: @Composable (Modifier, Surah) -> Unit = { paneModifier, currentSurah ->
             // DETAIL ACTIVE READING VIEW
             val context = androidx.compose.ui.platform.LocalContext.current
             var surahWithVerses by remember(currentSurah.id) { mutableStateOf(currentSurah) }
@@ -551,9 +542,10 @@ fun QuranScreen(
             }
 
             Column(
-                modifier = modifier
+                modifier = paneModifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
+                    .background(MaterialTheme.colorScheme.background),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // 1. TOP HEADER Reading Actions
                 Surface(
@@ -571,11 +563,13 @@ fun QuranScreen(
                             ),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(
-                            onClick = { selectedSurahForReading = null },
-                            modifier = Modifier.testTag("back_to_catalog")
-                        ) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = if (isAr) "رجوع" else "Back")
+                        if (!twoPane) {
+                            IconButton(
+                                onClick = { selectedSurahForReading = null },
+                                modifier = Modifier.testTag("back_to_catalog")
+                            ) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = if (isAr) "رجوع" else "Back")
+                            }
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(
@@ -603,7 +597,9 @@ fun QuranScreen(
 
                 // 3. VERSES LIST READER
                 LazyColumn(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .widthIn(max = 840.dp),
                     contentPadding = PaddingValues(16.dp),
                     state = readerListState
                 ) {
@@ -714,6 +710,57 @@ fun QuranScreen(
                         }
                     }
                 }
+            }
+    }
+
+    if (twoPane) {
+        Row(modifier = modifier.fillMaxSize()) {
+            catalogPane(
+                Modifier
+                    .width(360.dp)
+                    .fillMaxHeight(),
+                false
+            )
+            VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            val reading = selectedSurahForReading
+            if (reading == null) {
+                ReaderPlaceholder(
+                    isAr = isAr,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                )
+            } else {
+                readerPane(
+                    Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    reading
+                )
+            }
+        }
+    } else {
+        AnimatedContent(
+            targetState = selectedSurahForReading,
+            transitionSpec = {
+                if (targetState != null) {
+                    // Opening reading view
+                    (slideInHorizontally { width -> width } + fadeIn(animationSpec = tween(400))).togetherWith(
+                        slideOutHorizontally { width -> -width / 4 } + fadeOut(animationSpec = tween(400))
+                    )
+                } else {
+                    // Closing reading view
+                    (slideInHorizontally { width -> -width / 4 } + fadeIn(animationSpec = tween(400))).togetherWith(
+                        slideOutHorizontally { width -> width } + fadeOut(animationSpec = tween(400))
+                    )
+                }.using(SizeTransform(clip = false))
+            },
+            label = "QuranReadingTransition"
+        ) { currentSurah ->
+            if (currentSurah == null) {
+                catalogPane(modifier.fillMaxSize(), isLandscape)
+            } else {
+                readerPane(modifier.fillMaxSize(), currentSurah)
             }
         }
     }
@@ -831,4 +878,34 @@ fun Modifier.drawBehindSquareOrnament(color: Color) = this.drawBehind {
     }
     path.close()
     drawPath(path, color)
+}
+
+/** What the reader pane shows on a wide window before a surah is chosen. */
+@Composable
+private fun ReaderPlaceholder(
+    isAr: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .background(MaterialTheme.colorScheme.background)
+            .testTag("reader_placeholder"),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                imageVector = Icons.Outlined.Book,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.size(48.dp)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = if (isAr) "اختر سورة من القائمة" else "Choose a surah from the list",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
 }

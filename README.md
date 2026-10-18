@@ -25,7 +25,8 @@
 * **Qiblah Compass**: Locate the Kaaba directions instantly using interactive, hardware-sensor calibrated alignment with physical haptic vibrations.
 * **Haptic Tasbih**: Maintain focus during remembrance with a digital counter (misbaha) supporting custom targets and discrete haptic pulses.
 * **Duas (Supplications)**: Read through compiled *Hisnul Muslim* (حصن المسلم) supplications organized by daily activities and scenarios.
-* **Home-Screen Widgets**: Three of them — the daily prayer times, a live countdown to the next prayer, and the voluntary (Nawafil) times.
+* **Home-Screen Widgets**: Three of them - the daily prayer times, a live countdown to the next prayer, and the voluntary (Nawafil) times.
+* **Any Window Size**: The layout follows the window it is given rather than a fixed orientation. A phone keeps the bottom bar, a tablet or unfolded foldable gets a navigation rail, and a list with a detail view shows both side by side once there is room for them, so nothing is stretched across a wide screen or squeezed into a narrow one.
 
 ---
 

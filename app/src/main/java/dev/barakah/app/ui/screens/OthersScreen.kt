@@ -307,7 +307,8 @@ fun OthersScreen(
                     }
                 },
                 label = "others_tab_animation",
-                modifier = Modifier.weight(1f).fillMaxWidth()
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                contentAlignment = Alignment.TopCenter
             ) { targetIndex ->
                 when (targetIndex) {
                     0 -> NamesOfAllahPane(
@@ -645,6 +646,7 @@ fun CalendarAndOccasionsPane(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
+            .widthIn(max = 840.dp)
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
