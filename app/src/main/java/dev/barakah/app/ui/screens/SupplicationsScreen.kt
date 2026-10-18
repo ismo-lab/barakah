@@ -126,6 +126,10 @@ fun SupplicationsScreen(
     ) {
         val configuration = androidx.compose.ui.platform.LocalConfiguration.current
         val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+        // A short window (split screen, a resized free-form window) gets the same trimmed header as
+        // landscape: the full hero plus the search bar left the categories list a sliver behind the
+        // navigation bar.
+        val denseHeader = isLandscape || configuration.screenHeightDp < 560
 
         Box(
             modifier = Modifier
@@ -139,14 +143,14 @@ fun SupplicationsScreen(
                     )
                 )
                 .padding(
-                    top = if (isLandscape) {
+                    top = if (denseHeader) {
                         WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding() + 8.dp
                     } else {
                         WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding() + 24.dp
-                    }, 
-                    start = if (isLandscape) 16.dp else 24.dp, 
-                    end = if (isLandscape) 16.dp else 24.dp, 
-                    bottom = if (isLandscape) 8.dp else 24.dp
+                    },
+                    start = if (denseHeader) 16.dp else 24.dp,
+                    end = if (denseHeader) 16.dp else 24.dp,
+                    bottom = if (denseHeader) 8.dp else 24.dp
                 )
         ) {
             if (isLandscape) {
@@ -220,7 +224,7 @@ fun SupplicationsScreen(
                     ) {
                         Text(
                             text = if (isAr) "حصن المسلم" else "Hisnul Muslim",
-                            style = MaterialTheme.typography.headlineLarge,
+                            style = if (denseHeader) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineLarge,
                             fontWeight = FontWeight.ExtraBold,
                             color = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.weight(1f)
@@ -242,13 +246,17 @@ fun SupplicationsScreen(
                         }
                     }
                     
-                    Text(
-                        text = if (isAr) "الأدعية والأذكار اليومية الصحيحة" else "Authentic daily supplications",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.82f)
-                    )
+                    if (!denseHeader) {
+                        Text(
+                            text = if (isAr) "الأدعية والأذكار اليومية الصحيحة" else "Authentic daily supplications",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.82f)
+                        )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
+                    } else {
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
 
                     OutlinedTextField(
                         value = searchPattern,

@@ -81,4 +81,19 @@ class QuranWindowWidthTest {
         compose.onNodeWithTag("surah_item_1").assertIsDisplayed()
         compose.onNodeWithTag("reader_placeholder").assertDoesNotExist()
     }
+
+    /**
+     * A landscape phone has barely 400dp of height. The hero header used to be fixed at ~260dp and
+     * the search bar and the All/Bookmarks toggle took the rest, so the surah list collapsed to
+     * roughly nothing while the reader pane told you to pick a surah from a list that was not there.
+     * Asserting a row well down the list is what catches that.
+     */
+    @Test
+    @Config(sdk = [36], qualifiers = "w914dp-h411dp-land")
+    fun `a short landscape window still shows surahs beside the reader`() {
+        openQuranScreen()
+
+        compose.onNodeWithTag("surah_item_3").assertIsDisplayed()
+        compose.onNodeWithTag("reader_placeholder").assertIsDisplayed()
+    }
 }

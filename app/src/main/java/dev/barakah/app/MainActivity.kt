@@ -232,6 +232,9 @@ fun MainNavigationContainer(
     )
 
     val windowWidth = currentWindowWidth()
+    // Five labelled items do not fit a landscape or split-screen window at full spacing, so the last
+    // label used to be cut off by the bottom edge of the screen.
+    val railItemSpacing = if (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp < 560) 4.dp else 16.dp
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     val showSettingsDialog by viewModel.showSettingsDialog.collectAsStateWithLifecycle()
@@ -316,7 +319,7 @@ fun MainNavigationContainer(
                             modifier = Modifier.testTag(item.tag)
                         )
                         if (index < navItems.size - 1) {
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(railItemSpacing))
                         }
                     }
                     Spacer(modifier = Modifier.weight(1f))
