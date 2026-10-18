@@ -887,7 +887,9 @@ private fun ReaderPlaceholder(
     modifier: Modifier = Modifier
 ) {
     Box(
-        modifier = modifier.background(MaterialTheme.colorScheme.background),
+        modifier = modifier
+            .background(MaterialTheme.colorScheme.background)
+            .testTag("reader_placeholder"),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
