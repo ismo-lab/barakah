@@ -23,6 +23,7 @@ import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -122,8 +123,10 @@ fun HomeSettingsSection(
     }
     androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides layoutDirection) {
         // Location states
-        var locationQuery by remember { mutableStateOf("") }
-        var searchSubmission by remember { mutableIntStateOf(0) }
+        // Kept across a configuration change so a rotation in the middle of searching for a city
+        // does not wipe the query; the suggestion list is rebuilt by the effect below either way.
+        var locationQuery by rememberSaveable { mutableStateOf("") }
+        var searchSubmission by rememberSaveable { mutableIntStateOf(0) }
         var citySuggestions by remember { mutableStateOf(emptyList<dev.barakah.app.data.CitySuggestion>()) }
         LaunchedEffect(locationQuery, searchSubmission, currentLang) {
             val query = locationQuery.trim()

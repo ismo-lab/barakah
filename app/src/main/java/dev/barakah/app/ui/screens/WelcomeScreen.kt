@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,7 +42,10 @@ import com.google.accompanist.permissions.isGranted
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun WelcomeScreen(viewModel: BarakahViewModel) {
-    var step by remember { mutableIntStateOf(1) } // 1: Language, 2: Calculations, 3: Notifications, 4: Location
+    // The onboarding step and the two permission flags are kept across a configuration change:
+    // without this, rotating mid-setup would send the user back to step one and re-ask for a
+    // permission they had already answered.
+    var step by rememberSaveable { mutableIntStateOf(1) } // 1: Language, 2: Calculations, 3: Notifications, 4: Location
     val currentLang by viewModel.appLanguage.collectAsStateWithLifecycle()
     val isAr = currentLang == "ar"
 
@@ -97,7 +101,7 @@ fun WelcomeScreen(viewModel: BarakahViewModel) {
 @Composable
 fun LanguageStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
     val currentLang by viewModel.appLanguage.collectAsStateWithLifecycle()
-    var permissionRequested by remember { mutableStateOf(false) }
+    var permissionRequested by rememberSaveable { mutableStateOf(false) }
     val notificationPermissionState = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
         rememberPermissionState(android.Manifest.permission.POST_NOTIFICATIONS)
     } else null
@@ -204,9 +208,9 @@ fun LanguageCard(label: String, isSelected: Boolean, onClick: () -> Unit) {
  fun LocationStep(viewModel: BarakahViewModel, onFinish: () -> Unit) {
      val currentLang by viewModel.appLanguage.collectAsStateWithLifecycle()
      val isAr = currentLang == "ar"
-     var query by remember { mutableStateOf("") }
+     var query by rememberSaveable { mutableStateOf("") }
      var filteredCities by remember { mutableStateOf(emptyList<dev.barakah.app.data.CitySuggestion>()) }
-     var gpsPermissionRequested by remember { mutableStateOf(false) }
+     var gpsPermissionRequested by rememberSaveable { mutableStateOf(false) }
      val context = androidx.compose.ui.platform.LocalContext.current
 
      LaunchedEffect(query, currentLang) {
