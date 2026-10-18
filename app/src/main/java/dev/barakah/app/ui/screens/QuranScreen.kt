@@ -65,7 +65,7 @@ fun QuranScreen(
     // In Detail Reading view target. Only the id is kept across a configuration change; the surah
     // itself is looked up from it again, so rotating brings the reader back instead of dropping the
     // user at the catalogue.
-    var selectedSurahId by rememberSaveable { mutableStateOf<Int?>(null) }
+    var selectedSurahId by remember { mutableStateOf<Int?>(null) }
     val selectedSurahForReading: Surah? = selectedSurahId?.let { QuranData.getSurahById(it) }
     
     // Dialog for individual verse Tafseer
