@@ -309,21 +309,23 @@ fun QiblahScreen(
             ) {
                 Text(
                     text = if (isAr) "بوصلة القبلة" else "Qiblah Compass",
-                    style = MaterialTheme.typography.headlineLarge,
+                    style = if (isShortScreen) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.onBackground,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
-                Text(
-                    text = if (isAr) "تحديد اتجاه الكعبة المشرفة بدقة متناهية" else "Points accurately towards the Holy Kaaba in Mecca",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                
-                Spacer(modifier = Modifier.height(12.dp))
+                if (!isShortScreen) {
+                    Text(
+                        text = if (isAr) "تحديد اتجاه الكعبة المشرفة بدقة متناهية" else "Points accurately towards the Holy Kaaba in Mecca",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(if (isShortScreen) 6.dp else 12.dp))
 
                 // Info panel
                 QiblahLocationRow(
@@ -341,25 +343,35 @@ fun QiblahScreen(
             }
 
             // 2. LIVE ROTATING COMPASS DIAL CARD
-            QiblahDial(
-                compassSize = compassSize,
-                glowSize = glowSize,
-                dialRingSize = dialRingSize,
-                canvasSize = canvasSize,
-                pointerSize = pointerSize,
-                innerCoreSize = innerCoreSize,
-                coreIconSize = coreIconSize,
-                style = dialStyle,
-                isAligned = isAligned,
-                relativeAngle = relativeAngle,
-                animatedHeading = animatedHeading,
-                alignmentColor = alignmentColor,
-                hasLiveHeading = hasLiveHeading,
-                isAr = isAr,
-                useWesternNumbersInArabic = useWesternNumbersInArabic,
-                shortestDiff = shortestDiff,
-                statusMessage = statusMessage
-            )
+            // The dial is a circle, so it has to be sized from the space it is actually given. A fixed
+            // size was clamped by a short window and squashed into an ellipse with its ticks clipped.
+            BoxWithConstraints(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                val dial = minOf(maxWidth, maxHeight, 280.dp)
+                QiblahDial(
+                    compassSize = dial,
+                    glowSize = dial * 0.96f,
+                    dialRingSize = dial * 0.89f,
+                    canvasSize = dial * 0.86f,
+                    pointerSize = dial * 0.75f,
+                    innerCoreSize = dial * 0.27f,
+                    coreIconSize = dial * 0.13f,
+                    style = dialStyle,
+                    isAligned = isAligned,
+                    relativeAngle = relativeAngle,
+                    animatedHeading = animatedHeading,
+                    alignmentColor = alignmentColor,
+                    hasLiveHeading = hasLiveHeading,
+                    isAr = isAr,
+                    useWesternNumbersInArabic = useWesternNumbersInArabic,
+                    shortestDiff = shortestDiff,
+                    statusMessage = statusMessage
+                )
+            }
 
             // 3. BOTTOM ALIGN STATUS PANEL
             Column(

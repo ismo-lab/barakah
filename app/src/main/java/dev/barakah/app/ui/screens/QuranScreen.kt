@@ -121,6 +121,12 @@ fun QuranScreen(
     // landscape phone and never in the side pane of a tablet.
     val catalogPane: @Composable (Modifier, Boolean) -> Unit = { paneModifier, wideHeader ->
 
+        // A short window — landscape phone, split screen, a resized free-form window — cannot afford
+        // the full hero header: it is ~260dp, which left the surah list a few dozen dp and made the
+        // pane look empty next to a reader pane asking you to pick a surah. Collapse it to one line
+        // and give the list the space instead.
+        val denseHeader = wideHeader || configuration.screenHeightDp < 560
+
         val lastReadBanner: @Composable () -> Unit = {
             Card(
                 modifier = Modifier
@@ -202,17 +208,17 @@ fun QuranScreen(
                             )
                         )
                         .padding(
-                            top = if (wideHeader) {
+                            top = if (denseHeader) {
                                 WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding() + 8.dp
                             } else {
                                 WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding() + 24.dp
-                            }, 
-                            start = if (wideHeader) 16.dp else 24.dp,
-                            end = if (wideHeader) 16.dp else 24.dp,
-                            bottom = if (wideHeader) 8.dp else 24.dp
+                            },
+                            start = if (denseHeader) 16.dp else 24.dp,
+                            end = if (denseHeader) 16.dp else 24.dp,
+                            bottom = if (denseHeader) 8.dp else 24.dp
                         )
                 ) {
-                    if (wideHeader) {
+                    if (denseHeader) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
@@ -403,7 +409,7 @@ fun QuranScreen(
                     contentPadding = PaddingValues(bottom = 16.dp),
                     state = listState
                 ) {
-                    if (wideHeader) {
+                    if (denseHeader) {
                         item {
                             Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
                                 lastReadBanner()

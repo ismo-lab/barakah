@@ -164,14 +164,16 @@ fun TasbihScreen(
                 }
 
                 // Right column: Large clicking blob
-                Box(
+                // A square that is given only the leftover height still has to fit inside it, so size it
+                // from the constraints instead of forcing it with fillMaxHeight.
+                BoxWithConstraints(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight(),
                     contentAlignment = Alignment.Center
                 ) {
                     TasbihTapBlob(
-                        modifier = Modifier.fillMaxHeight(0.9f),
+                        modifier = Modifier.size(minOf(maxWidth, maxHeight) * 0.9f),
                         blobScale = blobScale,
                         isAr = isAr,
                         count = count,
@@ -196,6 +198,7 @@ fun TasbihScreen(
                 }
             }
         } else {
+            val isShortScreen = configuration.screenHeightDp < 620
             Column(
                 modifier = modifier
                     .fillMaxHeight()
@@ -216,19 +219,21 @@ fun TasbihScreen(
         ) {
             Text(
                 text = if (isAr) "مسبحة الذكر" else "Tasbih Counter",
-                style = MaterialTheme.typography.headlineLarge,
+                style = if (isShortScreen) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
-            Text(
-                text = if (isAr) "حافظ على أورادك اليومية وأذكارك بسهولة" else "Keep track of your acts of remembrance",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
+            if (!isShortScreen) {
+                Text(
+                    text = if (isAr) "حافظ على أورادك اليومية وأذكارك بسهولة" else "Keep track of your acts of remembrance",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -249,29 +254,36 @@ fun TasbihScreen(
         }
 
         // 2. LARGE TACTILE TAP ZONE (Pulsating Capsule Shape)
-        TasbihTapBlob(
+        // In a short window the column only has the leftover height to give; sizing the blob from the
+        // constraints keeps it square instead of letting aspectRatio stretch or crop it.
+        BoxWithConstraints(
             modifier = Modifier.fillMaxWidth(0.85f),
-            blobScale = blobScale,
-            isAr = isAr,
-            count = count,
-            target = target,
-            useWesternNumbersInArabic = useWesternNumbersInArabic,
-            numberStyle = MaterialTheme.typography.displayLarge.copy(
-                fontSize = 52.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 0.sp,
-                lineHeight = 52.sp,
-                textDirection = androidx.compose.ui.text.style.TextDirection.Ltr
-            ),
-            hintStyle = MaterialTheme.typography.labelMedium,
-            hintText = if (isAr) "اضغط في أي مكان للتسبيح" else "TAP ANYWHERE TO COUNT",
-            contentPadding = 24.dp,
-            hintSpacing = 8.dp,
-            onTap = {
-                isTapped = true
-                viewModel.incrementTasbih()
-            }
-        )
+            contentAlignment = Alignment.Center
+        ) {
+            TasbihTapBlob(
+                modifier = Modifier.size(minOf(maxWidth, maxHeight)),
+                blobScale = blobScale,
+                isAr = isAr,
+                count = count,
+                target = target,
+                useWesternNumbersInArabic = useWesternNumbersInArabic,
+                numberStyle = MaterialTheme.typography.displayLarge.copy(
+                    fontSize = 52.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.sp,
+                    lineHeight = 52.sp,
+                    textDirection = androidx.compose.ui.text.style.TextDirection.Ltr
+                ),
+                hintStyle = MaterialTheme.typography.labelMedium,
+                hintText = if (isAr) "اضغط في أي مكان للتسبيح" else "TAP ANYWHERE TO COUNT",
+                contentPadding = 24.dp,
+                hintSpacing = 8.dp,
+                onTap = {
+                    isTapped = true
+                    viewModel.incrementTasbih()
+                }
+            )
+        }
 
         // 3. TARGET OPTIONS BAR & RESET CONTROLS
         Column(
