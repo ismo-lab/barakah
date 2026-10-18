@@ -153,7 +153,10 @@ jobs:
 
     - name: Create Release
       uses: softprops/action-gh-release@v2
-      if: github.event_name != 'pull_request'
+      # Only a push to main publishes a release. A manual run exists to re-record the screenshot
+      # references, and it must not turn into a release just because it built an APK. (It still
+      # uploads the APK as a workflow artifact.)
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       with:
         tag_name: "v${{ env.VERSION_NAME }}"
         name: "${{ env.VERSION_NAME }}"
