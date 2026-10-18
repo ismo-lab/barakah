@@ -409,7 +409,7 @@ fun QuranScreen(
                     contentPadding = PaddingValues(bottom = 16.dp),
                     state = listState
                 ) {
-                    if (denseHeader) {
+                    if (wideHeader) {
                         item {
                             Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
                                 lastReadBanner()
