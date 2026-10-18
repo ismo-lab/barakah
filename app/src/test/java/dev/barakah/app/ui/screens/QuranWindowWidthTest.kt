@@ -1,10 +1,15 @@
 package dev.barakah.app.ui.screens
 
 import android.app.Application
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.test.core.app.ApplicationProvider
 import com.github.takahirom.roborazzi.captureRoboImage
 import dev.barakah.app.data.QuranData
@@ -40,8 +45,19 @@ class QuranWindowWidthTest {
         QuranData.load(application)
         val viewModel = BarakahViewModel(application)
         compose.setContent {
+            val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
             BarakahTheme {
-                QuranScreen(viewModel = viewModel)
+                // The same direction MainActivity provides. Without it the reference image would
+                // show the Arabic screen laid out left to right, which no device does.
+                CompositionLocalProvider(
+                    LocalLayoutDirection provides if (appLanguage == "ar") {
+                        LayoutDirection.Rtl
+                    } else {
+                        LayoutDirection.Ltr
+                    }
+                ) {
+                    QuranScreen(viewModel = viewModel)
+                }
             }
         }
     }

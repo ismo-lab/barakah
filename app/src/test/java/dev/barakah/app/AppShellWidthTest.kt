@@ -1,11 +1,16 @@
 package dev.barakah.app
 
 import android.app.Application
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
 import androidx.test.core.app.ApplicationProvider
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -34,6 +39,10 @@ import org.robolectric.annotation.GraphicsMode
  * - 850dp: ten dp past the expanded breakpoint, the narrowest window that splits the reader away
  *   from the surah list, which is where a split would be too tight if it ever is;
  * - 1000dp: expanded and landscape, for the other screen that splits.
+ *
+ * The app defaults to Arabic, and the layout direction follows the language, so these references
+ * are right-to-left, the way a device shows them. The left-to-right arrangement is the mirror of
+ * the same geometry.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -47,11 +56,25 @@ class AppShellWidthTest {
         val application = ApplicationProvider.getApplicationContext<Application>()
         val viewModel = BarakahViewModel(application)
         compose.setContent {
+            val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
             BarakahTheme {
-                MainNavigationContainer(
-                    viewModel = viewModel,
-                    navController = rememberNavController()
-                )
+                // MainActivity decides the layout direction from the language, and Arabic is this
+                // app's default. Composing the shell without that draws a frame the app never shows
+                // for either language - Arabic strings laid out left to right, with the rail on the
+                // wrong side - so the images would say nothing about what a user sees, and nothing
+                // about the direction that is actually the default.
+                CompositionLocalProvider(
+                    LocalLayoutDirection provides if (appLanguage == "ar") {
+                        LayoutDirection.Rtl
+                    } else {
+                        LayoutDirection.Ltr
+                    }
+                ) {
+                    MainNavigationContainer(
+                        viewModel = viewModel,
+                        navController = rememberNavController()
+                    )
+                }
             }
         }
     }
