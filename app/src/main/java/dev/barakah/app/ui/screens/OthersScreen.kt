@@ -23,6 +23,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -220,14 +221,20 @@ fun OthersScreen(
         )
     }
 
-    var selectedTabIndex by remember { mutableStateOf(0) }
+    var selectedTabIndex by rememberSaveable { mutableStateOf(0) }
     val tabTitles = listOf(
         if (isAr) "أسماء الله الحسنى" else "Names of Allah",
         if (isAr) "المناسبات والأعياد" else "Occasions & Eids"
     )
 
-    var selectedNameForDetail by remember { mutableStateOf<AllahName?>(null) }
-    var selectedOccasionForDetail by remember { mutableStateOf<IslamicOccasion?>(null) }
+    // Only the ids are kept across a configuration change; the entries are looked up from the same
+    // lists the screen already holds, so an open detail dialog survives a rotation.
+    var selectedNameId by rememberSaveable { mutableStateOf<Int?>(null) }
+    var selectedOccasionId by rememberSaveable { mutableStateOf<Int?>(null) }
+    val selectedNameForDetail: AllahName? =
+        selectedNameId?.let { id -> AllahNamesData.names.firstOrNull { it.id == id } }
+    val selectedOccasionForDetail: IslamicOccasion? =
+        selectedOccasionId?.let { id -> occasions.firstOrNull { it.id == id } }
 
     Scaffold(
         topBar = {
@@ -317,7 +324,7 @@ fun OthersScreen(
                         useWesternNumbersInArabic = useWesternNumbersInArabic,
                         onNameClick = { name ->
                             triggerVibration()
-                            selectedNameForDetail = name
+                            selectedNameId = name.id
                         }
                     )
                     1 -> CalendarAndOccasionsPane(
@@ -327,7 +334,7 @@ fun OthersScreen(
                         hijriAdjustment = hijriAdjustment,
                         onOccasionClick = { occasion ->
                             triggerVibration()
-                            selectedOccasionForDetail = occasion
+                            selectedOccasionId = occasion.id
                         }
                     )
                 }
@@ -339,11 +346,11 @@ fun OthersScreen(
     if (selectedNameForDetail != null) {
         val name = selectedNameForDetail!!
         AlertDialog(
-            onDismissRequest = { selectedNameForDetail = null },
+            onDismissRequest = { selectedNameId = null },
             confirmButton = {
                 TextButton(onClick = { 
                     triggerVibration()
-                    selectedNameForDetail = null 
+                    selectedNameId = null 
                 }) {
                     Text(if (isAr) "إغلاق" else "Close")
                 }
@@ -421,11 +428,11 @@ fun OthersScreen(
     if (selectedOccasionForDetail != null) {
         val holiday = selectedOccasionForDetail!!
         AlertDialog(
-            onDismissRequest = { selectedOccasionForDetail = null },
+            onDismissRequest = { selectedOccasionId = null },
             confirmButton = {
                 TextButton(onClick = { 
                     triggerVibration()
-                    selectedOccasionForDetail = null 
+                    selectedOccasionId = null 
                 }) {
                     Text(if (isAr) "تم" else "Dismiss")
                 }

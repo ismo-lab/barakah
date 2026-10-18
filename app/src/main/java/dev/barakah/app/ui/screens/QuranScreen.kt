@@ -23,6 +23,7 @@ import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,20 +56,23 @@ fun QuranScreen(
     viewModel: BarakahViewModel,
     modifier: Modifier = Modifier
 ) {
-    var searchQuery by remember { mutableStateOf("") }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
     val bookmarks by viewModel.bookmarks.collectAsStateWithLifecycle()
     
     // Filters: 0 -> All Surahs, 1 -> Bookmarks Only
-    var activeFilterTab by remember { mutableStateOf(0) }
+    var activeFilterTab by rememberSaveable { mutableStateOf(0) }
     
-    // In Detail Reading view target
-    var selectedSurahForReading by remember { mutableStateOf<Surah?>(null) }
+    // In Detail Reading view target. Only the id is kept across a configuration change; the surah
+    // itself is looked up from it again, so rotating brings the reader back instead of dropping the
+    // user at the catalogue.
+    var selectedSurahId by rememberSaveable { mutableStateOf<Int?>(null) }
+    val selectedSurahForReading: Surah? = selectedSurahId?.let { QuranData.getSurahById(it) }
     
     // Dialog for individual verse Tafseer
     var showVerseTafseerDialog by remember { mutableStateOf<Pair<dev.barakah.app.data.Verse, String>?>(null) }
     
     BackHandler(enabled = selectedSurahForReading != null) {
-        selectedSurahForReading = null
+        selectedSurahId = null
     }
     
     // Resume state
@@ -123,9 +127,9 @@ fun QuranScreen(
                     .fillMaxWidth()
                     .clickable {
                         lastReadingState?.let {
-                            selectedSurahForReading = QuranData.getSurahById(it.surahId)
+                            selectedSurahId = it.surahId
                         } ?: run {
-                            selectedSurahForReading = QuranData.getSurahById(1)
+                            selectedSurahId = 1
                         }
                     }
                     .testTag("last_read_banner"),
@@ -413,7 +417,7 @@ fun QuranScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
-                                    selectedSurahForReading = QuranData.getSurahById(surah.id)
+                                    selectedSurahId = surah.id
                                 }
                                 .padding(horizontal = 16.dp, vertical = 12.dp)
                                 .testTag("surah_item_${surah.id}"),
@@ -565,7 +569,7 @@ fun QuranScreen(
                     ) {
                         if (!twoPane) {
                             IconButton(
-                                onClick = { selectedSurahForReading = null },
+                                onClick = { selectedSurahId = null },
                                 modifier = Modifier.testTag("back_to_catalog")
                             ) {
                                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = if (isAr) "رجوع" else "Back")
