@@ -331,7 +331,7 @@ fun LanguageCard(label: String, isSelected: Boolean, onClick: () -> Unit) {
                 ElevatedCard(
                     onClick = {
                         viewModel.setLocationMethod("manual")
-                        viewModel.updateLocation(city.lat, city.lng, city.displayName(currentLang), timeZoneId = city.timeZoneId)
+                        viewModel.updateLocation(city.lat, city.lng, city.displayName(currentLang), timeZoneId = city.timeZoneId, countryCode = city.countryCode)
                         onFinish()
                     },
                     modifier = Modifier.fillMaxWidth(),

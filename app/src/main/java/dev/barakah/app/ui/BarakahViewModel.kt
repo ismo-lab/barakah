@@ -21,6 +21,7 @@ import dev.barakah.app.widget.PrayerRemainingWidget
 import dev.barakah.app.widget.NawafilWidget
 import dev.barakah.app.widget.refreshWidgetInstances
 import dev.barakah.app.util.AppNightMode
+import dev.barakah.app.util.HijriCalendarHelper
 import dev.barakah.app.util.LocationProvider
 import dev.barakah.app.util.PrayerCalculator
 import dev.barakah.app.util.QiblaManager
@@ -121,13 +122,13 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
             if (diffLat > 0.001 || diffLng > 0.001) {
                 viewModelScope.launch {
-                    val resolvedName = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                        getCityNameFromLocation(location.latitude, location.longitude)
+                    val (resolvedName, countryCode) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        getPlaceFromLocation(location.latitude, location.longitude)
                     }
                     val defaultLabel = if (_appLanguage.value == "ar") "تلقائي (GPS)" else "GPS (Auto)"
                     val label = resolvedName ?: defaultLabel
 
-                    updateLocation(location.latitude, location.longitude, label)
+                    updateLocation(location.latitude, location.longitude, label, countryCode = countryCode)
 
                     if (now - lastGpsSuccessMsgTime > 60000) {
                         lastGpsSuccessMsgTime = now
@@ -230,8 +231,26 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     val adjMaghrib = MutableStateFlow(prefs.getInt(AppPrefs.ADJ_MAGHRIB, 0))
     val adjIsha = MutableStateFlow(prefs.getInt(AppPrefs.ADJ_ISHA, 0))
 
+    /**
+     * Where the Hijri shift comes from. Countries that wait for a local sighting usually start the
+     * month a day after the Umm al-Qura table this app computes from, so their default is -1. A
+     * value the user picks is kept; clearing it goes back to the country default.
+     */
+    private fun countryHijriAdjustment(): Int =
+        HijriCalendarHelper.countryAdjustmentDays(prefs.getString(AppPrefs.LOC_COUNTRY, null))
+
+    private fun savedHijriAdjustment(): Int =
+        if (prefs.contains(AppPrefs.HIJRI_ADJUSTMENT)) {
+            prefs.getInt(AppPrefs.HIJRI_ADJUSTMENT, 0)
+        } else {
+            countryHijriAdjustment()
+        }
+
     /** Days to shift the calculated Hijri date by, so it can follow the local moon sighting. */
-    val hijriAdjustment = MutableStateFlow(prefs.getInt(AppPrefs.HIJRI_ADJUSTMENT, 0))
+    val hijriAdjustment = MutableStateFlow(savedHijriAdjustment())
+
+    /** False while [hijriAdjustment] is the country default rather than a choice the user made. */
+    val hijriAdjustmentIsManual = MutableStateFlow(prefs.contains(AppPrefs.HIJRI_ADJUSTMENT))
 
     // Cached parsed prayer seconds to eliminate 1s loop allocations
     private var CachedFajrSec = 0
@@ -547,13 +566,13 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             locationProvider.currentLocation { loc ->
                 if (loc != null) {
                     viewModelScope.launch {
-                        val resolvedName = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                            getCityNameFromLocation(loc.latitude, loc.longitude)
+                        val (resolvedName, countryCode) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                            getPlaceFromLocation(loc.latitude, loc.longitude)
                         }
                         val defaultLabel = if (_appLanguage.value == "ar") "تلقائي (GPS)" else "GPS (Auto)"
                         val label = resolvedName ?: defaultLabel
 
-                        updateLocation(loc.latitude, loc.longitude, label)
+                        updateLocation(loc.latitude, loc.longitude, label, countryCode = countryCode)
 
                         val now = System.currentTimeMillis()
                         val diffLat = abs(loc.latitude - _currentLocation.value.first)
@@ -606,24 +625,25 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
     private fun isLocationEnabled(): Boolean = locationProvider.isEnabled()
 
-    private fun getCityNameFromLocation(lat: Double, lng: Double): String? {
+    private fun getPlaceFromLocation(lat: Double, lng: Double): Pair<String?, String?> {
         return try {
             val context = getApplication<Application>()
             val geocoder = android.location.Geocoder(context, java.util.Locale.getDefault())
             val addresses = geocoder.getFromLocation(lat, lng, 1)
             if (!addresses.isNullOrEmpty()) {
                 val address = addresses[0]
-                address.locality ?: address.subAdminArea ?: address.adminArea ?: address.countryName
+                val name = address.locality ?: address.subAdminArea ?: address.adminArea ?: address.countryName
+                name to address.countryCode
             } else {
-                null
+                null to null
             }
         } catch (e: Exception) {
             Log.e(TAG, "Unable to name the location from its coordinates", e)
-            null
+            null to null
         }
     }
 
-    fun updateLocation(lat: Double, lng: Double, label: String, isSuccessFeedback: Boolean = false, timeZoneId: String? = null) {
+    fun updateLocation(lat: Double, lng: Double, label: String, isSuccessFeedback: Boolean = false, timeZoneId: String? = null, countryCode: String? = null) {
         _currentLocation.value = Pair(lat, lng)
         _locationLabel.value = label
         _isLocationSet.value = LocationDefaults.isSet(label)
@@ -639,6 +659,10 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             putFloat(AppPrefs.LOC_LNG, lng.toFloat())
             putString(AppPrefs.LOC_LABEL, label)
             putString(AppPrefs.LOC_TIMEZONE, resolvedTimeZoneId)
+            if (countryCode != null) putString(AppPrefs.LOC_COUNTRY, countryCode.uppercase())
+        }
+        if (!hijriAdjustmentIsManual.value) {
+            hijriAdjustment.value = countryHijriAdjustment()
         }
         recalculatePrayerTimes()
         if (isSuccessFeedback) {
@@ -980,7 +1004,15 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
      */
     fun setHijriAdjustment(value: Int) {
         hijriAdjustment.value = value
+        hijriAdjustmentIsManual.value = true
         prefs.edit { putInt(AppPrefs.HIJRI_ADJUSTMENT, value) }
+    }
+
+    /** Drops the manual shift and goes back to the saved location's country default. */
+    fun resetHijriAdjustment() {
+        prefs.edit { remove(AppPrefs.HIJRI_ADJUSTMENT) }
+        hijriAdjustmentIsManual.value = false
+        hijriAdjustment.value = countryHijriAdjustment()
     }
 
     fun resetToDefaults() {
