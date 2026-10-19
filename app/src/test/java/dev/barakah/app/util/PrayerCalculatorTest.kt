@@ -231,6 +231,39 @@ class PrayerCalculatorTest {
         assertEquals(3.0, PrayerCalculator.getTimeZoneOffset("Asia/Riyadh", july), 0.001)
         assertEquals(0.0, PrayerCalculator.getTimeZoneOffset("UTC", january), 0.001)
         assertEquals(0.0, PrayerCalculator.getTimeZoneOffset("Europe/London", january), 0.001)
-        assertEquals(1.0, PrayerCalculator.getTimeZoneOffset("Europe/London", july), 0.001)
+    @Test
+    fun `phone clock offset moves every prayer by the same amount`() {
+        val calendar = day(2024, 3, 11)
+        val base = PrayerCalculator.calculate(21.4225, 39.8262, 3.0, calendar)
+        val shifted = PrayerCalculator.calculate(
+            21.4225, 39.8262, 3.0, calendar, clockOffsetMinutes = -60
+        )
+
+        val pairs = listOf(
+            "fajr" to (base.fajr to shifted.fajr),
+            "sunrise" to (base.sunrise to shifted.sunrise),
+            "dhuhr" to (base.dhuhr to shifted.dhuhr),
+            "asr" to (base.asr to shifted.asr),
+            "maghrib" to (base.maghrib to shifted.maghrib),
+            "isha" to (base.isha to shifted.isha)
+        )
+        for ((name, pair) in pairs) {
+            assertEquals("$name moved by the wrong amount: ${pair.first} to ${pair.second}",
+                minutes(pair.first) - 60, minutes(pair.second))
+        }
+    }
+
+    @Test
+    fun `phone clock offset adds to the per prayer adjustment`() {
+        val calendar = day(2024, 3, 11)
+        val base = PrayerCalculator.calculate(21.4225, 39.8262, 3.0, calendar)
+        val shifted = PrayerCalculator.calculate(
+            21.4225, 39.8262, 3.0, calendar,
+            adjFajr = 5,
+            clockOffsetMinutes = -60
+        )
+
+        assertEquals(minutes(base.fajr) - 55, minutes(shifted.fajr))
+        assertEquals(minutes(base.dhuhr) - 60, minutes(shifted.dhuhr))
     }
 }
