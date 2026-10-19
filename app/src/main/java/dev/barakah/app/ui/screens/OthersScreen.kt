@@ -264,6 +264,10 @@ fun OthersScreen(
                         )
                     }
                 },
+                // The container already inset this screen by the status bar, and TopAppBar defaults to
+                // applying the same inset itself, which pushed the back button down by a second status
+                // bar height above and below the divider.
+                windowInsets = WindowInsets(0, 0, 0, 0),
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                     titleContentColor = MaterialTheme.colorScheme.onBackground,
