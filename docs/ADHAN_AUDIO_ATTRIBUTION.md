@@ -1,8 +1,15 @@
 # Adhan audio attribution
 
-The app bundles two recordings from [Kiwifu/adhan-mp3](https://github.com/Kiwifu/adhan-mp3):
+The app bundles two recordings from the Internet Archive, both released by their uploader under
+[CC0 1.0 Universal (Public Domain Dedication)](https://creativecommons.org/publicdomain/zero/1.0/),
+which permits reuse and redistribution without conditions:
 
-- Fajr: `Adhan_Fajr_Al_Haram_Al_Maki_(أذان_الفجر_الحرم_المكي).mp3`
-- Other obligatory prayers: `Adhan_Al_Haram_Al_Madani_-_Al_Madinah_1_(أذان_الحرم_المدني_-_المدينة_المنورة).mp3`
+- Fajr: [28 May Fajr Adhan, Makkah](https://archive.org/details/28MayFajrAdhanMakkah) -
+  `app/src/main/res/raw/adhan_fajr.mp3`
+- Other obligatory prayers: [Makkah Azan - Ramadan](https://archive.org/details/MakkahAzan-ramadan) -
+  `app/src/main/res/raw/adhan_regular.mp3`
 
-The source repository describes its recordings as free for Islamic apps, prayer-time software, and personal use. It does not include a separate license file. The recordings are bundled with attribution to the source; confirm rights with the recording owner before redistributing the app if you need a formal license grant.
+These replaced two recordings from [Kiwifu/adhan-mp3](https://github.com/Kiwifu/adhan-mp3), which
+were described as free for Islamic apps but carried no licence file, so the grant could not be
+relied on for redistribution. Nothing else about the playback path changed: `AdhanPlaybackService`
+picks `adhan_fajr` for Fajr and `adhan_regular` for every other prayer.
