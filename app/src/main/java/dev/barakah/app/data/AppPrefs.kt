@@ -46,6 +46,14 @@ object AppPrefs {
     const val ADJ_ISHA = "adj_isha"
 
     /**
+     * Minutes added to every calculated time at once, sunrise included. This exists for phones
+     * whose time zone rules are out of date: a country that changes its lawful hour leaves the
+     * device reporting the old offset, which moves every prayer by the same amount. It is kept
+     * apart from the per-prayer adjustments so it can be reset to 0 on its own.
+     */
+    const val ADJ_GLOBAL = "adj_global"
+
+    /**
      * Days to shift the calculated Hijri date by, so the calendar can be lined up with the moon
      * sighting the user's community follows. 0 keeps the plain Umm al-Qura date.
      */

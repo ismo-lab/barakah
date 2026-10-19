@@ -45,7 +45,8 @@ object PrayerCalculator {
         adjDhuhr: Int = 0,
         adjAsr: Int = 0,
         adjMaghrib: Int = 0,
-        adjIsha: Int = 0
+        adjIsha: Int = 0,
+        clockOffsetMinutes: Int = 0
     ): PrayerTimes {
         val year = calendar.get(Calendar.YEAR)
         val month = calendar.get(Calendar.MONTH) + 1
@@ -130,12 +131,12 @@ object PrayerCalculator {
         val asrTime = dhuhrTime + asrHourAngle
 
         return PrayerTimes(
-            fajr = formatTime(fajrTime, adjFajr),
-            sunrise = formatTime(sunriseTime, adjSunrise),
-            dhuhr = formatTime(dhuhrTime, adjDhuhr),
-            asr = formatTime(asrTime, adjAsr),
-            maghrib = formatTime(maghribTime, adjMaghrib),
-            isha = formatTime(ishaTime, adjIsha)
+            fajr = formatTime(fajrTime, adjFajr + clockOffsetMinutes),
+            sunrise = formatTime(sunriseTime, adjSunrise + clockOffsetMinutes),
+            dhuhr = formatTime(dhuhrTime, adjDhuhr + clockOffsetMinutes),
+            asr = formatTime(asrTime, adjAsr + clockOffsetMinutes),
+            maghrib = formatTime(maghribTime, adjMaghrib + clockOffsetMinutes),
+            isha = formatTime(ishaTime, adjIsha + clockOffsetMinutes)
         )
     }
 

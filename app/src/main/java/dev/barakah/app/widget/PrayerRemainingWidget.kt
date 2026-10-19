@@ -64,12 +64,14 @@ class PrayerRemainingWidget : GlanceAppWidget() {
             val adjAsr = prefs.getInt(AppPrefs.ADJ_ASR, 0)
             val adjMaghrib = prefs.getInt(AppPrefs.ADJ_MAGHRIB, 0)
             val adjIsha = prefs.getInt(AppPrefs.ADJ_ISHA, 0)
+            val clockOffset = prefs.getInt(AppPrefs.ADJ_GLOBAL, 0)
         
             val times = PrayerCalculator.calculate(
                 lat, lng, offsetHours, calendar,
                 method = m, asrMethod = asrMethod, ishaMethod = ishaMethod,
                 adjFajr = adjFajr, adjSunrise = adjSunrise, adjDhuhr = adjDhuhr,
-                adjAsr = adjAsr, adjMaghrib = adjMaghrib, adjIsha = adjIsha
+                adjAsr = adjAsr, adjMaghrib = adjMaghrib, adjIsha = adjIsha,
+                clockOffsetMinutes = clockOffset
             )
         
             val currentTimeInSec = calendar.get(Calendar.HOUR_OF_DAY) * 3600 + calendar.get(Calendar.MINUTE) * 60 + calendar.get(Calendar.SECOND)

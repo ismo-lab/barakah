@@ -102,6 +102,7 @@ fun HomeSettingsSection(
     val adjAsr by viewModel.adjAsr.collectAsStateWithLifecycle()
     val adjMaghrib by viewModel.adjMaghrib.collectAsStateWithLifecycle()
     val adjIsha by viewModel.adjIsha.collectAsStateWithLifecycle()
+val adjGlobal by viewModel.adjGlobal.collectAsStateWithLifecycle()
     val hijriAdjustment by viewModel.hijriAdjustment.collectAsStateWithLifecycle()
     val hijriAdjustmentIsManual by viewModel.hijriAdjustmentIsManual.collectAsStateWithLifecycle()
 
@@ -1034,6 +1035,65 @@ fun HomeSettingsSection(
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
+
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
+                                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = if (isAr) "توقيت الهاتف" else "Phone clock",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = if (isAr) "إن كان الهاتف ما زال على التوقيت القديم، أزح كل الصلوات بنفس المقدار."
+                                            else "Shift every prayer at once if the phone still uses the old time zone rules.",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        IconButton(
+                                            onClick = { if (adjGlobal > -180) viewModel.setAdjGlobal(adjGlobal - 60) },
+                                            enabled = adjGlobal > -180,
+                                            modifier = Modifier.size(32.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Remove,
+                                                contentDescription = if (isAr) "ساعة أقل" else "An hour earlier",
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                        val globalPrefix = if (adjGlobal > 0) "+" else ""
+                                        Text(
+                                            text = if (adjGlobal == 0) "0" else "$globalPrefix${adjGlobal / 60} " + (if (isAr) "س" else "h"),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.Bold,
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier.width(50.dp)
+                                        )
+                                        IconButton(
+                                            onClick = { if (adjGlobal < 180) viewModel.setAdjGlobal(adjGlobal + 60) },
+                                            enabled = adjGlobal < 180,
+                                            modifier = Modifier.size(32.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Add,
+                                                contentDescription = if (isAr) "ساعة أكثر" else "An hour later",
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    }
+                                }
 
                                 val adjList = listOf(
                                     Quadruple("Fajr", if (isAr) "الفجر" else "Fajr", adjFajr) { v: Int -> viewModel.setAdjFajr(v) },

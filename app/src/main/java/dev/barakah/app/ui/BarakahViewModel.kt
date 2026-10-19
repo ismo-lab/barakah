@@ -230,6 +230,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     val adjAsr = MutableStateFlow(prefs.getInt(AppPrefs.ADJ_ASR, 0))
     val adjMaghrib = MutableStateFlow(prefs.getInt(AppPrefs.ADJ_MAGHRIB, 0))
     val adjIsha = MutableStateFlow(prefs.getInt(AppPrefs.ADJ_ISHA, 0))
+    val adjGlobal = MutableStateFlow(prefs.getInt(AppPrefs.ADJ_GLOBAL, 0))
 
     /**
      * Where the Hijri shift comes from. Countries that wait for a local sighting usually start the
@@ -326,6 +327,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             val adjA = prefs.getInt(AppPrefs.ADJ_ASR, 0)
             val adjM = prefs.getInt(AppPrefs.ADJ_MAGHRIB, 0)
             val adjI = prefs.getInt(AppPrefs.ADJ_ISHA, 0)
+            val adjG = prefs.getInt(AppPrefs.ADJ_GLOBAL, 0)
             val isAutoLocation = prefs.getString(AppPrefs.LOCATION_METHOD, "manual") == "auto"
             val timeZoneId = PrayerCalculator.resolveTimeZoneId(
                 if (isAutoLocation) TimeZone.getDefault().id else prefs.getString(AppPrefs.LOC_TIMEZONE, null)
@@ -345,7 +347,8 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
                 adjDhuhr = adjD,
                 adjAsr = adjA,
                 adjMaghrib = adjM,
-                adjIsha = adjI
+                adjIsha = adjI,
+                clockOffsetMinutes = adjG
             )
         }
     )
@@ -842,7 +845,8 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             adjDhuhr = adjDhuhr.value,
             adjAsr = adjAsr.value,
             adjMaghrib = adjMaghrib.value,
-            adjIsha = adjIsha.value
+            adjIsha = adjIsha.value,
+            clockOffsetMinutes = adjGlobal.value
         )
         _prayerTimes.value = newTimes
         updateParsedSeconds(newTimes)
@@ -995,6 +999,18 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     fun setAdjIsha(value: Int) {
         adjIsha.value = value
         prefs.edit { putInt(AppPrefs.ADJ_ISHA, value) }
+        recalculatePrayerTimes()
+    }
+
+    /**
+     * Moves every prayer by [value] minutes, in one step. Meant for a device whose time zone
+     * rules still carry an hour the country has since dropped, where all five prayers are off by
+     * the same amount. Kept separate from the per-prayer adjustments so resetting it to 0 keeps
+     * any fine tuning the user made.
+     */
+    fun setAdjGlobal(value: Int) {
+        adjGlobal.value = value
+        prefs.edit { putInt(AppPrefs.ADJ_GLOBAL, value) }
         recalculatePrayerTimes()
     }
 
