@@ -160,7 +160,9 @@ fun HomeSettingsSection(
                 modifier = Modifier
                     .fillMaxWidth()
                     .widthIn(max = 680.dp)
-                    .padding(16.dp)
+                    // No bottom padding here: out here it would end the scroll area short of the nav
+                    // bar and leave a visible band. The list keeps that spacing inside itself instead.
+                    .padding(start = 16.dp, end = 16.dp, top = 16.dp)
             ) {
                 Row(
                     modifier = Modifier
@@ -186,6 +188,7 @@ fun HomeSettingsSection(
 
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(bottom = 16.dp),
                     modifier = Modifier.fillMaxWidth().weight(1f)
                 ) {
                     // Card 1: Language & Theme Preferences

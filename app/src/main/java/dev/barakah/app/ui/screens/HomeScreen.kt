@@ -290,7 +290,9 @@ fun HomeScreen(
                 start = 16.dp, 
                 end = 16.dp, 
                 top = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding() + 16.dp,
-                bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding() + 24.dp
+                // The Scaffold content already stops above the bottom nav bar; adding the window inset
+                // here counted it twice and left a black band above the bar.
+                bottom = 24.dp
             )
         ) {
         // 1. LOCATION SELECTION HEADER (Bold Typography style)

@@ -99,7 +99,6 @@ fun TasbihScreen(
             Row(
                 modifier = modifier
                     .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.safeDrawing)
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -210,7 +209,9 @@ fun TasbihScreen(
                         start = 24.dp,
                         end = 24.dp,
                         top = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding() + 24.dp,
-                        bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding() + 24.dp
+                        // The Scaffold content already stops above the bottom nav bar; the window inset
+                        // was counted twice and left a black band above the bar.
+                        bottom = 24.dp
                     ),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = if (isShortScreen) Arrangement.spacedBy(16.dp) else Arrangement.SpaceEvenly
