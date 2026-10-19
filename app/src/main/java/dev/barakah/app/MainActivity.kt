@@ -244,8 +244,10 @@ fun MainNavigationContainer(
     val currentDestination = navBackStackEntry?.destination
     val showSettingsDialog by viewModel.showSettingsDialog.collectAsStateWithLifecycle()
 
-    val shouldHideNavigation = showSettingsDialog || currentDestination?.route == "others"
-    val showNavigationRail = windowWidth.showsNavigationRail && !shouldHideNavigation
+    // Settings replaces the rail with the bottom bar: it is an overlay that applies its own insets.
+    // Others used to do the same, which left it on a bottom bar in a wide window while every other
+    // screen had the rail. It is an ordinary screen, so it keeps the rail.
+    val showNavigationRail = windowWidth.showsNavigationRail && !showSettingsDialog
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),

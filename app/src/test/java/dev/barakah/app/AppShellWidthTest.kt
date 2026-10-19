@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import androidx.test.core.app.ApplicationProvider
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -52,6 +53,9 @@ class AppShellWidthTest {
     @get:Rule
     val compose = createComposeRule()
 
+    /** The shell's controller, so a test can reach a route that has no tab of its own. */
+    private var navController: NavHostController? = null
+
     private fun openShell() {
         val application = ApplicationProvider.getApplicationContext<Application>()
         val viewModel = BarakahViewModel(application)
@@ -72,7 +76,7 @@ class AppShellWidthTest {
                 ) {
                     MainNavigationContainer(
                         viewModel = viewModel,
-                        navController = rememberNavController()
+                        navController = rememberNavController().also { navController = it }
                     )
                 }
             }
@@ -135,5 +139,31 @@ class AppShellWidthTest {
         compose.onNodeWithTag("dua_search_bar").assertIsDisplayed()
 
         compose.onRoot().captureRoboImage("src/test/screenshots/duas_two_pane_1000dp.png")
+    }
+
+    @Test
+    @Config(sdk = [36], qualifiers = "w1000dp-h800dp-land")
+    fun `the others screen keeps the rail in a wide window`() {
+        openShell()
+
+        compose.runOnIdle { navController!!.navigate("others") }
+        compose.waitForIdle()
+
+        compose.onNodeWithTag("side_navigation_rail").assertIsDisplayed()
+        compose.onNodeWithTag("bottom_nav_bar").assertDoesNotExist()
+        compose.onNodeWithTag("others_tab_row").assertIsDisplayed()
+    }
+
+    @Test
+    @Config(sdk = [36], qualifiers = "w914dp-h411dp-land")
+    fun `a short window gives the others grid the space its intro banner took`() {
+        openShell()
+
+        compose.runOnIdle { navController!!.navigate("others") }
+        compose.waitForIdle()
+
+        compose.onNodeWithTag("side_navigation_rail").assertIsDisplayed()
+        compose.onNodeWithTag("allah_names_grid").assertIsDisplayed()
+        compose.onNodeWithTag("allah_names_intro").assertDoesNotExist()
     }
 }
