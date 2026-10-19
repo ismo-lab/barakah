@@ -289,7 +289,9 @@ fun HomeScreen(
             contentPadding = PaddingValues(
                 start = 16.dp, 
                 end = 16.dp, 
-                top = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding() + 16.dp,
+                // No window inset here: the Scaffold content already starts below the status bar, and
+                // adding it again left a second status bar height of empty space above the date.
+                top = 16.dp,
                 // The Scaffold content already stops above the bottom nav bar; adding the window inset
                 // here counted it twice and left a black band above the bar.
                 bottom = 24.dp
