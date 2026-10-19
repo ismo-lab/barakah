@@ -208,11 +208,9 @@ fun QuranScreen(
                             )
                         )
                         .padding(
-                            top = if (denseHeader) {
-                                WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding() + 8.dp
-                            } else {
-                                WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding() + 24.dp
-                            },
+                            // The Scaffold content already starts below the status bar; the window inset
+                            // was a second one and left an extra status bar of empty header.
+                            top = if (denseHeader) 8.dp else 24.dp,
                             start = if (denseHeader) 16.dp else 24.dp,
                             end = if (denseHeader) 16.dp else 24.dp,
                             bottom = if (denseHeader) 8.dp else 24.dp

@@ -39,7 +39,7 @@ jobs:
       uses: actions/checkout@v5
     
     - name: set up JDK 17
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         java-version: '17'
         distribution: 'temurin'
@@ -187,7 +187,7 @@ jobs:
     # itself still builds fine on 17. Keep this job on 21 so the Robolectric and
     # screenshot tests can actually run; the build job above stays on 17.
     - name: set up JDK 21
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         java-version: '21'
         distribution: 'temurin'
@@ -243,7 +243,7 @@ jobs:
 
     # Matches the job that builds the APK, so the analysis covers the same variant family.
     - name: set up JDK 17
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         java-version: '17'
         distribution: 'temurin'

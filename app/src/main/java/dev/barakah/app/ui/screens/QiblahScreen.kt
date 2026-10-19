@@ -295,7 +295,8 @@ fun QiblahScreen(
                     .padding(
                         start = 24.dp,
                         end = 24.dp,
-                        top = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding() + 24.dp,
+                        // No window inset: the Scaffold content already starts below the status bar.
+                        top = 24.dp,
                         // The Scaffold content already stops above the bottom nav bar; the window inset
                         // was counted twice and left a black band above the bar.
                         bottom = 24.dp
