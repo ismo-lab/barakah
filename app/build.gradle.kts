@@ -1,6 +1,3 @@
-import java.net.URL
-import java.net.HttpURLConnection
-import java.net.URI
 import java.util.Properties
 import java.util.Base64
 import java.io.File
@@ -10,7 +7,6 @@ plugins {
   alias(libs.plugins.kotlin.compose)
   alias(libs.plugins.google.devtools.ksp)
   alias(libs.plugins.roborazzi)
-  alias(libs.plugins.secrets)
 }
 
 // Load version configuration cleanly from version.properties without configuration-phase side effects
@@ -25,13 +21,18 @@ val majorVersion = versionProps.getProperty("MAJOR", "1").toInt()
 val minorVersion = versionProps.getProperty("MINOR", "0").toInt()
 val patchVersion = versionProps.getProperty("PATCH", "0").toInt()
 val buildNumber = versionProps.getProperty("BUILD_NUMBER", "1006").toInt()
+// CI appends the workflow run number so every push to main publishes a distinct version. F-Droid
+// only regexes version information and never runs this file, so it passes those two numbers in as
+// Gradle properties instead and the APK it builds carries the same version as the tagged release.
 val ciRunOffset = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 0
 val signingStorePassword = System.getenv("BARAKAH_KEYSTORE_PASSWORD") ?: "android"
 val signingKeyAlias = System.getenv("BARAKAH_KEY_ALIAS") ?: "androiddebugkey"
 val signingKeyPassword = System.getenv("BARAKAH_KEY_PASSWORD") ?: "android"
 
-val currentVersionCode = majorVersion * 100000 + minorVersion * 10000 + patchVersion * 100 + buildNumber + ciRunOffset
-val currentVersionName = System.getenv("DYNAMIC_VERSION")?.takeIf { it.isNotEmpty() }
+val currentVersionCode = (findProperty("barakahVersionCode") as String?)?.toIntOrNull()
+  ?: (majorVersion * 100000 + minorVersion * 10000 + patchVersion * 100 + buildNumber + ciRunOffset)
+val currentVersionName = (findProperty("barakahVersionName") as String?)?.takeIf { it.isNotEmpty() }
+  ?: System.getenv("DYNAMIC_VERSION")?.takeIf { it.isNotEmpty() }
   ?: "$majorVersion.$minorVersion.$patchVersion"
 
 // Room writes the schema of every database version to app/schemas. Checking those in is what makes
@@ -108,13 +109,6 @@ android {
     buildConfig = true
   }
   testOptions { unitTests { isIncludeAndroidResources = true } }
-}
-
-// Configure the Secrets Gradle Plugin to use .env and .env.example files
-// to match the convention used in Web projects.
-secrets {
-  propertiesFileName = ".env"
-  defaultPropertiesFileName = ".env.example"
 }
 
 /**
@@ -235,101 +229,6 @@ dependencies {
   "ksp"(libs.androidx.room.compiler)
 }
 
-tasks.register("downloadHisn") {
-  notCompatibleWithConfigurationCache("Uses network connection and local file references")
-  doLast {
-    val dest = file("src/main/res/raw/hisn_en.json")
-    dest.parentFile.mkdirs()
-    println("Downloading Hisn data to ${dest.absolutePath}...")
-    val url = URI("https://raw.githubusercontent.com/4thel00z/hadith.json/refs/heads/master/hisnulmuslim/hisnulmuslim.json").toURL()
-    val conn = url.openConnection() as HttpURLConnection
-    conn.requestMethod = "GET"
-    conn.connectTimeout = 30000
-    conn.readTimeout = 30000
-    if (conn.responseCode == 200) {
-      conn.inputStream.use { input ->
-        dest.outputStream().use { output ->
-          input.copyTo(output)
-        }
-      }
-      println("Hisn data downloaded successfully! Size: ${dest.length()} bytes")
-      println("FIRST 1000 CHARS:")
-      val firstChars = dest.readText().take(1500)
-      println(firstChars)
-    } else {
-      throw GradleException("Failed to download Hisn data. HTTP Response Code: ${conn.responseCode}")
-    }
-  }
-}
-
-tasks.register("downloadArabicTafseer") {
-  notCompatibleWithConfigurationCache("Uses network connection and local file references")
-  doLast {
-    val dest = file("src/main/assets/quran/tafseer_ar.json")
-    if (dest.exists() && dest.length() > 100000) {
-      println("Arabic Tafseer data already exists, skipping download.")
-      return@doLast
-    }
-    dest.parentFile.mkdirs()
-    println("Downloading Arabic Tafseer data to ${dest.absolutePath}...")
-    val url = URI("https://github.com/00AhmedMokhtar00/QuranTafseer-ar-json/raw/refs/heads/master/tafseer.json").toURL()
-    val conn = url.openConnection() as HttpURLConnection
-    conn.requestMethod = "GET"
-    conn.connectTimeout = 30000
-    conn.readTimeout = 30000
-    if (conn.responseCode == 200) {
-      conn.inputStream.use { input ->
-        dest.outputStream().use { output ->
-          input.copyTo(output)
-        }
-      }
-      println("Arabic Tafseer data downloaded successfully! Size: ${dest.length()} bytes")
-    } else {
-      println("Failed to download Arabic Tafseer data. HTTP Response Code: ${conn.responseCode}")
-    }
-  }
-}
-
-tasks.register("downloadEnglishTafseer") {
-  notCompatibleWithConfigurationCache("Uses network connection and local file references")
-  doLast {
-    val dir = file("src/main/assets/quran/en_tafseer")
-    dir.mkdirs()
-    println("Checking English Tafseer files (1..114) in ${dir.absolutePath}...")
-    var localCount = 0
-    for (surah in 1..114) {
-      val target = File(dir, "$surah.json")
-      if (target.exists() && target.length() > 100) {
-        localCount++
-        continue
-      }
-      try {
-        println("Downloading English Tafseer for surah $surah...")
-        val url = URI("https://cdn.jsdelivr.net/gh/spa5k/tafsir_api@main/tafsir/en-al-jalalayn/$surah.json").toURL()
-        val conn = url.openConnection() as HttpURLConnection
-        conn.requestMethod = "GET"
-        conn.connectTimeout = 10000
-        conn.readTimeout = 10000
-        if (conn.responseCode == 200) {
-          conn.inputStream.use { input ->
-            target.outputStream().use { output ->
-              input.copyTo(output)
-            }
-          }
-          localCount++
-        } else {
-          println("Failed to download English Tafseer for surah $surah. HTTP Code: ${conn.responseCode}")
-        }
-      } catch (e: Exception) {
-        println("Error downloading English Tafseer for surah $surah: ${e.message}")
-      }
-    }
-    println("English Tafseer files update complete. Total of $localCount/114 files downloaded and ready offline.")
-  }
-}
-
-// The tafsir assets are committed, so the build no longer reaches out to jsdelivr and
-// GitHub while building. Run the download tasks by hand when refreshing that data.
 tasks.named("preBuild") {
   dependsOn(prepareSigningKeystore)
 }
