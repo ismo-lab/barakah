@@ -14,7 +14,6 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
-import dev.barakah.app.MainActivity
 import dev.barakah.app.R
 import dev.barakah.app.data.AppPrefs
 
@@ -87,6 +86,12 @@ class AdhanPlaybackService : Service() {
             newPlayer.setOnCompletionListener { stopPlayback() }
             newPlayer.start()
 
+            // Detach the notification from the foreground state so it can be swiped away on
+            // every supported version, not just Android 14 where foreground service
+            // notifications became dismissible. An app that is playing audio stays perceptible
+            // to the system, so the service is not a candidate for background trimming.
+            stopForeground(STOP_FOREGROUND_DETACH)
+
             if (prefs.getString(AppPrefs.ADHAN_AUDIO_MODE, "short") != "full") {
                 handler.postDelayed(stopShortPlayback, SHORT_PLAYBACK_MS)
             }
@@ -123,12 +128,6 @@ class AdhanPlaybackService : Service() {
             Intent(this, AdhanPlaybackService::class.java).setAction(ACTION_STOP),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        val openAppIntent = PendingIntent.getActivity(
-            this,
-            NOTIFICATION_ID,
-            Intent(this, MainActivity::class.java),
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
         val prayerLabel = if (isAr) {
             when (prayerName) {
                 "Fajr" -> "الفجر"
@@ -144,9 +143,10 @@ class AdhanPlaybackService : Service() {
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(if (isAr) "أذان صلاة $prayerLabel" else "$prayerLabel Adhan")
             .setContentText(if (isAr) "يُشغّل الأذان" else "Adhan is playing")
-            .setContentIntent(openAppIntent)
+            .setContentIntent(stopIntent)
+            .setDeleteIntent(stopIntent)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
-            .setOngoing(true)
+            .setOngoing(false)
             .setSilent(true)
             .addAction(
                 android.R.drawable.ic_media_pause,
@@ -170,6 +170,9 @@ class AdhanPlaybackService : Service() {
         // minSdk is 24, so the deprecated boolean overload this used to fall back to
         // can never be reached.
         stopForeground(STOP_FOREGROUND_REMOVE)
+        // The notification was detached from the foreground state once playback started, so
+        // stopping the foreground service no longer takes it down with it.
+        getSystemService(NotificationManager::class.java).cancel(NOTIFICATION_ID)
         stopSelf()
     }
 
