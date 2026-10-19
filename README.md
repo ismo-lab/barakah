@@ -43,12 +43,11 @@ and no Google Play Services dependency.
 ./gradlew lintDebug         # Android Lint
 ```
 
-The offline city catalog is not committed. Run `python tools/build_city_database.py` once (Python
-3.12) before building, otherwise city search quietly returns nothing; pass `--source` and
-`--alternate-names-source` to use saved GeoNames exports instead of downloading them. CI downloads
-both exports and builds the same catalog as a cached step before packaging each APK, so lookup works
-with no network connection after installation. Checksums of the two sources version the on-device
-cache, so a newer APK replaces an older cached catalog on its next search.
+The offline city catalog is committed as `app/src/main/assets/cities500.sqlite`, so building needs no
+network. `python tools/build_city_database.py` (Python 3.12+) regenerates it from the GeoNames
+exports; pass `--source` and `--alternate-names-source` to reuse saved exports instead of downloading
+them. Checksums of the two exports are stored beside it in `cities500.version` and version the
+on-device cache, so a newer APK replaces an older cached catalog on its next search.
 
 Signing: the build expects `app/keystore.jks`. Locally it is materialised from
 `debug.keystore.base64` or `debug.keystore`, and a throwaway key is generated when neither
@@ -77,10 +76,10 @@ Barakah relies gratefully on the efforts of the global FOSS Islamic developer co
 - **Hadith Compilation**: [hadith.json](https://github.com/4thel00z/hadith.json)
 - **Hisnul Muslim Supplications**: [HisnElMuslim](https://github.com/asellam/HisnElMuslim)
 - **Holy Quran Database**: [Quran-Data](https://github.com/rn0x/Quran-Data)
-- **Holy Quran Database & Tafseer**: [Quran-Data](https://github.com/rn0x/Quran-Data), [QuranTafseer-ar-json](https://github.com/00AhmedMokhtar00/QuranTafseer-ar-json), and [tafsir_api](https://github.com/spa5k/tafsir_api) by spa5k
+- **Holy Quran Database & Tafseer**: [Quran-Data](https://github.com/rn0x/Quran-Data) (MIT) for the text, and [tafsir_api](https://github.com/spa5k/tafsir_api) by spa5k (MIT) for the Arabic and English *Tafsir al-Jalalayn*, a classical work in the public domain
 - **Quran Script Font**: [Amiri Quran](https://github.com/aliftype/amiri) © Khaled Hosny and the Amiri Project Authors, licensed under the [SIL Open Font License 1.1](https://openfontlicense.org). The bundled licence text is in [docs/AmiriQuran-OFL.txt](docs/AmiriQuran-OFL.txt).
 - **Astronomical Mathematics**: [Adhan SDK](https://github.com/batoulapps/adhan-java)
-- **Adhan Audio Assets**: [adhan-mp3](https://github.com/Kiwifu/adhan-mp3) by Kiwifu
+- **Adhan Audio Assets**: two Makkah recordings released under [CC0](https://creativecommons.org/publicdomain/zero/1.0/) on the Internet Archive - [Fajr adhan](https://archive.org/details/28MayFajrAdhanMakkah) and [regular adhan](https://archive.org/details/MakkahAzan-ramadan). See [docs/ADHAN_AUDIO_ATTRIBUTION.md](docs/ADHAN_AUDIO_ATTRIBUTION.md).
 - **Offline City Search, Localized Names, and City Timezones**: [GeoNames cities500](https://download.geonames.org/export/dump/cities500.zip) and [GeoNames alternateNamesV2](https://download.geonames.org/export/dump/alternateNamesV2.zip), © GeoNames, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The bundled catalog keeps canonical city records separate from language-tagged alternate names. Arabic labels use GeoNames entries tagged as Arabic; when no localized name exists, the app shows the canonical city name instead of guessing from its script. The catalog contains populated places with a population above 500 or designated capitals. It is broad global coverage, but does not claim to include every named village or settlement. GPS mode uses the device's configured timezone; manual city selections use the IANA timezone ID supplied with each city record.
 
 ---

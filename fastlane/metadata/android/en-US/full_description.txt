@@ -1,0 +1,25 @@
+Barakah is a privacy-respecting Islamic companion app for Android. Everything it shows works with no network connection, no account and no Google Play Services.
+
+NO NETWORK PERMISSION
+
+Barakah does not declare the INTERNET permission at all, so it cannot send anything anywhere, even in principle. The Quran, the tafseer, the supplications and the city catalog are bundled inside the APK. There is no advertising, no analytics and no tracking of any kind.
+
+WHAT IT DOES
+
+* Prayer times - a daily schedule calculated on the device from your coordinates, using the calculation method you choose (Umm al-Qura, Muslim World League, Egyptian, Karachi, ISNA and others). Fajr, Dhuhr, Asr, Maghrib and Isha, with the current prayer and the countdown to the next one on the home screen.
+* Adhan reminders - notifications at each prayer time, or a short reminder before it, or the adhan itself played in the background from bundled recordings. Fajr can be announced with its own recording.
+* Hijri calendar - today's Hijri date and the Islamic occasions dated from it, with a 1-2 day shift in Settings so the calendar lines up with the moon sighting your community follows. The default for countries that usually sight a day later is applied automatically, and can be overridden or cleared.
+* Quran reader - the complete Quran text with Arabic or English tafseer, adjustable font size, and an optional Uthmani-script face (Amiri Quran) used for the Quran text alone.
+* Qibla compass - the direction of the Kaaba from your location, with a compass that uses the device sensors and haptic feedback.
+* Tasbih counter - a digital misbaha with haptic pulses and a target you set yourself.
+* Duas - Hisnul Muslim supplications organised by occasion and daily activity.
+* Widgets - three home-screen widgets: the daily prayer times, a live countdown to the next prayer, and the voluntary (Nawafil) prayer times.
+* Any window size - the layout follows the window it is given. A phone keeps the bottom bar, a tablet or unfolded foldable gets a navigation rail, and list-and-detail screens show both panes once there is room, so nothing is stretched across a wide screen or squeezed into a narrow one.
+
+PRIVACY
+
+Location is used only to calculate prayer times and the Qibla direction on the device. Nothing leaves the phone, because nothing can: there is no network permission to send it with.
+
+FREE AND OPEN SOURCE
+
+Barakah is released under the GNU General Public License v3.0. The source code is at https://github.com/ismo-lab/barakah, where the datasets and fonts it bundles are credited.
