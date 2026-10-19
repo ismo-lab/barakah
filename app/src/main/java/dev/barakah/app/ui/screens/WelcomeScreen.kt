@@ -56,8 +56,9 @@ fun WelcomeScreen(viewModel: BarakahViewModel) {
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .statusBarsPadding()
-            .navigationBarsPadding(),
+            // safeDrawing, not status/navigation bars separately: it also covers a landscape display
+            // cutout, which sits on a side edge and had content drawn under the camera.
+            .windowInsetsPadding(WindowInsets.safeDrawing),
         contentAlignment = Alignment.TopCenter
     ) {
         Column(
