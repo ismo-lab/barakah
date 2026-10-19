@@ -103,6 +103,7 @@ fun HomeSettingsSection(
     val adjMaghrib by viewModel.adjMaghrib.collectAsStateWithLifecycle()
     val adjIsha by viewModel.adjIsha.collectAsStateWithLifecycle()
 val adjGlobal by viewModel.adjGlobal.collectAsStateWithLifecycle()
+val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
     val hijriAdjustment by viewModel.hijriAdjustment.collectAsStateWithLifecycle()
     val hijriAdjustmentIsManual by viewModel.hijriAdjustmentIsManual.collectAsStateWithLifecycle()
 
@@ -1095,6 +1096,20 @@ val adjGlobal by viewModel.adjGlobal.collectAsStateWithLifecycle()
                                     }
                                 }
 
+                                if (adjGlobal != 0) {
+                                    Text(
+                                        text = if (isAr) {
+                                            if (adjGlobal > 0) "أُزيحت كل الصلوات ${kotlin.math.abs(adjGlobal)} دقيقة متأخرًا."
+                                            else "أُزيحت كل الصلوات ${kotlin.math.abs(adjGlobal)} دقيقة مبكرًا."
+                                        } else {
+                                            if (adjGlobal > 0) "All prayers moved ${kotlin.math.abs(adjGlobal)} min later."
+                                            else "All prayers moved ${kotlin.math.abs(adjGlobal)} min earlier."
+                                        },
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+
                                 val adjList = listOf(
                                     Quadruple("Fajr", if (isAr) "الفجر" else "Fajr", adjFajr) { v: Int -> viewModel.setAdjFajr(v) },
                                     Quadruple("Dhuhr", if (isAr) "الظهر" else "Dhuhr", adjDhuhr) { v: Int -> viewModel.setAdjDhuhr(v) },
@@ -1103,11 +1118,36 @@ val adjGlobal by viewModel.adjGlobal.collectAsStateWithLifecycle()
                                     Quadruple("Isha", if (isAr) "العشاء" else "Isha", adjIsha) { v: Int -> viewModel.setAdjIsha(v) }
                                 )
 
-                                Column(
-                                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                                    modifier = Modifier.fillMaxWidth()
+                                var fineTuningOpen by rememberSaveable { mutableStateOf(false) }
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .clickable { fineTuningOpen = !fineTuningOpen }
+                                        .padding(horizontal = 4.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    adjList.forEach { adjItem ->
+                                    Text(
+                                        text = if (isAr) "ضبط دقيق لكل صلاة" else "Fine tuning per prayer",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                    Icon(
+                                        imageVector = if (fineTuningOpen) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+
+                                AnimatedVisibility(visible = fineTuningOpen) {
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        adjList.forEach { adjItem ->
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
@@ -1122,6 +1162,17 @@ val adjGlobal by viewModel.adjGlobal.collectAsStateWithLifecycle()
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 fontWeight = FontWeight.Bold,
                                                 modifier = Modifier.width(80.dp)
+                                            )
+                                            Text(
+                                                text = when (adjItem.first) {
+                                                    "Fajr" -> prayerTimes.fajr
+                                                    "Dhuhr" -> prayerTimes.dhuhr
+                                                    "Asr" -> prayerTimes.asr
+                                                    "Maghrib" -> prayerTimes.maghrib
+                                                    else -> prayerTimes.isha
+                                                },
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                             Row(
                                                 verticalAlignment = Alignment.CenterVertically,
@@ -1152,6 +1203,7 @@ val adjGlobal by viewModel.adjGlobal.collectAsStateWithLifecycle()
                                             }
                                         }
                                     }
+                                }
                                 }
                             }
                         }
