@@ -4,6 +4,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -134,6 +135,21 @@ class HijriCalendarHelperTest {
         val range = HijriCalendarHelper.getGregorianEquivalentRange(9, 21, 30, false)
 
         assertTrue("range was '$range'", range.contains(" to "))
+    }
+
+    @Test
+    fun `ramadan is recognised from the calculated date`() {
+        assertTrue(HijriCalendarHelper.isRamadan(2024, 3, 11))
+        assertFalse(HijriCalendarHelper.isRamadan(2024, 6, 21))
+    }
+
+    @Test
+    fun `countries that sight locally default a day behind`() {
+        // Local sighting usually starts the month after the Umm al-Qura table this app computes.
+        assertEquals(-1, HijriCalendarHelper.countryAdjustmentDays("pk"))
+        assertEquals(-1, HijriCalendarHelper.countryAdjustmentDays(" PK "))
+        assertEquals(0, HijriCalendarHelper.countryAdjustmentDays("SA"))
+        assertEquals(0, HijriCalendarHelper.countryAdjustmentDays(null))
     }
 
     @Test

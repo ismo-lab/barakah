@@ -28,6 +28,28 @@ object HijriCalendarHelper {
     }
 
     /**
+     * True when the calculated Umm al-Qura date falls in Ramadan. Umm al-Qura lengthens its Isha
+     * interval for the month, so the prayer calculator needs this too.
+     */
+    fun isRamadan(year: Int, month: Int, day: Int): Boolean =
+        hijriFor(year, month, day, 0).month == 9
+
+    /**
+     * The shift that matches the month start most often in [countryCode]. Countries that wait for
+     * a local sighting usually begin a day after the Umm al-Qura table this app computes from.
+     *
+     * Only a default, not a claim of the actual sighting: any single month can go either way, so
+     * the manual adjustment stays as the override and an unknown country keeps the plain date.
+     */
+    fun countryAdjustmentDays(countryCode: String?): Int {
+        val code = countryCode?.trim()?.uppercase(java.util.Locale.ROOT) ?: return 0
+        return if (code in ONE_DAY_LATER_COUNTRIES) -1 else 0
+    }
+
+    private val ONE_DAY_LATER_COUNTRIES =
+        setOf("BD", "DZ", "ID", "IN", "LK", "MA", "MY", "PK", "TN")
+
+    /**
      * The one conversion the whole app goes through: Umm al-Qura where the platform has it, and
      * the arithmetic fallback on older devices.
      *

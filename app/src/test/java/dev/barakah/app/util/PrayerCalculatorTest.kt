@@ -6,6 +6,7 @@ import java.util.TimeZone
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.math.abs
 
 /**
  * The prayer times decide when the alarms fire and when the adhan plays, so these lock down
@@ -61,16 +62,57 @@ class PrayerCalculatorTest {
     }
 
     @Test
-    fun `umm al qura isha is ninety minutes after maghrib`() {
-        val times = PrayerCalculator.calculate(
+    fun `umm al qura isha follows the published interval`() {
+        // Umm al-Qura gives Isha as an interval after Maghrib: 90 minutes normally and 120 through
+        // Ramadan. The Makkah calendar for 11 March 2024 (1 Ramadan 1445) lists 20:29 against an
+        // 18:29 maghrib, and 21 June 2024 lists 20:36 against 19:06.
+        val ramadan = PrayerCalculator.calculate(
             latitude = 21.4225,
             longitude = 39.8262,
             timezoneOffset = 3.0,
             calendar = day(2024, 3, 11),
             method = PrayerCalculator.CalculationMethod.UMM_AL_QURA
         )
+        assertEquals(minutes(ramadan.maghrib) + 120, minutes(ramadan.isha))
 
-        assertEquals(minutes(times.maghrib) + 90, minutes(times.isha))
+        val ordinary = PrayerCalculator.calculate(
+            latitude = 21.4225,
+            longitude = 39.8262,
+            timezoneOffset = 3.0,
+            calendar = day(2024, 6, 21),
+            method = PrayerCalculator.CalculationMethod.UMM_AL_QURA
+        )
+        assertEquals(minutes(ordinary.maghrib) + 90, minutes(ordinary.isha))
+    }
+
+    @Test
+    fun `makkah matches the published umm al qura calendar`() {
+        // Reference: api.aladhan.com method 4 (Umm al-Qura) at 21.3890824/39.8579118, for a Ramadan
+        // day and an ordinary one. The app solves the same solar geometry with a low-precision solar
+        // position, so a minute or two is the expected agreement. This catches a formula drifting
+        // by more than that; it does not claim the authority's own rounding or criteria.
+        val reference = linkedMapOf(
+            day(2024, 3, 11) to listOf("05:17", "06:33", "12:31", "15:54", "18:29", "20:29"),
+            day(2024, 6, 21) to listOf("04:11", "05:39", "12:23", "15:42", "19:06", "20:36")
+        )
+
+        for ((date, expected) in reference) {
+            val times = PrayerCalculator.calculate(
+                latitude = 21.3890824,
+                longitude = 39.8579118,
+                timezoneOffset = 3.0,
+                calendar = date,
+                method = PrayerCalculator.CalculationMethod.UMM_AL_QURA
+            )
+            val actual = listOf(times.fajr, times.sunrise, times.dhuhr, times.asr, times.maghrib, times.isha)
+
+            for (i in expected.indices) {
+                assertTrue(
+                    "expected ~${expected[i]}, got ${actual[i]} for ${date.time}",
+                    abs(minutes(actual[i]) - minutes(expected[i])) <= 3
+                )
+            }
+        }
     }
 
     @Test

@@ -103,6 +103,7 @@ fun HomeSettingsSection(
     val adjMaghrib by viewModel.adjMaghrib.collectAsStateWithLifecycle()
     val adjIsha by viewModel.adjIsha.collectAsStateWithLifecycle()
     val hijriAdjustment by viewModel.hijriAdjustment.collectAsStateWithLifecycle()
+    val hijriAdjustmentIsManual by viewModel.hijriAdjustmentIsManual.collectAsStateWithLifecycle()
 
     val adhanAudioEnabled by viewModel.adhanAudioEnabled.collectAsStateWithLifecycle()
     val adhanAudioMode by viewModel.adhanAudioMode.collectAsStateWithLifecycle()
@@ -881,7 +882,7 @@ fun HomeSettingsSection(
                                                         .clip(RoundedCornerShape(8.dp))
                                                         .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
                                                         .clickable {
-                                                            viewModel.updateLocation(city.lat, city.lng, city.displayName(currentLang), isSuccessFeedback = true, timeZoneId = city.timeZoneId)
+                                                            viewModel.updateLocation(city.lat, city.lng, city.displayName(currentLang), isSuccessFeedback = true, timeZoneId = city.timeZoneId, countryCode = city.countryCode)
                                                             locationQuery = ""
                                                             keyboardController?.hide()
                                                             focusManager.clearFocus()
@@ -1120,7 +1121,7 @@ fun HomeSettingsSection(
                                 }
 
                                 Text(
-                                    text = if (isAr) "التاريخ محسوب، فإن اختلف عن رؤية الهلال في بلدك فاضبطه هنا" else "The date is calculated. If it differs from the moon sighting where you are, shift it here.",
+                                    text = if (isAr) "التاريخ محسوب على أم القرى، ويُزاح تلقائياً في البلدان التي تعتمد الرؤية المحلية. عدّله هنا عند الحاجة، واضغط الرقم للرجوع إلى التلقائي." else "The date is calculated from Umm al-Qura, shifted automatically for countries that follow a local sighting. Override it here if needed; tap the number to go back to automatic.",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -1151,6 +1152,7 @@ fun HomeSettingsSection(
                                             Icon(Icons.Default.Remove, contentDescription = if (isAr) "يوم أقل" else "One day earlier", modifier = Modifier.size(16.dp))
                                         }
                                         val adjustmentLabel = when {
+                                            !hijriAdjustmentIsManual -> if (isAr) "تلقائي" else "Auto"
                                             hijriAdjustment == 0 -> if (isAr) "محسوب" else "Calculated"
                                             hijriAdjustment > 0 -> "+$hijriAdjustment " + (if (isAr) "يوم" else "d")
                                             else -> "$hijriAdjustment " + (if (isAr) "يوم" else "d")
@@ -1160,7 +1162,11 @@ fun HomeSettingsSection(
                                             style = MaterialTheme.typography.bodySmall,
                                             fontWeight = FontWeight.Bold,
                                             textAlign = TextAlign.Center,
-                                            modifier = Modifier.width(70.dp)
+                                            modifier = Modifier
+                                                .width(70.dp)
+                                                .clickable(enabled = hijriAdjustmentIsManual) {
+                                                    viewModel.resetHijriAdjustment()
+                                                }
                                         )
                                         IconButton(
                                             onClick = { viewModel.setHijriAdjustment(hijriAdjustment + 1) },

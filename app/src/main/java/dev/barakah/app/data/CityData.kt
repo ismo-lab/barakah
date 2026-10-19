@@ -17,6 +17,7 @@ data class CitySuggestion(
     val localizedName: String?,
     val localizedLanguageTag: String?,
     val countryName: String,
+    val countryCode: String,
     val lat: Double,
     val lng: Double,
     val timeZoneId: String
@@ -176,6 +177,7 @@ object CityData {
                             localizedName = cursor.getString(3),
                             localizedLanguageTag = cursor.getString(3)?.let { Locale.forLanguageTag(languageTag).language },
                             countryName = countryName,
+                            countryCode = countryCode,
                             lat = cursor.getDouble(4),
                             lng = cursor.getDouble(5),
                             timeZoneId = cursor.getString(6)

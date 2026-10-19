@@ -110,7 +110,9 @@ object PrayerCalculator {
         // Isha, which had the mirror image of the same bug: a flat 6.2 hours after midday landed it
         // before maghrib wherever the evening twilight angle could not be reached.
         val ishaTime = if (method == CalculationMethod.UMM_AL_QURA) {
-            maghribTime + 1.5 // 90 minutes after Maghrib
+            // Umm al-Qura publishes Isha as an interval after Maghrib: 120 minutes through Ramadan
+            // and 90 otherwise. A flat 90 put Ramadan Isha half an hour before the Makkah calendar.
+            maghribTime + if (HijriCalendarHelper.isRamadan(year, month, day)) 2.0 else 1.5
         } else {
             val angle = if (ishaMethod == "hanafi") 18.0 else method.ishaAngle
             val ishaHourAngle = hourAngle(-angle, latitude, declination)

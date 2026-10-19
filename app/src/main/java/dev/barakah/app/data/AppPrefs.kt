@@ -32,6 +32,9 @@ object AppPrefs {
     const val LOC_LNG = "loc_lng"
     const val LOC_LABEL = "loc_label"
     const val LOC_TIMEZONE = "loc_timezone"
+
+    /** ISO code of the saved location's country, which sets the default Hijri shift. */
+    const val LOC_COUNTRY = "loc_country"
     const val CALC_METHOD = "calc_method"
     const val ASR_METHOD = "asr_method"
     const val ISHA_METHOD = "isha_method"

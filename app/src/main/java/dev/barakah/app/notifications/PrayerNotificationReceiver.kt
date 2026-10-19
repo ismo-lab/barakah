@@ -135,14 +135,16 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
                 val tomorrow = java.util.Calendar.getInstance().apply { add(java.util.Calendar.DAY_OF_YEAR, 1) }
                 val dayOfWeek = tomorrow.get(java.util.Calendar.DAY_OF_WEEK)
                 if (dayOfWeek == java.util.Calendar.MONDAY || dayOfWeek == java.util.Calendar.THURSDAY) {
-                    val title = if (isAr) "تذكير بصيام السنة" else "Sunnah Fasting Reminder"
                     val dayStr = if (dayOfWeek == java.util.Calendar.MONDAY) {
                         if (isAr) "الإثنين" else "Monday"
                     } else {
                         if (isAr) "الخميس" else "Thursday"
                     }
-                    val text = if (isAr) "تذكير: غداً هو يوم $dayStr، فمن استطاع الصوم فليصم طمعاً في الأجر." 
-                               else "Reminder: Tomorrow is $dayStr. If you are able to fast, earn the reward of this Sunnah."
+                    // The day is the only part that varies, so it goes in the title: that is the
+                    // line a collapsed notification always shows.
+                    val title = if (isAr) "صيام $dayStr غداً" else "Fasting Tomorrow: $dayStr"
+                    val text = if (isAr) "فمن استطاع الصوم فليصم طمعاً في الأجر."
+                               else "If you are able to fast, earn the reward of this Sunnah."
                     
                     val builder = NotificationCompat.Builder(context, channelId)
                         .setSmallIcon(R.drawable.ic_notification)
@@ -221,9 +223,11 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
                 }
                 
                 if (occasionName != null && occasionNameAr != null) {
-                    val title = if (isAr) "تذكير بالمناسبة الإسلامية" else "Islamic Occasion Reminder"
-                    val text = if (isAr) "تذكير: غداً هو $occasionNameAr. نسأل الله لنا ولكم القبول والبركة."
-                               else "Reminder: Tomorrow is $occasionName. Wishing you a blessed day."
+                    // The occasion names the message, so it is the title; the text carries only the
+                    // blessing instead of repeating the name.
+                    val title = if (isAr) occasionNameAr else occasionName
+                    val text = if (isAr) "غداً — نسأل الله لنا ولكم القبول والبركة."
+                               else "Tomorrow — wishing you a blessed day."
                     
                     val builder = NotificationCompat.Builder(context, channelId)
                         .setSmallIcon(R.drawable.ic_notification)
@@ -285,7 +289,6 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
             text = if (isAr) "متبقي ١٥ دقيقة على أذان صلاة $dispName. استعد للوضوء." 
                    else "15 minutes left until $dispName Adhan. Prepare for wudu."
         } else {
-            title = if (isAr) "مواقيت الصلاة" else "Prayer Time"
             val dispName = if (isAr) {
                 when (prayerName) {
                     "Fajr" -> "الفجر"
@@ -303,6 +306,14 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
             } else {
                 prayerName
             }
+            // The prayer itself (and when it is) is what the user scans the shade for, so it is the
+            // title; the sentence below stays as the actionable line.
+            val time = if (scheduledTime > 0L) {
+                android.text.format.DateFormat.getTimeFormat(context).format(java.util.Date(scheduledTime))
+            } else {
+                null
+            }
+            title = if (time != null) "$dispName · $time" else dispName
             text = if (isAr) "حان وقت صلاة $dispName." else "It's time for $dispName prayer."
         }
 
