@@ -7,6 +7,8 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -203,6 +205,7 @@ fun TasbihScreen(
                 modifier = modifier
                     .fillMaxHeight()
                     .widthIn(max = 680.dp)
+                    .then(if (isShortScreen) Modifier.verticalScroll(rememberScrollState()) else Modifier)
                     .padding(
                         start = 24.dp,
                         end = 24.dp,
@@ -210,7 +213,7 @@ fun TasbihScreen(
                         bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding() + 24.dp
                     ),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceEvenly
+                verticalArrangement = if (isShortScreen) Arrangement.spacedBy(16.dp) else Arrangement.SpaceEvenly
             ) {
         // 1. TOP HEADER & DHIKR SELECTOR
         Column(
