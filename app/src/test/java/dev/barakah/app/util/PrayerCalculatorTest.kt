@@ -231,6 +231,9 @@ class PrayerCalculatorTest {
         assertEquals(3.0, PrayerCalculator.getTimeZoneOffset("Asia/Riyadh", july), 0.001)
         assertEquals(0.0, PrayerCalculator.getTimeZoneOffset("UTC", january), 0.001)
         assertEquals(0.0, PrayerCalculator.getTimeZoneOffset("Europe/London", january), 0.001)
+        assertEquals(1.0, PrayerCalculator.getTimeZoneOffset("Europe/London", july), 0.001)
+    }
+
     @Test
     fun `phone clock offset moves every prayer by the same amount`() {
         val calendar = day(2024, 3, 11)
