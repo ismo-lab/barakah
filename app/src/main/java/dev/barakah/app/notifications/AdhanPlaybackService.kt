@@ -14,6 +14,7 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
+import dev.barakah.app.MainActivity
 import dev.barakah.app.R
 import dev.barakah.app.data.AppPrefs
 
@@ -24,11 +25,14 @@ class AdhanPlaybackService : Service() {
         private const val CHANNEL_ID = "adhan_playback"
         private const val NOTIFICATION_ID = 2101
         private const val SHORT_PLAYBACK_MS = 15_000L
+
+        /** Step between volume changes while fading, on the main handler. */
+        private const val FADE_STEP_MS = 35L
     }
 
     private val handler = Handler(Looper.getMainLooper())
     private var player: MediaPlayer? = null
-    private val stopShortPlayback = Runnable { stopPlayback() }
+    private val stopShortPlayback = Runnable { fadeOutAndStop() }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -84,7 +88,9 @@ class AdhanPlaybackService : Service() {
             }
             newPlayer.prepare()
             newPlayer.setOnCompletionListener { stopPlayback() }
+            newPlayer.setVolume(0f, 0f)
             newPlayer.start()
+            fadeIn(newPlayer)
 
             // Detach the notification from the foreground state so it can be swiped away on
             // every supported version, not just Android 14 where foreground service
@@ -128,6 +134,12 @@ class AdhanPlaybackService : Service() {
             Intent(this, AdhanPlaybackService::class.java).setAction(ACTION_STOP),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+        val openAppIntent = PendingIntent.getActivity(
+            this,
+            NOTIFICATION_ID,
+            Intent(this, MainActivity::class.java),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
         val prayerLabel = if (isAr) {
             when (prayerName) {
                 "Fajr" -> "الفجر"
@@ -143,7 +155,7 @@ class AdhanPlaybackService : Service() {
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(if (isAr) "أذان صلاة $prayerLabel" else "$prayerLabel Adhan")
             .setContentText(if (isAr) "يُشغّل الأذان" else "Adhan is playing")
-            .setContentIntent(stopIntent)
+            .setContentIntent(openAppIntent)
             .setDeleteIntent(stopIntent)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setOngoing(false)
@@ -154,6 +166,34 @@ class AdhanPlaybackService : Service() {
                 stopIntent
             )
             .build()
+    }
+
+    /** Ramps the player up after start, so the first frame of the recitation does not click. */
+    private fun fadeIn(target: MediaPlayer) {
+        val steps = 10
+        for (step in 1..steps) {
+            handler.postDelayed({
+                target.runCatching { setVolume(step / steps.toFloat(), step / steps.toFloat()) }
+            }, step * FADE_STEP_MS)
+        }
+    }
+
+    /**
+     * Ramps the player down before stopping. The short adhan ends at fifteen seconds, which is
+     * mid-recitation, so cutting the volume dead is audible and out of place for this content.
+     */
+    private fun fadeOutAndStop() {
+        val playing = player ?: return
+        val steps = 8
+        for (step in 1..steps) {
+            handler.postDelayed({
+                playing.runCatching {
+                    val volume = 1f - step / steps.toFloat()
+                    setVolume(volume, volume)
+                }
+            }, step * FADE_STEP_MS)
+        }
+        handler.postDelayed({ stopPlayback() }, steps * FADE_STEP_MS + FADE_STEP_MS)
     }
 
     private fun releasePlayer() {
