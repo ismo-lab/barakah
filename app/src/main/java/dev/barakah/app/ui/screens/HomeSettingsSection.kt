@@ -148,11 +148,12 @@ fun HomeSettingsSection(
         val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
 
         Box(
+            // No navigation bar inset: the Scaffold content already ends above the bottom nav bar,
+            // so asking for it again left a dead black band above the bar.
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
-                .statusBarsPadding()
-                .navigationBarsPadding(),
+                .statusBarsPadding(),
             contentAlignment = Alignment.TopCenter
         ) {
             Column(
