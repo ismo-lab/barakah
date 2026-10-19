@@ -4,21 +4,13 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Mihrab arch behind the moon: a stroked outline rather than a filled shape, so the
-         crescent's hollow stays background instead of reading as a ring around a dark disc. The
-         legs stop at 66dp, which keeps every part inside the 66dp adaptive-icon safe circle.
-         Same geometry as the generated legacy and store PNGs. -->
-    <path
-        android:fillColor="#00000000"
-        android:pathData="M23,66 L23,51 A31,31 0 0 1 85,51 L85,66"
-        android:strokeColor="#96FFFFFF"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:strokeWidth="2.2" />
-    <!-- Crescent: outer disc minus an offset disc, one even-odd path. The offset ratio is the one
-         the icon always used, only enlarged from 2.5 to 2.75 of the source viewport. -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:fillType="evenOdd"
-        android:pathData="M29.25,54 A24.75,24.75 0 1,1 78.75,54 A24.75,24.75 0 1,1 29.25,54 Z M44.99,45.51 A17.5,17.5 0 1,1 79.99,45.51 A17.5,17.5 0 1,1 44.99,45.51 Z" />
+    <group
+        android:scaleX="2.5"
+        android:scaleY="2.5"
+        android:translateX="24"
+        android:translateY="24">
+      <path
+          android:fillColor="#FFFFFF"
+          android:pathData="M21,12.79A9,9 0 1,1 11.21,3 7,7 0 0,0 21,12.79z"/>
+    </group>
 </vector>
