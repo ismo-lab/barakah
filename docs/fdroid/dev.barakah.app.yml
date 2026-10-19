@@ -38,9 +38,10 @@ Builds:
     # prepareSigningKeystore task when app/keystore.jks is missing; F-Droid re-signs the APK
     # with its own key afterwards.
     #
-    # compileSdk is 36 with minorApiLevel 1, so the build server may need
-    # `sdks: [platforms;android-36]` or the matching minor-level platform image, and
-    # build-tools 36.x, if the default image is too old.
+    # compileSdk is plain 36 (no minor API level), so the default buildserver image only
+    # needs platforms;android-36 and build-tools 36.x.
+    sdks:
+      - platforms;android-36
 
 AutoUpdateMode: None
 UpdateCheckMode: None

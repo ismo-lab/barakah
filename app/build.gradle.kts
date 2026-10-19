@@ -44,7 +44,7 @@ ksp {
 
 android {
   namespace = "dev.barakah.app"
-  compileSdk { version = release(36) { minorApiLevel = 1 } }
+  compileSdk = 36
 
   androidResources {
     noCompress += "json"
