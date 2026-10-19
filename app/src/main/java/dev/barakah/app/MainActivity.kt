@@ -251,9 +251,10 @@ fun MainNavigationContainer(
         modifier = Modifier.fillMaxSize(),
         // safeDrawing rather than the Scaffold default (systemBars): on a phone held in landscape the
         // display cutout, the camera, is on a side edge, and systemBars does not cover it, so every
-        // screen laid its content under the camera. Settings and Others apply their own vertical
-        // insets, so for them only the horizontal ones are taken here.
-        contentWindowInsets = if (shouldHideNavigation) {
+        // screen laid its content under the camera. The whole app is inset once, here; the screens
+        // must not ask again. Settings is the exception: it draws its own top inset while the bottom
+        // bar is still on screen, so it takes the horizontal sides only.
+        contentWindowInsets = if (showSettingsDialog) {
             WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
         } else {
             WindowInsets.safeDrawing

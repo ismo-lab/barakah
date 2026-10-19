@@ -237,6 +237,10 @@ fun OthersScreen(
         selectedOccasionId?.let { id -> occasions.firstOrNull { it.id == id } }
 
     Scaffold(
+        // Window insets are applied once, by the container this screen lives in. The Scaffold default
+        // (systemBars) reserved the bottom navigation inset a second time, so the names grid and the
+        // occasions list ended short of the nav bar and left a band above it.
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
                 title = { 
