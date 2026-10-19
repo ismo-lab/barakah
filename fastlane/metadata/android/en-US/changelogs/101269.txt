@@ -1,0 +1,1 @@
+F-Droid readiness release. The offline city catalog now ships inside the APK, so city search works in builds made without network access. The bundled adhan recordings and the Arabic tafsir now come from properly licensed sources, and a truncated Arabic tafsir file was replaced with a complete one. The unused secrets plugin and the manual download tasks are gone.
