@@ -505,48 +505,55 @@ fun NamesOfAllahPane(
     useWesternNumbersInArabic: Boolean = false,
     onNameClick: (AllahName) -> Unit
 ) {
+    // The intro banner is the first thing to go when the window is short: the grid needs the height.
+    val isShortScreen = androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp < 600
     Column(
         modifier = Modifier
             .fillMaxSize()
+            // Same cap as the occasions pane: a tablet should not read a 99-name grid stretched from
+            // edge to edge just because the window is wide.
+            .widthIn(max = 840.dp)
             .padding(horizontal = 16.dp)
     ) {
-        Spacer(modifier = Modifier.height(12.dp))
-        
-        // Introductory banner
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier.padding(14.dp),
-                verticalAlignment = Alignment.CenterVertically
+        Spacer(modifier = Modifier.height(if (isShortScreen) 4.dp else 12.dp))
+
+        if (!isShortScreen) {
+            // Introductory banner
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
+                modifier = Modifier.fillMaxWidth().testTag("allah_names_intro")
             ) {
-                Icon(
-                    imageVector = Icons.Default.AutoAwesome,
-                    contentDescription = if (isAr) "أيقونة" else "Stars icon",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = if (isAr) "إن لله تسعة وتسعين اسماً" else "99 Names of Allah",
-                        fontWeight = FontWeight.ExtraBold,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary
+                Row(
+                    modifier = Modifier.padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AutoAwesome,
+                        contentDescription = if (isAr) "أيقونة" else "Stars icon",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
                     )
-                    Text(
-                        text = if (isAr) "من أحصاها دخل الجنة. اضغط على أي اسم لقراءة شرحه ودلالاته." 
-                               else "Whosoever memorizes and acts upon them will enter Paradise. Tap any name to read its meaning.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = if (isAr) "إن لله تسعة وتسعين اسماً" else "99 Names of Allah",
+                            fontWeight = FontWeight.ExtraBold,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = if (isAr) "من أحصاها دخل الجنة. اضغط على أي اسم لقراءة شرحه ودلالاته." 
+                                   else "Whosoever memorizes and acts upon them will enter Paradise. Tap any name to read its meaning.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(12.dp))
+        }
 
         // Grid for responsive layouts
         LazyVerticalGrid(
