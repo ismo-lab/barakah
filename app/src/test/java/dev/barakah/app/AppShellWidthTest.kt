@@ -116,6 +116,15 @@ class AppShellWidthTest {
     }
 
     @Test
+    @Config(sdk = [36], qualifiers = "w914dp-h411dp-land")
+    fun `a short landscape window still shows every rail item`() {
+        openShell()
+
+        compose.onNodeWithTag("side_navigation_rail").assertIsDisplayed()
+        compose.onNodeWithTag("tab_duas").assertIsDisplayed()
+    }
+
+    @Test
     @Config(sdk = [36], qualifiers = "w1000dp-h800dp-land")
     fun `the supplications split at an expanded width`() {
         openShell()

@@ -292,6 +292,7 @@ fun QiblahScreen(
                 modifier = Modifier
                     .fillMaxHeight()
                     .widthIn(max = 680.dp)
+                    .then(if (isShortScreen) Modifier.verticalScroll(rememberScrollState()) else Modifier)
                     .padding(
                         start = 24.dp,
                         end = 24.dp,
@@ -299,7 +300,7 @@ fun QiblahScreen(
                         bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding() + 24.dp
                     ),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween
+                verticalArrangement = if (isShortScreen) Arrangement.Top else Arrangement.SpaceBetween
             ) {
             // 1. TOP HEADER BANNER
             Column(
@@ -343,35 +344,27 @@ fun QiblahScreen(
             }
 
             // 2. LIVE ROTATING COMPASS DIAL CARD
-            // The dial is a circle, so it has to be sized from the space it is actually given. A fixed
-            // size was clamped by a short window and squashed into an ellipse with its ticks clipped.
-            BoxWithConstraints(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                val dial = minOf(maxWidth, maxHeight, 280.dp)
-                QiblahDial(
-                    compassSize = dial,
-                    glowSize = dial * 0.96f,
-                    dialRingSize = dial * 0.89f,
-                    canvasSize = dial * 0.86f,
-                    pointerSize = dial * 0.75f,
-                    innerCoreSize = dial * 0.27f,
-                    coreIconSize = dial * 0.13f,
-                    style = dialStyle,
-                    isAligned = isAligned,
-                    relativeAngle = relativeAngle,
-                    animatedHeading = animatedHeading,
-                    alignmentColor = alignmentColor,
-                    hasLiveHeading = hasLiveHeading,
-                    isAr = isAr,
-                    useWesternNumbersInArabic = useWesternNumbersInArabic,
-                    shortestDiff = shortestDiff,
-                    statusMessage = statusMessage
-                )
-            }
+            // The dial stays circular: a short window scrolls the column instead of clamping the dial,
+            // which squashed it into an ellipse with its ticks clipped.
+            QiblahDial(
+                compassSize = compassSize,
+                glowSize = glowSize,
+                dialRingSize = dialRingSize,
+                canvasSize = canvasSize,
+                pointerSize = pointerSize,
+                innerCoreSize = innerCoreSize,
+                coreIconSize = coreIconSize,
+                style = dialStyle,
+                isAligned = isAligned,
+                relativeAngle = relativeAngle,
+                animatedHeading = animatedHeading,
+                alignmentColor = alignmentColor,
+                hasLiveHeading = hasLiveHeading,
+                isAr = isAr,
+                useWesternNumbersInArabic = useWesternNumbersInArabic,
+                shortestDiff = shortestDiff,
+                statusMessage = statusMessage
+            )
 
             // 3. BOTTOM ALIGN STATUS PANEL
             Column(

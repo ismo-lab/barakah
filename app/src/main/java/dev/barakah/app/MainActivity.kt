@@ -40,6 +40,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 /**
  * The navigation bar scrims androidx.activity uses by default (it keeps them internal). They only
@@ -232,9 +234,12 @@ fun MainNavigationContainer(
     )
 
     val windowWidth = currentWindowWidth()
-    // Five labelled items do not fit a landscape or split-screen window at full spacing, so the last
-    // label used to be cut off by the bottom edge of the screen.
-    val railItemSpacing = if (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp < 560) 4.dp else 16.dp
+    // Five labelled items do not fit a landscape or split-screen window at full spacing, and the rail
+    // cannot centre itself in one either: it used to cut the last item off the bottom edge. A short
+    // window drops the centring spacers, tightens the spacing and lets the rail scroll instead.
+    val shortRail = androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp < 560
+    val railItemSpacing = if (shortRail) 4.dp else 16.dp
+    val railScroll = rememberScrollState()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     val showSettingsDialog by viewModel.showSettingsDialog.collectAsStateWithLifecycle()
@@ -290,9 +295,10 @@ fun MainNavigationContainer(
                 NavigationRail(
                     modifier = Modifier
                         .fillMaxHeight()
+                        .then(if (shortRail) Modifier.verticalScroll(railScroll) else Modifier)
                         .testTag("side_navigation_rail")
                 ) {
-                    Spacer(modifier = Modifier.weight(1f))
+                    if (!shortRail) Spacer(modifier = Modifier.weight(1f))
                     navItems.forEachIndexed { index, item ->
                         val isSelected = currentDestination?.route == item.route && !(item.route == "home" && showSettingsDialog)
                         NavigationRailItem(
@@ -322,7 +328,7 @@ fun MainNavigationContainer(
                             Spacer(modifier = Modifier.height(railItemSpacing))
                         }
                     }
-                    Spacer(modifier = Modifier.weight(1f))
+                    if (!shortRail) Spacer(modifier = Modifier.weight(1f))
                 }
             }
 
