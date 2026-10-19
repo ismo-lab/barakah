@@ -1,17 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="128" height="128">
   <defs>
-    <!-- Background Gradient -->
+    <!-- Background Gradient: the same two greens as ic_launcher_background.xml -->
     <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#125c34" stop-opacity="1.0" />
-      <stop offset="100%" stop-color="#0b381f" stop-opacity="1.0" />
+      <stop offset="0%" stop-color="#2e9e5b" stop-opacity="1.0" />
+      <stop offset="100%" stop-color="#1b6e3d" stop-opacity="1.0" />
     </linearGradient>
   </defs>
 
-  <!-- Circular App Icon Base with fully rounded corners -->
-  <rect width="512" height="512" rx="256" ry="256" fill="url(#bgGrad)" />
+  <!-- Rounded-square base, the shape the launcher mask produces -->
+  <rect width="512" height="512" rx="112" ry="112" fill="url(#bgGrad)" />
 
-  <!-- Centered Crescent Moon without any shadow/glow -->
-  <g transform="translate(64, 64) scale(16)">
-    <path d="M21,12.79 A9,9 0 1,1 11.21,3 A7,7 0 0,0 21,12.79 z" fill="#FFFFFF" />
-  </g>
+  <!-- Mihrab arch, same geometry as ic_launcher_foreground.xml (108dp viewport scaled by 512/108) -->
+  <path d="M109,313 L109,242 A147,147 0 0 1 403,242 L403,313"
+        fill="none" stroke="#ffffff" stroke-opacity="0.588" stroke-width="10.4"
+        stroke-linecap="round" stroke-linejoin="round" />
+
+  <!-- Crescent: outer disc minus an offset disc, one even-odd path so it subtracts the same way
+       the launcher foreground and the legacy PNGs do -->
+  <path fill-rule="evenodd" fill="#ffffff"
+        d="M138.7,256 A117.3,117.3 0 1,1 373.3,256 A117.3,117.3 0 1,1 138.7,256 Z M213.3,215.8 A83,83 0 1,1 379.3,215.8 A83,83 0 1,1 213.3,215.8 Z" />
 </svg>

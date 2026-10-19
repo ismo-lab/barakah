@@ -3,7 +3,7 @@ package dev.barakah.app.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // Bold Typography Theme Colors (High contrast, forest greens, lime accents, off-white background)
-val GreenPrimaryLight = Color(0xFF125C34)       // Deep Forest green
+val GreenPrimaryLight = Color(0xFF1B6E3D)       // Icon green: the deep end of the launcher gradient
 val GreenOnPrimaryLight = Color(0xFFFFFFFF)     // Soft light off-white
 val GreenPrimaryContainerLight = Color(0xFFE2F0E7) // Vibrant Lime Green
 val GreenOnPrimaryContainerLight = Color(0xFF072B17) // Very Dark Forest Green
@@ -46,7 +46,7 @@ val SurfaceContainerHighestLight = Color(0xFFE3E7E0)
 // Dark Theme Colors supporting same theme vibe (High-contrast bold neon accent)
 val GreenPrimaryDark = Color(0xFF81D7A1)        // Lime accent as primary key in dark
 val GreenOnPrimaryDark = Color(0xFF003816)
-val GreenPrimaryContainerDark = Color(0xFF125C34)
+val GreenPrimaryContainerDark = Color(0xFF1B6E3D)  // Same icon green, for a container that must not read as a lighter green
 val GreenOnPrimaryContainerDark = Color(0xFFE2F0E7)
 
 val GoldSecondaryDark = Color(0xFFD7E8CD)
