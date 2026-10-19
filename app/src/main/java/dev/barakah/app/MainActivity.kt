@@ -249,7 +249,15 @@ fun MainNavigationContainer(
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        contentWindowInsets = if (shouldHideNavigation) WindowInsets(0, 0, 0, 0) else ScaffoldDefaults.contentWindowInsets,
+        // safeDrawing rather than the Scaffold default (systemBars): on a phone held in landscape the
+        // display cutout, the camera, is on a side edge, and systemBars does not cover it, so every
+        // screen laid its content under the camera. Settings and Others apply their own vertical
+        // insets, so for them only the horizontal ones are taken here.
+        contentWindowInsets = if (shouldHideNavigation) {
+            WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
+        } else {
+            WindowInsets.safeDrawing
+        },
         bottomBar = {
             if (!showNavigationRail) {
                 NavigationBar(
