@@ -23,11 +23,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  # Bump this by one whenever you want the offline city catalog rebuilt from
-  # fresh GeoNames data. Daily builds reuse the cached catalog keyed on this.
-  CITY_CATALOG_REVISION: "1"
-
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -47,28 +42,8 @@ jobs:
         # request, which is where this project runs CI. Move on when one of them fixes that.
         cache: gradle
 
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
-
-    # The catalog is a pure function of the script plus the GeoNames dump, so
-    # rebuild it only when the script changes or CITY_CATALOG_REVISION is bumped.
-    - name: Restore offline city catalog
-      id: city_catalog
-      uses: actions/cache@v4
-      with:
-        path: |
-          app/src/main/assets/cities500.sqlite
-          app/src/main/assets/cities500.version
-        key: city-catalog-${{ env.CITY_CATALOG_REVISION }}-${{ hashFiles('tools/build_city_database.py') }}
-
-    - name: Build offline city catalog
-      if: steps.city_catalog.outputs.cache-hit != 'true'
-      run: python tools/build_city_database.py
 
     - name: Determine Dynamic Version
       id: get_version
@@ -254,8 +229,6 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
-    # The offline city catalog is a plain asset that no Gradle task refers to, so lint does not
-    # need it and this job skips the Python steps the build job needs.
     - name: Run lint
       env:
         DYNAMIC_VERSION: "ci"
