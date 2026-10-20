@@ -1,5 +1,7 @@
 package dev.barakah.app.data
 
+import java.util.Locale
+
 /** Interface languages. Religious-text languages are separate; German has no bundled text yet. */
 data class UiLanguage(val tag: String, val nativeName: String)
 
@@ -23,4 +25,13 @@ object UiLanguages {
     fun byTag(tag: String?): UiLanguage? = all.firstOrNull { it.tag == tag }
 
     fun isRtl(tag: String?): Boolean = tag in setOf("ar", "ur", "fa", "ckb")
+
+    /**
+     * Interface language for a device locale. Unsupported locales fall back to Arabic, the app's
+     * historical default. "in" is the legacy Android code for Indonesian.
+     */
+    fun forDeviceLocale(locale: Locale = Locale.getDefault()): String {
+        val language = if (locale.language == "in") "id" else locale.language
+        return all.firstOrNull { it.tag == language }?.tag ?: "ar"
+    }
 }

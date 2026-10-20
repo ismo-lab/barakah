@@ -2,12 +2,20 @@ package dev.barakah.app.ui.screens
 
 import dev.barakah.app.data.UiStrings
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -26,10 +34,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.barakah.app.data.CityData
@@ -52,6 +62,9 @@ fun WelcomeScreen(viewModel: BarakahViewModel) {
 
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
     val isShortScreen = configuration.screenHeightDp < 600
+    val layoutDirection = LocalLayoutDirection.current
+
+    BackHandler(enabled = step > 1) { step -= 1 }
 
     Box(
         modifier = Modifier
@@ -59,7 +72,8 @@ fun WelcomeScreen(viewModel: BarakahViewModel) {
             .background(MaterialTheme.colorScheme.background)
             // safeDrawing, not status/navigation bars separately: it also covers a landscape display
             // cutout, which sits on a side edge and had content drawn under the camera.
-            .windowInsetsPadding(WindowInsets.safeDrawing),
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .imePadding(),
         contentAlignment = Alignment.TopCenter
     ) {
         Column(
@@ -89,11 +103,28 @@ fun WelcomeScreen(viewModel: BarakahViewModel) {
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
-            when (step) {
-                1 -> LanguageStep(viewModel, onNext = { step = 2 })
-                2 -> CalculationStep(viewModel, onNext = { step = 3 })
-                3 -> NotificationsStep(viewModel, onNext = { step = 4 })
-                4 -> LocationStep(viewModel, onFinish = { viewModel.setFirstRunComplete() })
+            val forwardSign = if (layoutDirection == LayoutDirection.Rtl) -1 else 1
+            AnimatedContent(
+                targetState = step,
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                transitionSpec = {
+                    val sign = if (targetState > initialState) forwardSign else -forwardSign
+                    (slideInHorizontally(tween(300)) { width -> sign * width } + fadeIn(tween(300)))
+                        .togetherWith(
+                            slideOutHorizontally(tween(300)) { width -> -sign * width } +
+                                fadeOut(tween(200))
+                        )
+                },
+                label = "welcome-step"
+            ) { currentStep ->
+                Box(modifier = Modifier.fillMaxSize()) {
+                    when (currentStep) {
+                        1 -> LanguageStep(viewModel, onNext = { step = 2 })
+                        2 -> CalculationStep(viewModel, onNext = { step = 3 })
+                        3 -> NotificationsStep(viewModel, onNext = { step = 4 })
+                        4 -> LocationStep(viewModel, onFinish = { viewModel.setFirstRunComplete() })
+                    }
+                }
             }
         }
     }
@@ -202,7 +233,12 @@ fun LanguageStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
      val configuration = androidx.compose.ui.platform.LocalConfiguration.current
      val isShortScreen = configuration.screenHeightDp < 600
 
-     Column(horizontalAlignment = Alignment.CenterHorizontally) {
+     Column(
+         horizontalAlignment = Alignment.CenterHorizontally,
+         modifier = Modifier
+             .fillMaxSize()
+             .verticalScroll(rememberScrollState())
+     ) {
          Icon(
              imageVector = Icons.Default.LocationOn,
              contentDescription = null,
@@ -285,16 +321,15 @@ fun LanguageStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        LazyColumn(
+        Column(
             modifier = Modifier
-                .weight(1f)
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
-            contentPadding = PaddingValues(8.dp),
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                .padding(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(filteredCities, key = { it.id }) { city ->
+            filteredCities.forEach { city ->
                 ElevatedCard(
                     onClick = {
                         viewModel.setLocationMethod("manual")
