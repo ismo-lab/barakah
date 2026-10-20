@@ -1,6 +1,5 @@
 package dev.barakah.app.ui.screens
 
-import dev.barakah.app.data.UiLanguages
 import dev.barakah.app.data.UiStrings
 
 import androidx.compose.animation.*
@@ -12,7 +11,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
@@ -125,7 +123,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
     val morningAdhkarOffset by viewModel.morningAdhkarOffset.collectAsStateWithLifecycle()
     val eveningAdhkarOffset by viewModel.eveningAdhkarOffset.collectAsStateWithLifecycle()
     val layoutDirection = remember(currentLang) {
-        if (currentLang == "ar") androidx.compose.ui.unit.LayoutDirection.Rtl else androidx.compose.ui.unit.LayoutDirection.Ltr
+        if (dev.barakah.app.data.UiLanguages.isRtl(currentLang)) androidx.compose.ui.unit.LayoutDirection.Rtl else androidx.compose.ui.unit.LayoutDirection.Ltr
     }
     androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides layoutDirection) {
         // Location states
@@ -220,34 +218,11 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                     )
                                 }
 
-                                Text(
-                                    text = if (isAr) "لغة التطبيق" else UiStrings.of("App Language"),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.SemiBold
+                                AppLanguagePicker(
+                                    selectedTag = currentLang,
+                                    isAr = isAr,
+                                    onSelect = { viewModel.setAppLanguage(it) }
                                 )
-                                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    items(UiLanguages.all) { language ->
-                                        OutlinedButton(
-                                            onClick = { viewModel.setAppLanguage(language.tag) },
-                                            modifier = Modifier.width(120.dp),
-                                            colors = ButtonDefaults.outlinedButtonColors(
-                                                containerColor = if (currentLang == language.tag) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
-                                            ),
-                                            border = androidx.compose.foundation.BorderStroke(
-                                                width = if (currentLang == language.tag) 2.dp else 1.dp,
-                                                color = if (currentLang == language.tag) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                                            )
-                                        ) {
-                                            Text(
-                                                text = language.nativeName,
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 12.sp,
-                                                maxLines = 2,
-                                                color = if (currentLang == language.tag) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
-                                            )
-                                        }
-                                    }
-                                }
 
                                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
 

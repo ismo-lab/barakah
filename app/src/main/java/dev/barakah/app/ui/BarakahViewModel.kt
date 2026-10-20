@@ -72,25 +72,14 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     val appLanguage: StateFlow<String> = _appLanguage
 
     // Religious text languages. Empty means "show no translation". Until the reader explicitly
-    // picks one, every area follows the interface: Arabic for Arabic, English otherwise.
+    // picks one, every area follows the interface language when a bundled edition exists.
     private fun defaultReligiousLanguage(
         key: String,
         explicitKey: String,
-        arabic: String,
-        other: String
+        fallback: String
     ): String {
-        val fallback = if (_appLanguage.value == "ar") arabic else other
         val stored = prefs.getString(key, null)
-        val explicit = if (prefs.contains(explicitKey)) {
-            prefs.getBoolean(explicitKey, false)
-        } else {
-            // Values written before the explicit marker existed are kept when they differ from
-            // the default, which is how an old hand-picked language survives this upgrade.
-            stored != null && stored != fallback
-        }
-        if (explicit && !prefs.contains(explicitKey)) {
-            prefs.edit { putBoolean(explicitKey, true) }
-        }
+        val explicit = prefs.getBoolean(explicitKey, false)
         return if (explicit) stored ?: fallback else fallback
     }
 
@@ -98,8 +87,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         defaultReligiousLanguage(
             AppPrefs.QURAN_TRANSLATION_LANG,
             AppPrefs.QURAN_TRANSLATION_EXPLICIT,
-            "",
-            "en"
+            ReligiousTextLanguages.quranTagFor(_appLanguage.value)
         )
     )
     val quranTranslationLanguage: StateFlow<String> = _quranTranslationLanguage
@@ -108,8 +96,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         defaultReligiousLanguage(
             AppPrefs.TAFSIR_LANG,
             AppPrefs.TAFSIR_EXPLICIT,
-            "ar",
-            "en"
+            ReligiousTextLanguages.tafsirTagFor(_appLanguage.value)
         )
     )
     val tafsirLanguage: StateFlow<String> = _tafsirLanguage
@@ -118,8 +105,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         defaultReligiousLanguage(
             AppPrefs.DUA_TRANSLATION_LANG,
             AppPrefs.DUA_TRANSLATION_EXPLICIT,
-            "",
-            "en"
+            ReligiousTextLanguages.duaTagFor(_appLanguage.value)
         )
     )
     val duaTranslationLanguage: StateFlow<String> = _duaTranslationLanguage
@@ -562,16 +548,19 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
                 val favIds = bookmarks.map { it.duaId }.toSet()
                 val currentDuas = if (lang == "ar") DuaData.duasAr else DuaData.duasEn
                 val searchResult = currentDuas.filter { dua ->
-                    val title = if (lang == "ar") dua.titleAr else dua.titleEn
+                    val title = if (lang == "ar") dua.titleAr else DuaData.titleFor(lang, dua.titleEn)
+                    val localizedCategory = if (lang == "ar") dua.categoryAr else DuaData.titleFor(lang, dua.categoryEn)
                     val matchesQuery = query.isEmpty() || title.contains(query, ignoreCase = true) ||
                             dua.arabic.contains(query) ||
                             dua.transliteration.contains(query, ignoreCase = true) ||
                             dua.translation.contains(query, ignoreCase = true)
                     
-                    val isFavCat = (category == "Favorites" || category == "المفضلة" || category == "Bookmarks" || category == "الإشارات المرجعية" || category == "الأذكار المحفوظة")
+                    val bookmarksLabel = UiStrings.of("Bookmarks")
+                    val isFavCat = (category == "Favorites" || category == "المفضلة" || category == "Bookmarks" ||
+                            category == "الإشارات المرجعية" || category == "الأذكار المحفوظة" || category == bookmarksLabel)
                     val matchesCategory = (isFavCat && favIds.contains(dua.id)) ||
                             (!isFavCat && (category == "All" || category == "الكل" || category == "Menu" ||
-                            dua.categoryAr == category || dua.categoryEn == category))
+                            dua.categoryAr == category || dua.categoryEn == category || localizedCategory == category))
                     
                     matchesQuery && matchesCategory
                 }
@@ -737,24 +726,28 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         _appLanguage.value = lang
         prefs.edit { putString(AppPrefs.APP_LANG, lang) }
 
-        // Areas the reader has not picked follow the interface: Arabic for Arabic, English
-        // otherwise. An explicit pick, including "None", is preserved.
-        if (!prefs.getBoolean(AppPrefs.QURAN_TRANSLATION_EXPLICIT, false)) {
-            val tag = if (lang == "ar") "" else "en"
-            _quranTranslationLanguage.value = tag
-            prefs.edit { putString(AppPrefs.QURAN_TRANSLATION_LANG, tag) }
-        }
-        if (!prefs.getBoolean(AppPrefs.TAFSIR_EXPLICIT, false)) {
-            val tag = if (lang == "ar") "ar" else "en"
-            _tafsirLanguage.value = tag
-            prefs.edit { putString(AppPrefs.TAFSIR_LANG, tag) }
-        }
-        if (!prefs.getBoolean(AppPrefs.DUA_TRANSLATION_EXPLICIT, false)) {
-            val tag = if (lang == "ar") "" else "en"
-            _duaTranslationLanguage.value = tag
-            prefs.edit { putString(AppPrefs.DUA_TRANSLATION_LANG, tag) }
+        // All three areas follow the interface language when they have a bundled edition, and
+        // fall back to English when they do not. A later per-area pick still wins until the next
+        // interface-language change.
+        val quranTag = ReligiousTextLanguages.quranTagFor(lang)
+        val tafsirTag = ReligiousTextLanguages.tafsirTagFor(lang)
+        val duaTag = ReligiousTextLanguages.duaTagFor(lang)
+        _quranTranslationLanguage.value = quranTag
+        _tafsirLanguage.value = tafsirTag
+        _duaTranslationLanguage.value = duaTag
+        prefs.edit {
+            putString(AppPrefs.QURAN_TRANSLATION_LANG, quranTag)
+            putBoolean(AppPrefs.QURAN_TRANSLATION_EXPLICIT, false)
+            putString(AppPrefs.TAFSIR_LANG, tafsirTag)
+            putBoolean(AppPrefs.TAFSIR_EXPLICIT, false)
+            putString(AppPrefs.DUA_TRANSLATION_LANG, duaTag)
+            putBoolean(AppPrefs.DUA_TRANSLATION_EXPLICIT, false)
         }
 
+        // Category names are localized, so a category selected in the old language can no longer
+        // match after the switch.
+        _duaSearchQuery.value = ""
+        _selectedDuaCategory.value = "Menu"
         _filteredDuas.value = if (lang == "ar") DuaData.duasAr else DuaData.duasEn
         updateWidgetsGlobally()
     }

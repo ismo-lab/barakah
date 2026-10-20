@@ -1,6 +1,6 @@
 # Religious text sources
 
-Arabic scripture is always shown unchanged. Translations and tafsir are human-authored
+Arabic scripture is always shown unchanged. Scripture translations and tafsir are human-authored
 interpretations, labelled as such in the app, never machine translations. When a chosen language
 has no bundled edition for a text, the app shows English and states on screen that the requested
 language is unavailable. It never silently substitutes a different language without saying so.
@@ -39,8 +39,18 @@ Bundled from [spa5k/tafsir_api](https://github.com/spa5k/tafsir_api) (MIT):
 | Bengali | Al-Mukhtasar | QUL / Tarteel |
 | Turkish | Al-Mukhtasar | QUL / Tarteel |
 | Persian | Al-Mukhtasar | QUL / Tarteel |
+| Urdu | Bayan ul Quran (Dr. Israr Ahmad) | QUL / Tarteel |
+| Russian | Al-Mukhtasar | QUL / Tarteel |
+| Sorani Kurdish | Al-Mukhtasar | QUL / Tarteel |
 
-Languages without a bundled tafsir show the English tafsir with an explicit notice.
+The tafsir picker lists only languages with a bundled edition. An old saved selection that no longer
+has one falls back to English and says so on screen.
+
+## Others screen copy
+
+Occasion names/descriptions and the 99 Allah-name meanings/details are machine-assisted
+translations in `app/src/main/assets/others_i18n.json`. They are not scripture and do not replace
+the Arabic names. Native-speaker review is required before treating them as final.
 
 ## Supplication translations
 

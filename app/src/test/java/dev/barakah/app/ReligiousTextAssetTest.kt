@@ -1,5 +1,6 @@
 package dev.barakah.app
 
+import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -35,7 +36,7 @@ class ReligiousTextAssetTest {
             assertEquals("$language translation verse count", 6236, verses)
         }
 
-        for (language in listOf("id", "bn", "tr", "fa")) {
+        for (language in listOf("id", "bn", "tr", "fa", "ur", "ru", "ckb")) {
             var ayahs = 0
             for (surah in 1..114) {
                 val root = JSONObject(asset("assets/quran/tafsir/$language/$surah.json").readText())
@@ -50,6 +51,29 @@ class ReligiousTextAssetTest {
         for (language in listOf("id", "ru", "fa", "ckb")) {
             val root = JSONObject(asset("res/raw/duas_$language.json").readText())
             assertTrue("$language supplication translations", root.length() > 0)
+        }
+    }
+
+    @Test
+    fun supplicationTitlesCoverEveryBundledLanguage() {
+        val entries = JSONArray(asset("res/raw/hisn_en.json").readText())
+        val titles = linkedSetOf<String>()
+        for (i in 0 until entries.length()) {
+            val title = entries.getJSONObject(i)
+                .optString("title", "")
+                .replace("Chapter: ", "")
+                .trim()
+            if (title.isNotEmpty()) titles.add(title)
+        }
+        val translated = JSONObject(asset("res/raw/dua_titles.json").readText())
+        for (language in listOf("id", "de", "ur", "bn", "tr", "fa", "ha", "ms", "sw", "ru", "ckb")) {
+            val map = translated.getJSONObject(language)
+            for (title in titles) {
+                assertTrue(
+                    "$language missing supplication title: $title",
+                    map.optString(title, "").isNotBlank()
+                )
+            }
         }
     }
 }

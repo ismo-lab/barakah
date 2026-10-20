@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Barakah</string>
+    <string name="widget_prayer_title">کاتەکانی نوێژ</string>
+    <string name="widget_prayer_desc">کاتەکانی نوێژی ڕۆژانە.</string>
+    <string name="widget_prayer_remaining_title">نوێژی داهاتوو</string>
+    <string name="widget_prayer_remaining_desc">بەدواداچوونی نوێژی داهاتوو.</string>
+    <string name="widget_nawafil_title">کاتەکانی نوافل</string>
+    <string name="widget_nawafil_desc">کاتەکانی نوێژی خۆبەخشی ڕۆژانە.</string>
+    <string name="widget_preview_fajr">بەیانی</string>
+    <string name="widget_preview_dhuhr">نیوەڕۆ</string>
+    <string name="widget_preview_asr">عەسر</string>
+    <string name="widget_preview_maghrib">ئێوارە</string>
+    <string name="widget_preview_isha">عیشا</string>
+    <string name="widget_preview_duha">چێشتەنگاو</string>
+    <string name="widget_preview_qiyam">قیام</string>
+    <string name="widget_preview_tahajjud">تەهەججود</string>
+    <string name="widget_preview_witr">ویتر</string>
+    <string name="widget_preview_location_sample">مەککە، عەرەبستانی سعوودی</string>
+    <string name="widget_next_prayer_label">نوێژی داهاتوو</string>
+    <string name="widget_sample_next_name">ئێوارە</string>
+    <string name="widget_sample_countdown">لە ماوەی ١ کاتژمێر و ٤٥ خولەکدا دەست پێدەکات</string>
+</resources>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Barakah</string>
+    <string name="widget_prayer_title">Gebetszeiten</string>
+    <string name="widget_prayer_desc">Tägliche Gebetszeiten.</string>
+    <string name="widget_prayer_remaining_title">Nächstes Gebet</string>
+    <string name="widget_prayer_remaining_desc">Verfolgt das nächste Gebet.</string>
+    <string name="widget_nawafil_title">Nawafil-Zeiten</string>
+    <string name="widget_nawafil_desc">Tägliche freiwillige Gebetszeiten.</string>
+    <string name="widget_preview_fajr">Fajr</string>
+    <string name="widget_preview_dhuhr">Dhuhr</string>
+    <string name="widget_preview_asr">Asr</string>
+    <string name="widget_preview_maghrib">Maghrib</string>
+    <string name="widget_preview_isha">Isha</string>
+    <string name="widget_preview_duha">Duha</string>
+    <string name="widget_preview_qiyam">Qiyam</string>
+    <string name="widget_preview_tahajjud">Tahajjud</string>
+    <string name="widget_preview_witr">Witr</string>
+    <string name="widget_preview_location_sample">Mekka, Saudi-Arabien</string>
+    <string name="widget_next_prayer_label">Nächstes Gebet</string>
+    <string name="widget_sample_next_name">Maghrib</string>
+    <string name="widget_sample_countdown">Beginnt in 1 Stunde 45 Minuten</string>
+</resources>

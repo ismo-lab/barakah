@@ -14,6 +14,7 @@ import dev.barakah.app.MainActivity
 import dev.barakah.app.R
 import dev.barakah.app.data.AppPrefs
 import dev.barakah.app.data.NotifHistoryPrefs
+import dev.barakah.app.data.OthersContent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -84,8 +85,9 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         
         val appPrefs = context.getSharedPreferences(AppPrefs.FILE, Context.MODE_PRIVATE)
-        UiStrings.setCurrentLanguage(appPrefs.getString(AppPrefs.APP_LANG, "ar") ?: "ar")
-        val isAr = appPrefs.getString(AppPrefs.APP_LANG, "ar") == "ar"
+        val appLanguage = appPrefs.getString(AppPrefs.APP_LANG, "ar") ?: "ar"
+        UiStrings.setCurrentLanguage(appLanguage)
+        val isAr = appLanguage == "ar"
 
         // Only the five prayers play the Adhan, and only when adhan audio is enabled.
         val playsAdhan = prayerName in PRIMARY_PRAYERS &&
@@ -175,60 +177,76 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
                 val hDay = tomorrowHijri.day
                 val hMonth = tomorrowHijri.month
                 
+                var occasionId: Int? = null
                 var occasionName: String? = null
                 var occasionNameAr: String? = null
                 
                 when {
                     hDay == 1 && hMonth == 1 -> {
+                        occasionId = 1
                         occasionName = "Hijri New Year"
                         occasionNameAr = "رأس السنة الهجرية"
                     }
                     hDay == 10 && hMonth == 1 -> {
+                        occasionId = 2
                         occasionName = "Day of Ashura"
                         occasionNameAr = "يوم عاشوراء"
                     }
                     hDay == 12 && hMonth == 3 -> {
+                        occasionId = 3
                         occasionName = "Mawlid al-Nabi"
                         occasionNameAr = "المولد النبوي الشريف"
                     }
                     hDay == 27 && hMonth == 7 -> {
+                        occasionId = 4
                         occasionName = "Isra' and Mi'raj"
                         occasionNameAr = "ليلة الإسراء والمعراج"
                     }
                     hDay == 1 && hMonth == 9 -> {
+                        occasionId = 5
                         occasionName = "Ramadan First Day"
                         occasionNameAr = "بداية شهر رمضان المبارك"
                     }
                     hDay == 15 && hMonth == 8 -> {
+                        occasionId = 6
                         occasionName = "Mid-Sha'ban Night"
                         occasionNameAr = "ليلة النصف من شعبان"
                     }
                     hDay == 26 && hMonth == 9 -> {
+                        occasionId = 7
                         occasionName = "Laylat al-Qadr (27th Night)"
                         occasionNameAr = "ليلة القدر (تحري ليلة ٢٧)"
                     }
                     hDay == 1 && hMonth == 10 -> {
+                        occasionId = 8
                         occasionName = "Eid al-Fitr"
                         occasionNameAr = "عيد الفطر المبارك"
                     }
                     hDay == 1 && hMonth == 11 -> {
+                        occasionId = 9
                         occasionName = "Start of Hajj Season"
                         occasionNameAr = "بداية أشهر الحج المباركة"
                     }
                     hDay == 9 && hMonth == 12 -> {
+                        occasionId = 10
                         occasionName = "Day of Arafah"
                         occasionNameAr = "يوم عرفة"
                     }
                     hDay == 10 && hMonth == 12 -> {
+                        occasionId = 11
                         occasionName = "Eid al-Adha"
                         occasionNameAr = "عيد الأضحى المبارك"
                     }
                 }
                 
-                if (occasionName != null && occasionNameAr != null) {
+                if (occasionId != null && occasionName != null && occasionNameAr != null) {
                     // The occasion names the message, so it is the title; the text carries only the
                     // blessing instead of repeating the name.
-                    val title = if (isAr) occasionNameAr else occasionName
+                    val title = if (isAr) {
+                        occasionNameAr
+                    } else {
+                        OthersContent.load(context).occasionName(occasionId, appLanguage, occasionName)
+                    }
                     val text = if (isAr) "غداً — نسأل الله لنا ولكم القبول والبركة."
                                else UiStrings.of("Tomorrow — wishing you a blessed day.")
                     

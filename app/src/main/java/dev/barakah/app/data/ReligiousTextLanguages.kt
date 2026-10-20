@@ -47,7 +47,8 @@ object ReligiousTextLanguages {
         tag = "ur",
         nameEn = "Urdu",
         nameAr = "الأردية",
-        quranEdition = "Muhammad Junagarhi (Tanzil)"
+        quranEdition = "Muhammad Junagarhi (Tanzil)",
+        tafsirSource = "Bayan ul Quran (Urdu, QUL)"
     )
 
     val bengali = ReligiousLanguage(
@@ -99,6 +100,7 @@ object ReligiousTextLanguages {
         tag = "ru",
         nameEn = "Russian",
         nameAr = "الروسية",
+        tafsirSource = "Russian Al-Mukhtasar (Tarteel QUL)",
         duaTranslations = true
     )
 
@@ -106,6 +108,7 @@ object ReligiousTextLanguages {
         tag = "ckb",
         nameEn = "Sorani Kurdish",
         nameAr = "الكردية السورانية",
+        tafsirSource = "Kurdish Al-Mukhtasar (Tarteel QUL)",
         duaTranslations = true
     )
 
@@ -116,6 +119,18 @@ object ReligiousTextLanguages {
 
     fun byTag(tag: String?): ReligiousLanguage? = all.firstOrNull { it.tag == tag }
 
+    /** The Quran text setting that follows [uiTag]. Empty means Arabic-only, per the reader. */
+    fun quranTagFor(uiTag: String): String =
+        if (uiTag == "ar") "" else byTag(uiTag)?.takeIf { it.quranEdition != null }?.tag ?: "en"
+
+    /** The tafsir setting that follows [uiTag], with English when no tafsir is bundled. */
+    fun tafsirTagFor(uiTag: String): String =
+        byTag(uiTag)?.takeIf { it.tafsirSource != null }?.tag ?: "en"
+
+    /** The dua setting that follows [uiTag]. Empty means the Arabic text is the content. */
+    fun duaTagFor(uiTag: String): String =
+        if (uiTag == "ar") "" else byTag(uiTag)?.takeIf { it.duaTranslations }?.tag ?: "en"
+
     fun name(tag: String, isAr: Boolean): String {
         val language = byTag(tag) ?: return if (isAr) "الإنجليزية" else UiStrings.of("English")
         return if (isAr) language.nameAr else language.nameEn
@@ -124,8 +139,8 @@ object ReligiousTextLanguages {
     /** Arabic is excluded: the Arabic text is already shown above every translation. */
     fun quranOptions(): List<ReligiousLanguage> = all.filter { it.tag != "ar" }
 
-    /** Every language is selectable; ones without a bundled tafsir say so and show English. */
-    fun tafsirOptions(): List<ReligiousLanguage> = all
+    /** Only languages with a bundled tafsir, so a pick cannot look like a no-op. */
+    fun tafsirOptions(): List<ReligiousLanguage> = all.filter { it.tafsirSource != null }
 
     fun duaOptions(): List<ReligiousLanguage> = all.filter { it.duaTranslations }
 }

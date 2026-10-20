@@ -37,6 +37,18 @@ object DuaData {
     /** English text keyed by normalized Arabic, for the Arabic-list rendering path. */
     private val englishByArabic = mutableMapOf<String, String>()
 
+    /** Chapter titles keyed by language then English title. These are labels, not scripture. */
+    private val duaTitles = mutableMapOf<String, Map<String, String>>()
+    private var titlesLoaded = false
+
+    /** Localized chapter title, falling back to English when the language has no translation. */
+    fun titleFor(language: String, titleEn: String): String {
+        if (language.isEmpty() || language == "en" || language == "ar" || titleEn.isEmpty()) {
+            return titleEn
+        }
+        return duaTitles[language]?.get(titleEn)?.takeIf { it.isNotBlank() } ?: titleEn
+    }
+
     /**
      * Translation for one dua in [language], or null when the language has no translated text for
      * it (the caller then keeps English and says so). English is not stored here: it is already on
@@ -80,6 +92,29 @@ object DuaData {
         translationsLoaded = true
     }
 
+    private fun loadDuaTitles(context: Context) {
+        if (titlesLoaded) return
+        try {
+            val raw = context.resources.openRawResource(R.raw.dua_titles)
+                .bufferedReader()
+                .use { it.readText() }
+            val clean = if (raw.startsWith("\uFEFF")) raw.substring(1) else raw
+            val root = JSONObject(clean)
+            for (language in root.keys()) {
+                val map = mutableMapOf<String, String>()
+                val translated = root.getJSONObject(language)
+                for (key in translated.keys()) {
+                    val value = translated.optString(key, "")
+                    if (value.isNotBlank()) map[key] = value
+                }
+                if (map.isNotEmpty()) duaTitles[language] = map
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to load supplication titles", e)
+        }
+        titlesLoaded = true
+    }
+
     /** Same normalization as the English matching above: letters only, no diacritics. */
     private fun normalizeArabic(text: String): String {
         val sb = java.lang.StringBuilder()
@@ -102,6 +137,7 @@ object DuaData {
 
     fun load(context: Context) {
         loadDuaTranslations(context)
+        loadDuaTitles(context)
         if (duasAr.isNotEmpty() && duasEn.isNotEmpty()) return
         
         // 1. Load Arabic Duas from hisn.json

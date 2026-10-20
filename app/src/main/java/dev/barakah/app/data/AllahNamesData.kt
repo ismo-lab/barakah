@@ -101,7 +101,7 @@ object AllahNamesData {
         AllahName(88, "الْغَنِيّ", "Al-Ghaniy", "The Rich", "المستغني بذاته وصفاته عن كلي خلقه، المحتاج إليه كل ما سواه", "The Self-Sufficient One who is absolutely independent and whom all creation needs for everything."),
         AllahName(89, "الْمُغْنِي", "Al-Mughni", "The Enricher", "الذي يسد فاقات الخلائق ويغني من يشاء من فضله وكرمه وبسطه", "The Enricher who satisfies the needs of His creatures and grants wealth and success to whom He wills."),
         AllahName(90, "الْمَانِع", "Al-Mani'", "The Withholder / Preventer", "الذي يمنع العسر والبلايا والأعطيات بـحكمته ولطفه", "The Withholder who prevents harm and constrains provision or blessings according to His wisdom."),
-        AllahName(91, "الضَّارّ", "Ad-Darr", "The distreesser / Harmer", "المقدر للضرر على من يشاء بمقتضى العقوبة والعدل والحكمة", "The Ordainer of Adversity who brings trials to whom He wills for reasons of justice and testing."),
+        AllahName(91, "الضَّارّ", "Ad-Darr", "The Distresser / Harmer", "المقدر للضرر على من يشاء بمقتضى العقوبة والعدل والحكمة", "The Ordainer of Adversity who brings trials to whom He wills for reasons of justice and testing."),
         AllahName(92, "النَّافِع", "An-Nafi'", "The Propitious / Benefactor", "المقدر للنفع والخير والفضل على من يشاء باللطف والمغفرة", "The Bestower of Benefits who brings good and success to whom He wills through His divine grace."),
         AllahName(93, "النُّور", "An-Nur", "The Light", "الهادي المرشد المنير للسموات والأرض ومجرى النور في النفوس", "The Light who guides and illuminates the heavens and the earth and brings clarity to the souls."),
         AllahName(94, "الْهَادِي", "Al-Hadi", "The Guide", "الذي يهدي القلوب والخلائق إلى سلوك سبيل الرشاد وطاعة الله", "The Guide who shows His creation the path of righteousness and leads the hearts to His truth."),
@@ -109,7 +109,7 @@ object AllahNamesData {
         AllahName(96, "الْبَاقِي", "Al-Baqi", "The Everlasting", "الدائم البقاء والوجود الذي لا نهاية له ولا يعتريه سبات فناء", "The Everlasting, whose existence is permanent and which will never end or fade into non-existence."),
         AllahName(97, "الْوَارِث", "Al-Warith", "The Ultimate Inheritor", "الباقي الحي بعد زوال الخلائق والملكوت، والوارث المطلق للكون", "The Ultimate Inheritor who remains after all creation has perished, the final owner of all things."),
         AllahName(98, "الرَّشِيد", "Ar-Rashid", "The Guide to Right Path", "الذي يرشد ويوجه الخلائق بحكمته وتقديره، وعاد الصواب المطلق", "The Absolute Guide who directs all things toward their correct end through His supreme wisdom."),
-        AllahName(99, "الصَّبُور", "As-Sabur", "The Extreemly Patient", "الذي لا يعجل بعقوبة العصاة، المتصف بالحلم والصبر الإلهي", "The Patient One who does not hasten to punish the disobedient, granting them respite to turn back.")
+        AllahName(99, "الصَّبُور", "As-Sabur", "The Most Patient", "الذي لا يعجل بعقوبة العصاة، المتصف بالحلم والصبر الإلهي", "The Patient One who does not hasten to punish the disobedient, granting them respite to turn back.")
     )
 
 }
