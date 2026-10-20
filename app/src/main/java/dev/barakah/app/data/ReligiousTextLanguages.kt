@@ -116,6 +116,18 @@ object ReligiousTextLanguages {
 
     fun byTag(tag: String?): ReligiousLanguage? = all.firstOrNull { it.tag == tag }
 
+    /** The Quran text setting that follows [uiTag]. Empty means Arabic-only, per the reader. */
+    fun quranTagFor(uiTag: String): String =
+        if (uiTag == "ar") "" else byTag(uiTag)?.takeIf { it.quranEdition != null }?.tag ?: "en"
+
+    /** The tafsir setting that follows [uiTag], with English when no tafsir is bundled. */
+    fun tafsirTagFor(uiTag: String): String =
+        byTag(uiTag)?.takeIf { it.tafsirSource != null }?.tag ?: "en"
+
+    /** The dua setting that follows [uiTag]. Empty means the Arabic text is the content. */
+    fun duaTagFor(uiTag: String): String =
+        if (uiTag == "ar") "" else byTag(uiTag)?.takeIf { it.duaTranslations }?.tag ?: "en"
+
     fun name(tag: String, isAr: Boolean): String {
         val language = byTag(tag) ?: return if (isAr) "الإنجليزية" else UiStrings.of("English")
         return if (isAr) language.nameAr else language.nameEn

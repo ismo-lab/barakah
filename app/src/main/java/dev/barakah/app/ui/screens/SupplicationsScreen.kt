@@ -64,11 +64,14 @@ fun SupplicationsScreen(
         context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
     }
 
-    val categoryList = remember(isAr, dev.barakah.app.data.DuaData.duasAr.isNotEmpty(), dev.barakah.app.data.DuaData.duasEn.isNotEmpty()) {
+    val categoryList = remember(appLanguage, isAr, dev.barakah.app.data.DuaData.duasAr.isNotEmpty(), dev.barakah.app.data.DuaData.duasEn.isNotEmpty()) {
         val list = mutableListOf<String>()
         list.add(if (isAr) "الأذكار المحفوظة" else UiStrings.of("Bookmarks"))
         val currentList = if (isAr) dev.barakah.app.data.DuaData.duasAr else dev.barakah.app.data.DuaData.duasEn
-        list.addAll(currentList.map { if (isAr) it.categoryAr else it.categoryEn }.distinct())
+        list.addAll(currentList.map {
+            if (isAr) it.categoryAr
+            else dev.barakah.app.data.DuaData.titleFor(appLanguage, it.categoryEn)
+        }.distinct())
         list
     }
 
@@ -110,7 +113,8 @@ fun SupplicationsScreen(
 
     fun getCategoryIcon(category: String): androidx.compose.ui.graphics.vector.ImageVector {
         val clean = category.lowercase()
-        return if (clean.contains("bookmark") || clean.contains("favorite") || clean.contains("المفضلة") || clean.contains("مرجعية") || clean.contains("محفوظ")) {
+        val bookmarks = UiStrings.of("Bookmarks").lowercase()
+        return if (clean == bookmarks || clean.contains("bookmark") || clean.contains("favorite") || clean.contains("المفضلة") || clean.contains("مرجعية") || clean.contains("محفوظ")) {
             Icons.Default.Bookmark
         } else {
             Icons.AutoMirrored.Filled.MenuBook
@@ -507,7 +511,8 @@ fun SupplicationsScreen(
 
                                     Column(modifier = Modifier.fillMaxWidth().padding(18.dp)) {
                                         Text(
-                                            text = if (isAr) dua.titleAr else dua.titleEn,
+                                            text = if (isAr) dua.titleAr
+                                            else dev.barakah.app.data.DuaData.titleFor(appLanguage, dua.titleEn),
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.ExtraBold,
                                             color = MaterialTheme.colorScheme.primary,
@@ -519,7 +524,8 @@ fun SupplicationsScreen(
                                             onClick = {},
                                             label = {
                                                 Text(
-                                                    text = if (isAr) dua.categoryAr else dua.categoryEn,
+                                                    text = if (isAr) dua.categoryAr
+                                            else dev.barakah.app.data.DuaData.titleFor(appLanguage, dua.categoryEn),
                                                     style = MaterialTheme.typography.labelSmall
                                                 )
                                             },
