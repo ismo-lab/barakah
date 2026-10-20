@@ -15,6 +15,18 @@ data class Verse(
     val english: String
 )
 
+/** Verses plus whether the requested translation was missing and English had to stand in. */
+data class VerseText(
+    val verses: List<Verse>,
+    val usedEnglishFallback: Boolean
+)
+
+/** Tafsir text plus whether the requested language was missing and English had to stand in. */
+data class TafsirResult(
+    val text: String,
+    val usedEnglishFallback: Boolean
+)
+
 data class Surah(
     val id: Int,
     val name: String,
@@ -273,5 +285,146 @@ object QuranData {
             return "English Tafseer (Tafsir al-Jalalayn) is not available currently. Here is the Arabic Tafseer:\n\n$arTafseer"
         }
         return "Tafsir is not available for this verse currently."
+    }
+
+    private val translationCache =
+        java.util.concurrent.ConcurrentHashMap<String, VerseText>()
+
+    /**
+     * Verses with [language]'s translation in [Verse.english], merged onto the bundled Arabic.
+     * A missing asset falls back to English and reports it so the screen can say so.
+     */
+    fun loadVersesForSurah(context: Context, surahId: Int, language: String): VerseText {
+        val base = loadVersesForSurah(context, surahId)
+        if (language.isEmpty() || language == "en") return VerseText(base, false)
+
+        val key = "$language:$surahId"
+        translationCache[key]?.let { return it }
+
+        val translated = readTranslationAsset(context, language, surahId)
+        val result = if (translated.isEmpty()) {
+            VerseText(base, true)
+        } else {
+            VerseText(
+                base.map { verse ->
+                    verse.copy(english = translated[verse.index] ?: verse.english)
+                },
+                false
+            )
+        }
+        translationCache[key] = result
+        return result
+    }
+
+    private fun readTranslationAsset(
+        context: Context,
+        language: String,
+        surahId: Int
+    ): Map<Int, String> {
+        val map = mutableMapOf<Int, String>()
+        try {
+            context.assets.open("quran/translations/$language/surah_$surahId.json").use { input ->
+                val reader = android.util.JsonReader(input.bufferedReader())
+                reader.beginObject()
+                while (reader.hasNext()) {
+                    if (reader.nextName() == "verses") {
+                        reader.beginArray()
+                        while (reader.hasNext()) {
+                            var index = -1
+                            var text = ""
+                            reader.beginObject()
+                            while (reader.hasNext()) {
+                                when (reader.nextName()) {
+                                    "index" -> index = reader.nextInt()
+                                    "text" -> text = reader.nextString()
+                                    else -> reader.skipValue()
+                                }
+                            }
+                            reader.endObject()
+                            if (index != -1 && text.isNotBlank()) map[index] = text
+                        }
+                        reader.endArray()
+                    } else {
+                        reader.skipValue()
+                    }
+                }
+                reader.endObject()
+                try { reader.close() } catch (ignored: Exception) {}
+            }
+        } catch (e: Exception) {
+            android.util.Log.d("QuranData", "No $language translation for surah $surahId")
+        }
+        return map
+    }
+
+    private val tafsirCache =
+        java.util.concurrent.ConcurrentHashMap<String, Map<Int, String>>()
+
+    /**
+     * Reads tafsir in [language]. Arabic and English use the existing assets; other languages
+     * live one file per surah under quran/tafsir/. Missing text falls back to English.
+     */
+    suspend fun loadTafsir(
+        context: Context,
+        surahId: Int,
+        ayahId: Int,
+        language: String
+    ): TafsirResult {
+        if (language.isEmpty() || language == "ar") {
+            return TafsirResult(loadTafseer(context, surahId, ayahId), false)
+        }
+        if (language == "en") {
+            return TafsirResult(loadEnglishTafseer(context, surahId, ayahId), false)
+        }
+
+        val key = "$language:$surahId"
+        val surahMap = tafsirCache[key] ?: withContext(Dispatchers.IO) {
+            readNumberedTafsir(context, language, surahId)
+        }.also { if (it.isNotEmpty()) tafsirCache[key] = it }
+
+        val text = surahMap[ayahId]
+        if (!text.isNullOrBlank()) return TafsirResult(text, false)
+        return TafsirResult(loadEnglishTafseer(context, surahId, ayahId), true)
+    }
+
+    private fun readNumberedTafsir(
+        context: Context,
+        language: String,
+        surahId: Int
+    ): Map<Int, String> {
+        val map = mutableMapOf<Int, String>()
+        try {
+            context.assets.open("quran/tafsir/$language/$surahId.json").use { input ->
+                val reader = android.util.JsonReader(input.bufferedReader())
+                reader.beginObject()
+                while (reader.hasNext()) {
+                    if (reader.nextName() == "ayahs") {
+                        reader.beginArray()
+                        while (reader.hasNext()) {
+                            var ayah = -1
+                            var text = ""
+                            reader.beginObject()
+                            while (reader.hasNext()) {
+                                when (reader.nextName()) {
+                                    "ayah" -> ayah = reader.nextInt()
+                                    "text" -> text = reader.nextString()
+                                    else -> reader.skipValue()
+                                }
+                            }
+                            reader.endObject()
+                            if (ayah != -1 && text.isNotBlank()) map[ayah] = text
+                        }
+                        reader.endArray()
+                    } else {
+                        reader.skipValue()
+                    }
+                }
+                reader.endObject()
+                try { reader.close() } catch (ignored: Exception) {}
+            }
+        } catch (e: Exception) {
+            android.util.Log.d("QuranData", "No $language tafsir for surah $surahId")
+        }
+        return map
     }
 }

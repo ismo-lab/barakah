@@ -1,5 +1,7 @@
 package dev.barakah.app.widget
 
+import dev.barakah.app.data.UiStrings
+
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
@@ -35,6 +37,7 @@ class PrayerWidget : GlanceAppWidget() {
             val refreshToken = currentState<Preferences>()[WidgetRefreshState.refreshToken] ?: 0L
             // Glance can reuse an active session and recompose this block without rerunning provideGlance.
             val prefs = context.getSharedPreferences(AppPrefs.FILE, Context.MODE_PRIVATE)
+            UiStrings.setLanguage(prefs.getString(AppPrefs.APP_LANG, "ar") ?: "ar")
             val isAr = prefs.getString(AppPrefs.APP_LANG, "ar") == "ar"
             val defaultLabel = LocationDefaults.unsetLabel(isAr)
             val lat = prefs.getFloat(AppPrefs.LOC_LAT, LocationDefaults.LATITUDE.toFloat()).toDouble()
@@ -136,11 +139,11 @@ class PrayerWidget : GlanceAppWidget() {
                 modifier = GlanceModifier.fillMaxWidth().padding(vertical = 12.dp)
             ) {
                 val timeFontSize = if (is24Hour) 11.sp else 9.5.sp
-                PrayerItem(GlanceModifier.defaultWeight(), if (isAr) "الفجر" else "Fajr", formatTimeStr(times.fajr), labelColor, timeColor, timeFontSize)
-                PrayerItem(GlanceModifier.defaultWeight(), if (isAr) "الظهر" else "Dhuhr", formatTimeStr(times.dhuhr), labelColor, timeColor, timeFontSize)
-                PrayerItem(GlanceModifier.defaultWeight(), if (isAr) "العصر" else "Asr", formatTimeStr(times.asr), labelColor, timeColor, timeFontSize)
-                PrayerItem(GlanceModifier.defaultWeight(), if (isAr) "المغرب" else "Maghrib", formatTimeStr(times.maghrib), labelColor, timeColor, timeFontSize)
-                PrayerItem(GlanceModifier.defaultWeight(), if (isAr) "العشاء" else "Isha", formatTimeStr(times.isha), labelColor, timeColor, timeFontSize)
+                PrayerItem(GlanceModifier.defaultWeight(), if (isAr) "الفجر" else UiStrings.of("Fajr"), formatTimeStr(times.fajr), labelColor, timeColor, timeFontSize)
+                PrayerItem(GlanceModifier.defaultWeight(), if (isAr) "الظهر" else UiStrings.of("Dhuhr"), formatTimeStr(times.dhuhr), labelColor, timeColor, timeFontSize)
+                PrayerItem(GlanceModifier.defaultWeight(), if (isAr) "العصر" else UiStrings.of("Asr"), formatTimeStr(times.asr), labelColor, timeColor, timeFontSize)
+                PrayerItem(GlanceModifier.defaultWeight(), if (isAr) "المغرب" else UiStrings.of("Maghrib"), formatTimeStr(times.maghrib), labelColor, timeColor, timeFontSize)
+                PrayerItem(GlanceModifier.defaultWeight(), if (isAr) "العشاء" else UiStrings.of("Isha"), formatTimeStr(times.isha), labelColor, timeColor, timeFontSize)
             }
         }
     }

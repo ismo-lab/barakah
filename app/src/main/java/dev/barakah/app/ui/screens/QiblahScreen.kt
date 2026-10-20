@@ -1,5 +1,7 @@
 package dev.barakah.app.ui.screens
 
+import dev.barakah.app.data.UiStrings
+
 import kotlin.math.sin
 import kotlin.math.cos
 import kotlin.math.abs
@@ -139,22 +141,22 @@ fun QiblahScreen(
     val statusMessage = when {
         compassStatus == CompassStatus.NO_SENSOR ->
             if (isAr) "لا يحتوي هذا الهاتف على مستشعر بوصلة، لذا لا يمكن للقرص تتبع الاتجاه."
-            else "This phone has no compass sensor, so the dial cannot track your direction."
+            else UiStrings.of("This phone has no compass sensor, so the dial cannot track your direction.")
         compassStatus == CompassStatus.UNCALIBRATED ->
             if (isAr) "البوصلة تحتاج إلى معايرة: ابتعد عن المعادن والأغطية المغناطيسية ثم حرّك الهاتف على شكل الرقم 8."
-            else "Compass needs calibrating: move away from metal and magnetic cases, then wave the phone in a figure 8."
+            else UiStrings.of("Compass needs calibrating: move away from metal and magnetic cases, then wave the phone in a figure 8.")
         compassStatus == CompassStatus.STALLED ->
             if (isAr) "توقّف مستشعر البوصلة عن الإرسال. اخرج من هذه الشاشة ثم أعد فتحها."
-            else "The compass sensor stopped reporting. Leave this screen and open it again."
+            else UiStrings.of("The compass sensor stopped reporting. Leave this screen and open it again.")
         compassStatus == CompassStatus.WAITING ->
             if (isAr) "في انتظار قراءة البوصلة…"
-            else "Waiting for the compass sensor…"
+            else UiStrings.of("Waiting for the compass sensor…")
         compassTilt > TILT_WARNING_DEGREES ->
             if (isAr) "أمسك الهاتف بشكل مسطح للحصول على دقة أعلى."
-            else "Hold your phone flat for highest precision."
+            else UiStrings.of("Hold your phone flat for highest precision.")
         else ->
             if (isAr) "يرجى وضع الهاتف بشكل مسطح والابتعاد عن المعادن أو الأغطية المغناطيسية لدقة أعلى."
-            else "Hold your phone flat, away from metal objects or magnetic cases for highest precision."
+            else UiStrings.of("Hold your phone flat, away from metal objects or magnetic cases for highest precision.")
     }
     val statusIsProblem = compassStatus == CompassStatus.NO_SENSOR ||
         compassStatus == CompassStatus.STALLED ||
@@ -233,7 +235,7 @@ fun QiblahScreen(
             ) {
                 // Header
                 Text(
-                    text = if (isAr) "بوصلة القبلة" else "Qiblah Compass",
+                    text = if (isAr) "بوصلة القبلة" else UiStrings.of("Qiblah Compass"),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.onBackground
@@ -241,7 +243,7 @@ fun QiblahScreen(
                 
                 // Location Bar
                 QiblahLocationRow(
-                    text = if (isAr) "موقعك الحالي: $locationLabel" else "Location: $locationLabel",
+                    text = if (isAr) "موقعك الحالي: $locationLabel" else UiStrings.format("Location: %s", locationLabel),
                     textStyle = MaterialTheme.typography.bodySmall,
                     iconSize = 16.dp,
                     spacerWidth = 8.dp,
@@ -311,7 +313,7 @@ fun QiblahScreen(
                     .fillMaxWidth()
             ) {
                 Text(
-                    text = if (isAr) "بوصلة القبلة" else "Qiblah Compass",
+                    text = if (isAr) "بوصلة القبلة" else UiStrings.of("Qiblah Compass"),
                     style = if (isShortScreen) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.onBackground,
@@ -320,7 +322,7 @@ fun QiblahScreen(
                 )
                 if (!isShortScreen) {
                     Text(
-                        text = if (isAr) "تحديد اتجاه الكعبة المشرفة بدقة متناهية" else "Points accurately towards the Holy Kaaba in Mecca",
+                        text = if (isAr) "تحديد اتجاه الكعبة المشرفة بدقة متناهية" else UiStrings.of("Points accurately towards the Holy Kaaba in Mecca"),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
@@ -332,7 +334,7 @@ fun QiblahScreen(
 
                 // Info panel
                 QiblahLocationRow(
-                    text = if (isAr) "حسب موقعك في: $locationLabel" else "Relative to: $locationLabel",
+                    text = if (isAr) "حسب موقعك في: $locationLabel" else UiStrings.format("Relative to: %s", locationLabel),
                     textStyle = MaterialTheme.typography.labelLarge,
                     iconSize = 18.dp,
                     spacerWidth = 10.dp,
@@ -492,8 +494,8 @@ private fun QiblahDial(
                 val angleFormatted = shortestDiff.toInt().toString().localize(isAr, useWesternNumbersInArabic)
                 contentDescription = when {
                     !hasLiveHeading -> statusMessage
-                    isAligned -> if (isAr) "تم محاذاة اتجاه القبلة بنجاح" else "Qibla is perfectly aligned!"
-                    else -> if (isAr) "القبلة تبعد $angleFormatted درجة" else "Qibla is $angleFormatted degrees away"
+                    isAligned -> if (isAr) "تم محاذاة اتجاه القبلة بنجاح" else UiStrings.of("Qibla is perfectly aligned!")
+                    else -> if (isAr) "القبلة تبعد $angleFormatted درجة" else UiStrings.format("Qibla is %s degrees away", angleFormatted)
                 }
             },
         contentAlignment = Alignment.Center
@@ -676,7 +678,7 @@ private fun QiblahAlignedBanner(
             modifier = modifier
         ) {
             Text(
-                text = if (isAr) "🕌 تم محاذاة القبلة بدقة!" else "🕌 PERFECTLY ALIGNED!",
+                text = if (isAr) "🕌 تم محاذاة القبلة بدقة!" else UiStrings.of("🕌 PERFECTLY ALIGNED!"),
                 style = textStyle,
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -721,7 +723,7 @@ private fun QiblahStatsCard(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = if (isAr) "اتجاه هاتفك" else "Your Heading",
+                        text = if (isAr) "اتجاه هاتفك" else UiStrings.of("Your Heading"),
                         style = labelStyle,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -733,7 +735,7 @@ private fun QiblahStatsCard(
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = if (isAr) "اتجاه القبلة" else "Mecca Target",
+                        text = if (isAr) "اتجاه القبلة" else UiStrings.of("Mecca Target"),
                         style = labelStyle,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

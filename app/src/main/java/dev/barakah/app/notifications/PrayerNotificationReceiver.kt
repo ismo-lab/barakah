@@ -1,5 +1,7 @@
 package dev.barakah.app.notifications
 
+import dev.barakah.app.data.UiStrings
+
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -82,6 +84,7 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         
         val appPrefs = context.getSharedPreferences(AppPrefs.FILE, Context.MODE_PRIVATE)
+        UiStrings.setLanguage(appPrefs.getString(AppPrefs.APP_LANG, "ar") ?: "ar")
         val isAr = appPrefs.getString(AppPrefs.APP_LANG, "ar") == "ar"
 
         // Only the five prayers play the Adhan, and only when adhan audio is enabled.
@@ -108,12 +111,12 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
         // top of it. Every other reminder keeps the audible channel.
         val channelId = if (playsAdhan) ADHAN_CHANNEL_ID else PRAYER_CHANNEL_ID
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            val channelName = if (isAr) "مواقيت الصلاة والذكر" else "Prayer Times & Remembrance"
+            val channelName = if (isAr) "مواقيت الصلاة والذكر" else UiStrings.of("Prayer Times & Remembrance")
             notificationManager.createNotificationChannel(
                 NotificationChannel(PRAYER_CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_HIGH)
             )
 
-            val adhanChannelName = if (isAr) "الأذان" else "Adhan"
+            val adhanChannelName = if (isAr) "الأذان" else UiStrings.of("Adhan")
             notificationManager.createNotificationChannel(
                 NotificationChannel(ADHAN_CHANNEL_ID, adhanChannelName, NotificationManager.IMPORTANCE_HIGH)
                     .apply { setSound(null, null) }
@@ -136,15 +139,15 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
                 val dayOfWeek = tomorrow.get(java.util.Calendar.DAY_OF_WEEK)
                 if (dayOfWeek == java.util.Calendar.MONDAY || dayOfWeek == java.util.Calendar.THURSDAY) {
                     val dayStr = if (dayOfWeek == java.util.Calendar.MONDAY) {
-                        if (isAr) "الإثنين" else "Monday"
+                        if (isAr) "الإثنين" else UiStrings.of("Monday")
                     } else {
-                        if (isAr) "الخميس" else "Thursday"
+                        if (isAr) "الخميس" else UiStrings.of("Thursday")
                     }
                     // The day is the only part that varies, so it goes in the title: that is the
                     // line a collapsed notification always shows.
-                    val title = if (isAr) "صيام $dayStr غداً" else "Fasting Tomorrow: $dayStr"
+                    val title = if (isAr) "صيام $dayStr غداً" else UiStrings.format("Fasting Tomorrow: %s", dayStr)
                     val text = if (isAr) "فمن استطاع الصوم فليصم طمعاً في الأجر."
-                               else "If you are able to fast, earn the reward of this Sunnah."
+                               else UiStrings.of("If you are able to fast, earn the reward of this Sunnah.")
                     
                     val builder = NotificationCompat.Builder(context, channelId)
                         .setSmallIcon(R.drawable.ic_notification)
@@ -227,7 +230,7 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
                     // blessing instead of repeating the name.
                     val title = if (isAr) occasionNameAr else occasionName
                     val text = if (isAr) "غداً — نسأل الله لنا ولكم القبول والبركة."
-                               else "Tomorrow — wishing you a blessed day."
+                               else UiStrings.of("Tomorrow — wishing you a blessed day.")
                     
                     val builder = NotificationCompat.Builder(context, channelId)
                         .setSmallIcon(R.drawable.ic_notification)
@@ -253,24 +256,24 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
         var title: String
         var text: String
         if (prayerName == "Morning Adhkar") {
-            title = if (isAr) "أذكار الصباح" else "Morning Adhkar"
-            text = if (isAr) "ابدأ يومك بالذكر" else "Start your day with remembrance."
+            title = if (isAr) "أذكار الصباح" else UiStrings.of("Morning Adhkar")
+            text = if (isAr) "ابدأ يومك بالذكر" else UiStrings.of("Start your day with remembrance.")
         } else if (prayerName == "Evening Adhkar") {
-            title = if (isAr) "أذكار المساء" else "Evening Adhkar"
-            text = if (isAr) "اختم يومك بالذكر" else "End your day with remembrance."
+            title = if (isAr) "أذكار المساء" else UiStrings.of("Evening Adhkar")
+            text = if (isAr) "اختم يومك بالذكر" else UiStrings.of("End your day with remembrance.")
         } else if (prayerName == "Friday Jumuah") {
             val isFriday = java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_WEEK) == java.util.Calendar.FRIDAY
             if (!isFriday) {
                 return
             }
-            title = if (isAr) "يوم الجمعة المبارك" else "Blessed Friday (Jumu'ah)"
-            text = if (isAr) "اقترب موعد صلاة الجمعة. لا تنسَ قراءة سورة الكهف والصلاة على النبي ﷺ." else "Jumu'ah prayer is approaching. Don't forget to read Surah Al-Kahf and send Salawat upon the Prophet ﷺ."
+            title = if (isAr) "يوم الجمعة المبارك" else UiStrings.of("Blessed Friday (Jumu'ah)")
+            text = if (isAr) "اقترب موعد صلاة الجمعة. لا تنسَ قراءة سورة الكهف والصلاة على النبي ﷺ." else UiStrings.of("Jumu'ah prayer is approaching. Don't forget to read Surah Al-Kahf and send Salawat upon the Prophet ﷺ.")
         } else if (prayerName == "Suhur Reminder") {
-            title = if (isAr) "تذكير بالسحور" else "Suhur Reminder"
-            text = if (isAr) "اقترب موعد الفجر، تسحروا فإن في السحور بركة." else "Fajr is approaching. Have Suhur, for indeed in Suhur there is blessing."
+            title = if (isAr) "تذكير بالسحور" else UiStrings.of("Suhur Reminder")
+            text = if (isAr) "اقترب موعد الفجر، تسحروا فإن في السحور بركة." else UiStrings.of("Fajr is approaching. Have Suhur, for indeed in Suhur there is blessing.")
         } else if (prayerName == "Iftar Reminder") {
-            title = if (isAr) "تذكير بالإفطار" else "Iftar Reminder"
-            text = if (isAr) "حان موعد أذان المغرب وإفطار الصائم. ذهب الظمأ وابتلت العروق وثبت الأجر إن شاء الله." else "Maghrib Adhan is here. Time to break your fast. Thirst has gone, the arteries are moist, and the reward is sure, if Allah wills."
+            title = if (isAr) "تذكير بالإفطار" else UiStrings.of("Iftar Reminder")
+            text = if (isAr) "حان موعد أذان المغرب وإفطار الصائم. ذهب الظمأ وابتلت العروق وثبت الأجر إن شاء الله." else UiStrings.of("Maghrib Adhan is here. Time to break your fast. Thirst has gone, the arteries are moist, and the reward is sure, if Allah wills.")
         } else if (prayerName.startsWith("Pre-")) {
             val actName = prayerName.substringAfter("Pre-")
             val dispName = if (isAr) {
@@ -283,11 +286,11 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
                     else -> actName
                 }
             } else {
-                actName
+                UiStrings.of(actName)
             }
-            title = if (isAr) "اقتراب وقت صلاة $dispName" else "$dispName Approaching"
+            title = if (isAr) "اقتراب وقت صلاة $dispName" else UiStrings.format("%s Approaching", dispName)
             text = if (isAr) "متبقي ١٥ دقيقة على أذان صلاة $dispName. استعد للوضوء." 
-                   else "15 minutes left until $dispName Adhan. Prepare for wudu."
+                   else UiStrings.format("15 minutes left until %s Adhan. Prepare for wudu.", dispName)
         } else {
             val dispName = if (isAr) {
                 when (prayerName) {
@@ -304,7 +307,7 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
                     else -> prayerName
                 }
             } else {
-                prayerName
+                UiStrings.of(prayerName)
             }
             // The prayer itself (and when it is) is what the user scans the shade for, so it is the
             // title; the sentence below stays as the actionable line.
@@ -314,7 +317,7 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
                 null
             }
             title = if (time != null) "$dispName · $time" else dispName
-            text = if (isAr) "حان وقت صلاة $dispName." else "It's time for $dispName prayer."
+            text = if (isAr) "حان وقت صلاة $dispName." else UiStrings.format("It's time for %s prayer.", dispName)
         }
 
         // The notification strings are either fully Arabic (app in Arabic mode) or fully

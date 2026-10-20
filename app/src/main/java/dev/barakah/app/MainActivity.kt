@@ -1,5 +1,8 @@
 package dev.barakah.app
 
+import dev.barakah.app.data.UiLanguages
+import dev.barakah.app.data.UiStrings
+
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -95,7 +98,7 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
-            val layoutDirection = if (appLanguage == "ar") {
+            val layoutDirection = if (UiLanguages.isRtl(appLanguage)) {
                 androidx.compose.ui.unit.LayoutDirection.Rtl
             } else {
                 androidx.compose.ui.unit.LayoutDirection.Ltr
@@ -120,7 +123,7 @@ class MainActivity : ComponentActivity() {
                             onDismissRequest = { viewModel.setShowGpsSettingsPrompt(false) },
                             title = {
                                 Text(
-                                    text = if (isAr) "تفعيل خدمات الموقع" else "Enable Location Services",
+                                    text = if (isAr) "تفعيل خدمات الموقع" else UiStrings.of("Enable Location Services"),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -130,7 +133,7 @@ class MainActivity : ComponentActivity() {
                                     text = if (isAr) 
                                         "لتحديد موقعك تلقائيًا والحصول على مواقيت صلاة دقيقة، يرجى تفعيل خدمات الموقع (GPS) على جهازك." 
                                     else 
-                                        "To auto-detect your location and get accurate prayer times, please enable your device's location services (GPS).",
+                                        UiStrings.of("To auto-detect your location and get accurate prayer times, please enable your device's location services (GPS)."),
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                             },
@@ -146,14 +149,14 @@ class MainActivity : ComponentActivity() {
                                         }
                                     }
                                 ) {
-                                    Text(if (isAr) "تفعيل" else "Enable")
+                                    Text(if (isAr) "تفعيل" else UiStrings.of("Enable"))
                                 }
                             },
                             dismissButton = {
                                 TextButton(
                                     onClick = { viewModel.setShowGpsSettingsPrompt(false) }
                                 ) {
-                                    Text(if (isAr) "إلغاء" else "Cancel")
+                                    Text(if (isAr) "إلغاء" else UiStrings.of("Cancel"))
                                 }
                             }
                         )
@@ -198,35 +201,35 @@ fun MainNavigationContainer(
     val navItems = listOf(
         NavigationTabItem(
             route = "home",
-            label = if (isAr) "الرئيسية" else "Home",
+            label = if (isAr) "الرئيسية" else UiStrings.of("Home"),
             selectedIcon = Icons.Default.Home,
             unselectedIcon = Icons.Outlined.Home,
             tag = "tab_home"
         ),
         NavigationTabItem(
             route = "quran",
-            label = if (isAr) "القرآن" else "Quran",
+            label = if (isAr) "القرآن" else UiStrings.of("Quran"),
             selectedIcon = Icons.Default.MenuBook,
             unselectedIcon = Icons.Outlined.MenuBook,
             tag = "tab_quran"
         ),
         NavigationTabItem(
             route = "qiblah",
-            label = if (isAr) "القبلة" else "Qiblah",
+            label = if (isAr) "القبلة" else UiStrings.of("Qiblah"),
             selectedIcon = Icons.Default.Explore,
             unselectedIcon = Icons.Outlined.Explore,
             tag = "tab_qiblah"
         ),
         NavigationTabItem(
             route = "tasbih",
-            label = if (isAr) "التسبيح" else "Tasbih",
+            label = if (isAr) "التسبيح" else UiStrings.of("Tasbih"),
             selectedIcon = Icons.Default.ControlPoint,
             unselectedIcon = Icons.Outlined.ControlPoint,
             tag = "tab_tasbih"
         ),
         NavigationTabItem(
             route = "duas",
-            label = if (isAr) "الأدعية" else "Duas",
+            label = if (isAr) "الأدعية" else UiStrings.of("Duas"),
             selectedIcon = Icons.Default.Star,
             unselectedIcon = Icons.Outlined.Star,
             tag = "tab_duas"

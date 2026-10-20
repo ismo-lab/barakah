@@ -1,5 +1,7 @@
 package dev.barakah.app.ui
 
+import dev.barakah.app.data.UiStrings
+
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.BroadcastReceiver
@@ -69,6 +71,59 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     private val _appLanguage = MutableStateFlow(prefs.getString(AppPrefs.APP_LANG, "ar") ?: "ar")
     val appLanguage: StateFlow<String> = _appLanguage
 
+    // Religious text languages. Empty means "show no translation". Until the reader explicitly
+    // picks one, every area follows the interface: Arabic for Arabic, English otherwise.
+    private fun defaultReligiousLanguage(
+        key: String,
+        explicitKey: String,
+        arabic: String,
+        other: String
+    ): String {
+        val fallback = if (_appLanguage.value == "ar") arabic else other
+        val stored = prefs.getString(key, null)
+        val explicit = if (prefs.contains(explicitKey)) {
+            prefs.getBoolean(explicitKey, false)
+        } else {
+            // Values written before the explicit marker existed are kept when they differ from
+            // the default, which is how an old hand-picked language survives this upgrade.
+            stored != null && stored != fallback
+        }
+        if (explicit && !prefs.contains(explicitKey)) {
+            prefs.edit { putBoolean(explicitKey, true) }
+        }
+        return if (explicit) stored ?: fallback else fallback
+    }
+
+    private val _quranTranslationLanguage = MutableStateFlow(
+        defaultReligiousLanguage(
+            AppPrefs.QURAN_TRANSLATION_LANG,
+            AppPrefs.QURAN_TRANSLATION_EXPLICIT,
+            "",
+            "en"
+        )
+    )
+    val quranTranslationLanguage: StateFlow<String> = _quranTranslationLanguage
+
+    private val _tafsirLanguage = MutableStateFlow(
+        defaultReligiousLanguage(
+            AppPrefs.TAFSIR_LANG,
+            AppPrefs.TAFSIR_EXPLICIT,
+            "ar",
+            "en"
+        )
+    )
+    val tafsirLanguage: StateFlow<String> = _tafsirLanguage
+
+    private val _duaTranslationLanguage = MutableStateFlow(
+        defaultReligiousLanguage(
+            AppPrefs.DUA_TRANSLATION_LANG,
+            AppPrefs.DUA_TRANSLATION_EXPLICIT,
+            "",
+            "en"
+        )
+    )
+    val duaTranslationLanguage: StateFlow<String> = _duaTranslationLanguage
+
     // Theme state: "dark", "light", "system"
     private val _appTheme = MutableStateFlow(prefs.getString(AppPrefs.APP_THEME, "system") ?: "system")
     val appTheme: StateFlow<String> = _appTheme
@@ -125,14 +180,14 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
                     val (resolvedName, countryCode) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                         getPlaceFromLocation(location.latitude, location.longitude)
                     }
-                    val defaultLabel = if (_appLanguage.value == "ar") "تلقائي (GPS)" else "GPS (Auto)"
+                    val defaultLabel = if (_appLanguage.value == "ar") "تلقائي (GPS)" else UiStrings.of("GPS (Auto)")
                     val label = resolvedName ?: defaultLabel
 
                     updateLocation(location.latitude, location.longitude, label, countryCode = countryCode)
 
                     if (now - lastGpsSuccessMsgTime > 60000) {
                         lastGpsSuccessMsgTime = now
-                        val msg = if (_appLanguage.value == "ar") "تم تحديث موقعك تلقائياً بنجاح ($label)" else "GPS location updated successfully ($label)"
+                        val msg = if (_appLanguage.value == "ar") "تم تحديث موقعك تلقائياً بنجاح ($label)" else UiStrings.format("GPS location updated successfully (%s)", label)
                         _eventFlow.emit(msg)
                     }
                 }
@@ -443,6 +498,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         if (!prefs.contains(AppPrefs.APP_LANG)) {
             prefs.edit { putString(AppPrefs.APP_LANG, "ar") }
         }
+        UiStrings.setLanguage(_appLanguage.value)
 
         if (!_isFirstRun.value && _locationMethod.value != "auto" && _isLocationSet.value && !prefs.contains(AppPrefs.LOC_TIMEZONE)) {
             viewModelScope.launch {
@@ -552,7 +608,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
                 if (now - lastGpsFailMsgTime > 30000) {
                     lastGpsFailMsgTime = now
                     viewModelScope.launch {
-                        val msg = if (_appLanguage.value == "ar") "لم يتم منح صلاحية تحديد الموقع، يرجى تحديد موقعك" else "Location permission not granted, please select your location"
+                        val msg = if (_appLanguage.value == "ar") "لم يتم منح صلاحية تحديد الموقع، يرجى تحديد موقعك" else UiStrings.of("Location permission not granted, please select your location")
                         _eventFlow.emit(msg)
                     }
                 }
@@ -572,7 +628,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
                         val (resolvedName, countryCode) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                             getPlaceFromLocation(loc.latitude, loc.longitude)
                         }
-                        val defaultLabel = if (_appLanguage.value == "ar") "تلقائي (GPS)" else "GPS (Auto)"
+                        val defaultLabel = if (_appLanguage.value == "ar") "تلقائي (GPS)" else UiStrings.of("GPS (Auto)")
                         val label = resolvedName ?: defaultLabel
 
                         updateLocation(loc.latitude, loc.longitude, label, countryCode = countryCode)
@@ -584,7 +640,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
                         // Show success message only if it's a significant change or once in a while
                         if (now - lastGpsSuccessMsgTime > 60000 || diffLat > 0.001 || diffLng > 0.001) {
                             lastGpsSuccessMsgTime = now
-                            val msg = if (_appLanguage.value == "ar") "تم تحديد موقعك تلقائياً بنجاح ($label)" else "GPS location detected successfully ($label)"
+                            val msg = if (_appLanguage.value == "ar") "تم تحديد موقعك تلقائياً بنجاح ($label)" else UiStrings.format("GPS location detected successfully (%s)", label)
                             _eventFlow.emit(msg)
                         }
                     }
@@ -596,7 +652,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
                     if (now - lastGpsFailMsgTime > 30000) {
                         lastGpsFailMsgTime = now
                         viewModelScope.launch {
-                            val msg = if (_appLanguage.value == "ar") "تعذر تحديد الموقع الجغرافي، يرجى اختياره يدوياً" else "Could not determine GPS location, please select manually"
+                            val msg = if (_appLanguage.value == "ar") "تعذر تحديد الموقع الجغرافي، يرجى اختياره يدوياً" else UiStrings.of("Could not determine GPS location, please select manually")
                             _eventFlow.emit(msg)
                         }
                     }
@@ -606,7 +662,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             Log.e(TAG, "Unable to get a GPS fix", e)
             fallBackToPlaceholderIfUnset()
             viewModelScope.launch {
-                val msg = if (_appLanguage.value == "ar") "حدث خطأ أثناء تحديد الموقع، يرجى اختياره يدوياً" else "GPS error occurred, please select manually"
+                val msg = if (_appLanguage.value == "ar") "حدث خطأ أثناء تحديد الموقع، يرجى اختياره يدوياً" else UiStrings.of("GPS error occurred, please select manually")
                 _eventFlow.emit(msg)
             }
         }
@@ -670,17 +726,61 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         recalculatePrayerTimes()
         if (isSuccessFeedback) {
             viewModelScope.launch {
-                val msg = if (_appLanguage.value == "ar") "تم تغيير الموقع بنجاح إلى $label" else "Location updated successfully to $label"
+                val msg = if (_appLanguage.value == "ar") "تم تغيير الموقع بنجاح إلى $label" else UiStrings.format("Location updated successfully to %s", label)
                 _eventFlow.emit(msg)
             }
         }
     }
 
     fun setAppLanguage(lang: String) {
+        UiStrings.setLanguage(lang)
         _appLanguage.value = lang
         prefs.edit { putString(AppPrefs.APP_LANG, lang) }
+
+        // Areas the reader has not picked follow the interface: Arabic for Arabic, English
+        // otherwise. An explicit pick, including "None", is preserved.
+        if (!prefs.getBoolean(AppPrefs.QURAN_TRANSLATION_EXPLICIT, false)) {
+            val tag = if (lang == "ar") "" else "en"
+            _quranTranslationLanguage.value = tag
+            prefs.edit { putString(AppPrefs.QURAN_TRANSLATION_LANG, tag) }
+        }
+        if (!prefs.getBoolean(AppPrefs.TAFSIR_EXPLICIT, false)) {
+            val tag = if (lang == "ar") "ar" else "en"
+            _tafsirLanguage.value = tag
+            prefs.edit { putString(AppPrefs.TAFSIR_LANG, tag) }
+        }
+        if (!prefs.getBoolean(AppPrefs.DUA_TRANSLATION_EXPLICIT, false)) {
+            val tag = if (lang == "ar") "" else "en"
+            _duaTranslationLanguage.value = tag
+            prefs.edit { putString(AppPrefs.DUA_TRANSLATION_LANG, tag) }
+        }
+
         _filteredDuas.value = if (lang == "ar") DuaData.duasAr else DuaData.duasEn
         updateWidgetsGlobally()
+    }
+
+    fun setQuranTranslationLanguage(lang: String) {
+        _quranTranslationLanguage.value = lang
+        prefs.edit {
+            putString(AppPrefs.QURAN_TRANSLATION_LANG, lang)
+            putBoolean(AppPrefs.QURAN_TRANSLATION_EXPLICIT, true)
+        }
+    }
+
+    fun setTafsirLanguage(lang: String) {
+        _tafsirLanguage.value = lang
+        prefs.edit {
+            putString(AppPrefs.TAFSIR_LANG, lang)
+            putBoolean(AppPrefs.TAFSIR_EXPLICIT, true)
+        }
+    }
+
+    fun setDuaTranslationLanguage(lang: String) {
+        _duaTranslationLanguage.value = lang
+        prefs.edit {
+            putString(AppPrefs.DUA_TRANSLATION_LANG, lang)
+            putBoolean(AppPrefs.DUA_TRANSLATION_EXPLICIT, true)
+        }
     }
 
     /**

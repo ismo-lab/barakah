@@ -1,5 +1,7 @@
 package dev.barakah.app.widget
 
+import dev.barakah.app.data.UiStrings
+
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
@@ -35,6 +37,7 @@ class PrayerRemainingWidget : GlanceAppWidget() {
             val refreshToken = currentState<Preferences>()[WidgetRefreshState.refreshToken] ?: 0L
             // Glance can reuse an active session and recompose this block without rerunning provideGlance.
             val prefs = context.getSharedPreferences(AppPrefs.FILE, Context.MODE_PRIVATE)
+            UiStrings.setLanguage(prefs.getString(AppPrefs.APP_LANG, "ar") ?: "ar")
             val isAr = prefs.getString(AppPrefs.APP_LANG, "ar") == "ar"
             val defaultLabel = LocationDefaults.unsetLabel(isAr)
             val lat = prefs.getFloat(AppPrefs.LOC_LAT, LocationDefaults.LATITUDE.toFloat()).toDouble()
@@ -124,7 +127,7 @@ class PrayerRemainingWidget : GlanceAppWidget() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = if (isAr) "الصلاة القادمة" else "Next Prayer",
+                text = if (isAr) "الصلاة القادمة" else UiStrings.of("Next Prayer"),
                 style = TextStyle(color = primaryColor, fontSize = 12.sp, fontWeight = FontWeight.Bold),
                 maxLines = 1
             )

@@ -1,5 +1,7 @@
 package dev.barakah.app.util
 
+import dev.barakah.app.data.UiStrings
+
 import java.util.Calendar
 import java.util.Locale
 import java.util.TimeZone
@@ -73,9 +75,9 @@ object ClockTime {
         } else {
             val hour12 = if (hour % 12 == 0) 12 else hour % 12
             val amPm = if (hour < 12) {
-                if (isArabic) "ص" else "AM"
+                if (isArabic) "ص" else UiStrings.of("AM")
             } else {
-                if (isArabic) "م" else "PM"
+                if (isArabic) "م" else UiStrings.of("PM")
             }
             String.format(Locale.US, if (padHour) "%02d:%02d %s" else "%d:%02d %s", hour12, minute, amPm)
         }

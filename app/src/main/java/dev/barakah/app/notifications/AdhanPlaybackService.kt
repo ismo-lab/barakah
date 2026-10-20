@@ -1,5 +1,7 @@
 package dev.barakah.app.notifications
 
+import dev.barakah.app.data.UiStrings
+
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -55,6 +57,7 @@ class AdhanPlaybackService : Service() {
         }
 
         createNotificationChannel()
+        UiStrings.setLanguage(prefs.getString(AppPrefs.APP_LANG, "ar") ?: "ar")
         val isAr = prefs.getString(AppPrefs.APP_LANG, "ar") == "ar"
         try {
             startForeground(NOTIFICATION_ID, createNotification(prayerName, isAr))
@@ -149,12 +152,12 @@ class AdhanPlaybackService : Service() {
                 else -> "العشاء"
             }
         } else {
-            prayerName
+            UiStrings.of(prayerName)
         }
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(if (isAr) "أذان صلاة $prayerLabel" else "$prayerLabel Adhan")
-            .setContentText(if (isAr) "يُشغّل الأذان" else "Adhan is playing")
+            .setContentTitle(if (isAr) "أذان صلاة $prayerLabel" else UiStrings.format("%s Adhan", prayerLabel))
+            .setContentText(if (isAr) "يُشغّل الأذان" else UiStrings.of("Adhan is playing"))
             .setContentIntent(openAppIntent)
             .setDeleteIntent(stopIntent)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
@@ -162,7 +165,7 @@ class AdhanPlaybackService : Service() {
             .setSilent(true)
             .addAction(
                 android.R.drawable.ic_media_pause,
-                if (isAr) "إيقاف" else "Stop",
+                if (isAr) "إيقاف" else UiStrings.of("Stop"),
                 stopIntent
             )
             .build()

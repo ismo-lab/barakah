@@ -1,5 +1,9 @@
 package dev.barakah.app.ui.screens
 
+import androidx.compose.foundation.horizontalScroll
+import dev.barakah.app.data.UiLanguages
+import dev.barakah.app.data.UiStrings
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.clickable
@@ -72,14 +76,14 @@ fun WelcomeScreen(viewModel: BarakahViewModel) {
             
             // Header
             Text(
-                text = if (isAr) "مرحباً بك في بركة" else "Welcome to Barakah",
+                text = if (isAr) "مرحباً بك في بركة" else UiStrings.of("Welcome to Barakah"),
                 style = if (isShortScreen) MaterialTheme.typography.titleLarge else MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Black,
                 color = MaterialTheme.colorScheme.primary
             )
             if (!isShortScreen) {
                 Text(
-                    text = if (isAr) "تطبيقك الإسلامي المجاني ومفتوح المصدر" else "Your free and open source Islam app",
+                    text = if (isAr) "تطبيقك الإسلامي المجاني ومفتوح المصدر" else UiStrings.of("Your free and open source Islam app"),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.secondary
                 )
@@ -135,17 +139,21 @@ fun LanguageStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(if (isShortScreen) 16.dp else 32.dp))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            LanguageCard(
-                label = "العربية",
-                isSelected = currentLang == "ar",
-                onClick = { viewModel.setAppLanguage("ar") }
-            )
-            LanguageCard(
-                label = "English",
-                isSelected = currentLang == "en",
-                onClick = { viewModel.setAppLanguage("en") }
-            )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(androidx.compose.foundation.rememberScrollState())
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            UiLanguages.all.forEach { language ->
+                LanguageCard(
+                    label = language.nativeName,
+                    isSelected = currentLang == language.tag,
+                    onClick = { viewModel.setAppLanguage(language.tag) },
+                    modifier = Modifier.width(140.dp)
+                )
+            }
         }
 
         if (isShortScreen) {
@@ -167,7 +175,7 @@ fun LanguageStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
             shape = RoundedCornerShape(16.dp)
         ) {
             Text(
-                text = if (currentLang == "ar") "التالي" else "Next",
+                text = if (currentLang == "ar") "التالي" else UiStrings.of("Next"),
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp
             )
@@ -178,10 +186,15 @@ fun LanguageStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
 }
 
 @Composable
-fun LanguageCard(label: String, isSelected: Boolean, onClick: () -> Unit) {
+fun LanguageCard(
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     OutlinedCard(
         onClick = onClick,
-        modifier = Modifier.size(140.dp, 100.dp),
+        modifier = modifier.height(100.dp),
         colors = CardDefaults.outlinedCardColors(
             containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
         ),
@@ -244,13 +257,13 @@ fun LanguageCard(label: String, isSelected: Boolean, onClick: () -> Unit) {
          )
          Spacer(modifier = Modifier.height(if (isShortScreen) 12.dp else 24.dp))
          Text(
-             text = if (isAr) "تحديد الموقع" else "Set Your Location",
+             text = if (isAr) "تحديد الموقع" else UiStrings.of("Set Your Location"),
              style = if (isShortScreen) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
              fontWeight = FontWeight.Bold
          )
          if (!isShortScreen) {
              Text(
-                 text = if (isAr) "لحساب مواقيت الصلاة واتجاه القبلة بدقة" else "For accurate prayer times and Qibla",
+                 text = if (isAr) "لحساب مواقيت الصلاة واتجاه القبلة بدقة" else UiStrings.of("For accurate prayer times and Qibla"),
                  style = MaterialTheme.typography.bodyMedium,
                  color = MaterialTheme.colorScheme.outline
              )
@@ -275,7 +288,7 @@ fun LanguageCard(label: String, isSelected: Boolean, onClick: () -> Unit) {
          ) {
              Icon(Icons.Default.GpsFixed, contentDescription = null)
              Spacer(modifier = Modifier.width(12.dp))
-             Text(text = if (isAr) "استخدام الموقع التلقائي (GPS)" else "Use GPS (Recommended)")
+             Text(text = if (isAr) "استخدام الموقع التلقائي (GPS)" else UiStrings.of("Use GPS (Recommended)"))
          }
 
          Spacer(modifier = Modifier.height(10.dp))
@@ -293,19 +306,19 @@ fun LanguageCard(label: String, isSelected: Boolean, onClick: () -> Unit) {
          ) {
              Icon(Icons.Default.LocationOn, contentDescription = null)
              Spacer(modifier = Modifier.width(12.dp))
-             Text(text = if (isAr) "تحديد الموقع لاحقاً (بدون تحديد)" else "Set Location Later (Not Set)")
+             Text(text = if (isAr) "تحديد الموقع لاحقاً (بدون تحديد)" else UiStrings.of("Set Location Later (Not Set)"))
          }
 
          Spacer(modifier = Modifier.height(16.dp))
         
-        Text(text = if (isAr) "أو اختر مدينة يدوياً:" else "Or select a city manually:", style = MaterialTheme.typography.labelMedium)
+        Text(text = if (isAr) "أو اختر مدينة يدوياً:" else UiStrings.of("Or select a city manually:"), style = MaterialTheme.typography.labelMedium)
         
         Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
             value = query,
             onValueChange = { query = it },
-            placeholder = { Text(if (isAr) "ابحث عن مدينتك..." else "Search for city...") },
+            placeholder = { Text(if (isAr) "ابحث عن مدينتك..." else UiStrings.of("Search for city...")) },
             modifier = Modifier.fillMaxWidth(),
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
             shape = RoundedCornerShape(12.dp),
@@ -350,7 +363,7 @@ fun LanguageCard(label: String, isSelected: Boolean, onClick: () -> Unit) {
         
         if (query.isEmpty()) {
             Text(
-                text = if (isAr) "يمكنك دائماً تغيير هذه الإعدادات لاحقاً" else "You can always change these later in settings",
+                text = if (isAr) "يمكنك دائماً تغيير هذه الإعدادات لاحقاً" else UiStrings.of("You can always change these later in settings"),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.outline,
                 modifier = Modifier.padding(bottom = 16.dp)
@@ -391,13 +404,13 @@ fun NotificationsStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(if (isShortScreen) 6.dp else 12.dp))
         Text(
-            text = if (isAr) "تخصيص التنبيهات" else "Configure Notifications",
+            text = if (isAr) "تخصيص التنبيهات" else UiStrings.of("Configure Notifications"),
             style = if (isShortScreen) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
         if (!isShortScreen) {
             Text(
-                text = if (isAr) "اختر التنبيهات التي ترغب في تلقيها يومياً" else "Select which reminders you want to receive",
+                text = if (isAr) "اختر التنبيهات التي ترغب في تلقيها يومياً" else UiStrings.of("Select which reminders you want to receive"),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.outline,
                 textAlign = TextAlign.Center,
@@ -420,16 +433,16 @@ fun NotificationsStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
         ) {
             item {
                 NotificationToggleCard(
-                    title = (if (isAr) "تنبيه قبل الأذان بـ ١٥ دقيقة" else "Pre-Adhan Reminders").localize(isAr, useWesternNumbersInArabic),
-                    desc = (if (isAr) "تنبيه تمهيدي قبل أذان كل صلاة مفروضة بـ ١٥ دقيقة" else "Notify 15 mins before every fard prayer time").localize(isAr, useWesternNumbersInArabic),
+                    title = (if (isAr) "تنبيه قبل الأذان بـ ١٥ دقيقة" else UiStrings.of("Pre-Adhan Reminders")).localize(isAr, useWesternNumbersInArabic),
+                    desc = (if (isAr) "تنبيه تمهيدي قبل أذان كل صلاة مفروضة بـ ١٥ دقيقة" else UiStrings.of("Notify 15 mins before every fard prayer time")).localize(isAr, useWesternNumbersInArabic),
                     checked = notifyBeforeAdhan,
                     onCheckedChange = { viewModel.setNotifyBeforeAdhan(it) }
                 )
             }
             item {
                 NotificationToggleCard(
-                    title = if (isAr) "تنبيهات أذكار الصباح" else "Morning Adhkar Notifications",
-                    desc = if (isAr) "تنبيه يومي لقراءة الأذكار (وقت قابل للتخصيص)" else "Daily reminder to recite Adhkar (customizable timing)",
+                    title = if (isAr) "تنبيهات أذكار الصباح" else UiStrings.of("Morning Adhkar Notifications"),
+                    desc = if (isAr) "تنبيه يومي لقراءة الأذكار (وقت قابل للتخصيص)" else UiStrings.of("Daily reminder to recite Adhkar (customizable timing)"),
                     checked = notifyMorningAdhkar,
                     onCheckedChange = { viewModel.setNotifyMorningAdhkar(it) }
                 )
@@ -447,8 +460,8 @@ fun NotificationsStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
             }
             item {
                 NotificationToggleCard(
-                    title = if (isAr) "تنبيهات أذكار المساء" else "Evening Adhkar Notifications",
-                    desc = if (isAr) "تنبيه يومي لقراءة الأذكار (وقت قابل للتخصيص)" else "Daily reminder to recite Adhkar (customizable timing)",
+                    title = if (isAr) "تنبيهات أذكار المساء" else UiStrings.of("Evening Adhkar Notifications"),
+                    desc = if (isAr) "تنبيه يومي لقراءة الأذكار (وقت قابل للتخصيص)" else UiStrings.of("Daily reminder to recite Adhkar (customizable timing)"),
                     checked = notifyEveningAdhkar,
                     onCheckedChange = { viewModel.setNotifyEveningAdhkar(it) }
                 )
@@ -467,8 +480,8 @@ fun NotificationsStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
 
             item {
                 NotificationToggleCard(
-                    title = if (isAr) "عرض النوافل وقيام الليل" else "Show Voluntary Prayers",
-                    desc = if (isAr) "تضمين الضحى وقيام الليل والوتر والتهجد لجدول الصلوات" else "Include Duha, Qiyam-ul-Layl, Witr & Tahajjud in schedule",
+                    title = if (isAr) "عرض النوافل وقيام الليل" else UiStrings.of("Show Voluntary Prayers"),
+                    desc = if (isAr) "تضمين الضحى وقيام الليل والوتر والتهجد لجدول الصلوات" else UiStrings.of("Include Duha, Qiyam-ul-Layl, Witr & Tahajjud in schedule"),
                     checked = showNawafil,
                     onCheckedChange = { viewModel.setShowNawafil(it) }
                 )
@@ -476,8 +489,8 @@ fun NotificationsStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
             if (showNawafil) {
                 item {
                     NotificationToggleCard(
-                        title = if (isAr) "تنبيهات صلوات النوافل" else "Nawafil Notifications",
-                        desc = if (isAr) "تنبيهات للضحى والوتر والتهجد وقيام الليل" else "Notifications for Duha, Witr, Tahajjud & Qiyam-ul-Layl",
+                        title = if (isAr) "تنبيهات صلوات النوافل" else UiStrings.of("Nawafil Notifications"),
+                        desc = if (isAr) "تنبيهات للضحى والوتر والتهجد وقيام الليل" else UiStrings.of("Notifications for Duha, Witr, Tahajjud & Qiyam-ul-Layl"),
                         checked = notifyNawafil,
                         onCheckedChange = { viewModel.setNotifyNawafil(it) }
                     )
@@ -485,48 +498,48 @@ fun NotificationsStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
             }
             item {
                 NotificationToggleCard(
-                    title = if (isAr) "تنبيه يوم الجمعة المبارك" else "Friday Jumu'ah Reminder",
-                    desc = if (isAr) "تنبيه خاص لصلاة الجمعة وقراءة سورة الكهف والصلوات" else "Special notification for Friday prayer and Surah Al-Kahf",
+                    title = if (isAr) "تنبيه يوم الجمعة المبارك" else UiStrings.of("Friday Jumu'ah Reminder"),
+                    desc = if (isAr) "تنبيه خاص لصلاة الجمعة وقراءة سورة الكهف والصلوات" else UiStrings.of("Special notification for Friday prayer and Surah Al-Kahf"),
                     checked = notifyJumuah,
                     onCheckedChange = { viewModel.setNotifyJumuah(it) }
                 )
             }
             item {
                 NotificationToggleCard(
-                    title = if (isAr) "تنبيه صيام الإذن والخميس" else "Mon/Thu Fasting Reminders",
-                    desc = if (isAr) "تذكير بصيام يومي الإثنين والخميس في الليلة السابقة" else "Reminder to fast on Mondays and Thursdays the night before",
+                    title = if (isAr) "تنبيه صيام الإذن والخميس" else UiStrings.of("Mon/Thu Fasting Reminders"),
+                    desc = if (isAr) "تذكير بصيام يومي الإثنين والخميس في الليلة السابقة" else UiStrings.of("Reminder to fast on Mondays and Thursdays the night before"),
                     checked = notifyFasting,
                     onCheckedChange = { viewModel.setNotifyFasting(it) }
                 )
             }
             item {
                 NotificationToggleCard(
-                    title = if (isAr) "تنبيهات الأعياد والمناسبات" else "Eid & Occasion Alerts",
-                    desc = if (isAr) "تذكير المناسبات الإسلامية المهمة قبل حلولها بليلة" else "Alert of key Islamic calendar events a day before",
+                    title = if (isAr) "تنبيهات الأعياد والمناسبات" else UiStrings.of("Eid & Occasion Alerts"),
+                    desc = if (isAr) "تذكير المناسبات الإسلامية المهمة قبل حلولها بليلة" else UiStrings.of("Alert of key Islamic calendar events a day before"),
                     checked = notifyOccasions,
                     onCheckedChange = { viewModel.setNotifyOccasions(it) }
                 )
             }
             item {
                 NotificationToggleCard(
-                    title = if (isAr) "تنبيه السحور" else "Suhur Reminder",
-                    desc = if (isAr) "تنبيه بوقت السحور الفضيل قبل أذان الكاذب للفجر" else "Special reminder notification for Suhur before Fajr",
+                    title = if (isAr) "تنبيه السحور" else UiStrings.of("Suhur Reminder"),
+                    desc = if (isAr) "تنبيه بوقت السحور الفضيل قبل أذان الكاذب للفجر" else UiStrings.of("Special reminder notification for Suhur before Fajr"),
                     checked = notifySuhur,
                     onCheckedChange = { viewModel.setNotifySuhur(it) }
                 )
             }
             item {
                 NotificationToggleCard(
-                    title = if (isAr) "تنبيه الإفطار" else "Iftar Reminder",
-                    desc = if (isAr) "تنبيه مخصص وقت الإفطار المبارك عند أذان المغرب" else "Special notification for Iftar at Maghrib time",
+                    title = if (isAr) "تنبيه الإفطار" else UiStrings.of("Iftar Reminder"),
+                    desc = if (isAr) "تنبيه مخصص وقت الإفطار المبارك عند أذان المغرب" else UiStrings.of("Special notification for Iftar at Maghrib time"),
                     checked = notifyIftar,
                     onCheckedChange = { viewModel.setNotifyIftar(it) }
                 )
             }
             item {
                 NotificationToggleCard(
-                    title = if (isAr) "الاهتزاز والتفاعل اللمسي" else "Global Haptic Feedback",
-                    desc = if (isAr) "تشغيل الاهتزاز والتفاعل اللمسي في السبحة والأدعية والقبلة" else "Enable vibrations in Tasbih subhah, Dua counters, and Qiblah alignment",
+                    title = if (isAr) "الاهتزاز والتفاعل اللمسي" else UiStrings.of("Global Haptic Feedback"),
+                    desc = if (isAr) "تشغيل الاهتزاز والتفاعل اللمسي في السبحة والأدعية والقبلة" else UiStrings.of("Enable vibrations in Tasbih subhah, Dua counters, and Qiblah alignment"),
                     checked = enableTasbihHaptics,
                     onCheckedChange = { viewModel.setEnableTasbihHaptics(it) }
                 )
@@ -541,7 +554,7 @@ fun NotificationsStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
             shape = RoundedCornerShape(16.dp)
         ) {
             Text(
-                text = if (isAr) "التالي" else "Next",
+                text = if (isAr) "التالي" else UiStrings.of("Next"),
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp
             )
@@ -625,13 +638,13 @@ fun CalculationStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(if (isShortScreen) 6.dp else 12.dp))
         Text(
-            text = if (isAr) "المذهب والحساب الفقهي" else "Juristic Calculations",
+            text = if (isAr) "المذهب والحساب الفقهي" else UiStrings.of("Juristic Calculations"),
             style = if (isShortScreen) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
         if (!isShortScreen) {
             Text(
-                text = if (isAr) "تسمح هذه الإعدادات بتخصيص حساب صلاة العصر والعشاء" else "These settings customize calculations for Asr and Isha prayers",
+                text = if (isAr) "تسمح هذه الإعدادات بتخصيص حساب صلاة العصر والعشاء" else UiStrings.of("These settings customize calculations for Asr and Isha prayers"),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.outline,
                 textAlign = TextAlign.Center,
@@ -661,7 +674,7 @@ fun CalculationStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Text(
-                            text = if (isAr) "صلاة العصر: حساب الجمهور أم الحنفي" else "Asr Prayer: Standard vs Hanafi School",
+                            text = if (isAr) "صلاة العصر: حساب الجمهور أم الحنفي" else UiStrings.of("Asr Prayer: Standard vs Hanafi School"),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
@@ -682,7 +695,7 @@ fun CalculationStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
                                 )
                             ) {
                                 Text(
-                                    text = if (isAr) "الجمهور (شافعي...)" else "Standard (Shafi'i)",
+                                    text = if (isAr) "الجمهور (شافعي...)" else UiStrings.of("Standard (Shafi'i)"),
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = if (asrMethod == "standard") MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
@@ -700,7 +713,7 @@ fun CalculationStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
                                 )
                             ) {
                                 Text(
-                                    text = if (isAr) "المذهب الحنفي" else "Hanafi School",
+                                    text = if (isAr) "المذهب الحنفي" else UiStrings.of("Hanafi School"),
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = if (asrMethod == "hanafi") MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
@@ -724,7 +737,7 @@ fun CalculationStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Text(
-                            text = if (isAr) "صلاة العشاء: التقدير الفلكي أم الحنفي" else "Isha Prayer: Standard Angle vs Hanafi Angle (18°)",
+                            text = if (isAr) "صلاة العشاء: التقدير الفلكي أم الحنفي" else UiStrings.of("Isha Prayer: Standard Angle vs Hanafi Angle (18°)"),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
@@ -745,7 +758,7 @@ fun CalculationStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
                                 )
                             ) {
                                 Text(
-                                    text = if (isAr) "الحساب فلكياً" else "Standard Angle",
+                                    text = if (isAr) "الحساب فلكياً" else UiStrings.of("Standard Angle"),
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = if (ishaMethod == "standard") MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
@@ -763,7 +776,7 @@ fun CalculationStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
                                 )
                             ) {
                                 Text(
-                                    text = if (isAr) "حنفي (18 درجة)" else "Hanafi Angle (18°)",
+                                    text = if (isAr) "حنفي (18 درجة)" else UiStrings.of("Hanafi Angle (18°)"),
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = if (ishaMethod == "hanafi") MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
@@ -783,7 +796,7 @@ fun CalculationStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
             shape = RoundedCornerShape(16.dp)
         ) {
             Text(
-                text = if (isAr) "التالي" else "Next",
+                text = if (isAr) "التالي" else UiStrings.of("Next"),
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp
             )

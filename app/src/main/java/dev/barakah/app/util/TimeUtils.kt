@@ -1,5 +1,7 @@
 package dev.barakah.app.util
 
+import dev.barakah.app.data.UiStrings
+
 import android.content.Context
 import android.text.format.DateFormat
 import java.util.*
@@ -27,9 +29,9 @@ object TimeUtils {
             } else {
                 val hour12 = if (h % 12 == 0) 12 else h % 12
                 val amPm = if (h < 12) {
-                    if (isAr) "ص" else "AM"
+                    if (isAr) "ص" else UiStrings.of("AM")
                 } else {
-                    if (isAr) "م" else "PM"
+                    if (isAr) "م" else UiStrings.of("PM")
                 }
                 java.lang.String.format(locale, "%02d:%02d %s", hour12, m, amPm)
             }
@@ -70,9 +72,9 @@ object TimeUtils {
                 ""
             } else {
                 if (h < 12) {
-                    if (isAr) "ص" else "AM"
+                    if (isAr) "ص" else UiStrings.of("AM")
                 } else {
-                    if (isAr) "م" else "PM"
+                    if (isAr) "م" else UiStrings.of("PM")
                 }
             }
             FormattedTime(
