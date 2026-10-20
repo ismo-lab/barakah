@@ -25,6 +25,7 @@ import dev.barakah.app.widget.refreshWidgetInstances
 import dev.barakah.app.util.AppNightMode
 import dev.barakah.app.util.HijriCalendarHelper
 import dev.barakah.app.util.LocationProvider
+import dev.barakah.app.util.NawafilTimes
 import dev.barakah.app.util.PrayerCalculator
 import dev.barakah.app.util.QiblaManager
 import kotlinx.coroutines.CoroutineScope
@@ -1435,7 +1436,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             val t = if (currentTimeInSec < fajrSec) currentTimeInSec + 24 * 3600 else currentTimeInSec
 
             val rSunrise = sunriseSec
-            val rDuha = sunriseSec + 20 * 60
+            val rDuha = sunriseSec + NawafilTimes.DUHA_AFTER_SUNRISE * 60
             val rDhuhr = dhuhrSec
             val rAsr = asrSec
             val rMaghrib = maghribSec
@@ -1447,14 +1448,14 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             }
             val nightDuration = adjustedFajr - maghribSec
             val firstThirdSec = maghribSec + nightDuration / 3
-            val midnightSec = maghribSec + nightDuration / 2
-            val lastThirdSec = maghribSec + (nightDuration * 2) / 3
-            val witrSec = ishaSec + 30 * 60
+            val qiyamSec = maghribSec + nightDuration / 2
+            val tahajjudSec = maghribSec + (nightDuration * 2) / 3
+            val witrSec = ishaSec + NawafilTimes.WITR_AFTER_ISHA * 60
 
             val rWitr = relativeSec(witrSec)
             val rFirstThird = relativeSec(firstThirdSec)
-            val rMidnight = relativeSec(midnightSec)
-            val rLastThird = relativeSec(lastThirdSec)
+            val rQiyam = relativeSec(qiyamSec)
+            val rTahajjud = relativeSec(tahajjudSec)
             val rNextFajr = fajrSec + 24 * 3600
 
             when {
@@ -1466,9 +1467,9 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
                 t < rIsha -> highlight = "Maghrib"
                 t < rWitr -> highlight = "Isha"
                 t < rFirstThird -> highlight = "Witr (Nafilah)"
-                t < rMidnight -> highlight = "First Third (Nafilah)"
-                t < rLastThird -> highlight = "Midnight (Nafilah)"
-                t < rNextFajr -> highlight = "Qiyam Last Third (Nafilah)"
+                t < rQiyam -> highlight = "First Third (Nafilah)"
+                t < rTahajjud -> highlight = "Qiyam-ul-Layl (Nafilah)"
+                t < rNextFajr -> highlight = "Tahajjud (Nafilah)"
                 else -> highlight = "Fajr"
             }
         } else {

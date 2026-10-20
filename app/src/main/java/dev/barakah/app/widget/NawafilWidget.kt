@@ -89,14 +89,12 @@ class NawafilWidget : GlanceAppWidget() {
                 clockOffsetMinutes = clockOffset
             )
 
-            fun calculateOffsetTime(timeStr: String, offsetMinutes: Int): String =
-                ClockTime.offset(timeStr, offsetMinutes, TimeZone.getTimeZone(timeZoneId))
-
-            // Calculate 4 Nawafil times
-            val duhaRaw = calculateOffsetTime(times.sunrise, NawafilTimes.DUHA_AFTER_SUNRISE)
-            val qiyamRaw = calculateOffsetTime(times.fajr, NawafilTimes.QIYAM_BEFORE_FAJR)
-            val tahajjudRaw = calculateOffsetTime(times.fajr, NawafilTimes.TAHAJJUD_BEFORE_FAJR)
-            val witrRaw = calculateOffsetTime(times.isha, NawafilTimes.WITR_AFTER_ISHA)
+            // The four times come from the same night division the home screen and alarms use.
+            val nawafil = NawafilTimes.schedule(times)
+            val duhaRaw = nawafil?.duha ?: "--:--"
+            val qiyamRaw = nawafil?.qiyam ?: "--:--"
+            val tahajjudRaw = nawafil?.tahajjud ?: "--:--"
+            val witrRaw = nawafil?.witr ?: "--:--"
 
             val is24Hour = android.text.format.DateFormat.is24HourFormat(context)
 
