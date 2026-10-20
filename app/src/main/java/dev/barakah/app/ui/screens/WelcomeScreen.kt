@@ -1,7 +1,5 @@
 package dev.barakah.app.ui.screens
 
-import androidx.compose.foundation.horizontalScroll
-import dev.barakah.app.data.UiLanguages
 import dev.barakah.app.data.UiStrings
 
 import androidx.compose.foundation.background
@@ -27,7 +25,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.text.KeyboardOptions
@@ -139,22 +136,11 @@ fun LanguageStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(if (isShortScreen) 16.dp else 32.dp))
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(androidx.compose.foundation.rememberScrollState())
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            UiLanguages.all.forEach { language ->
-                LanguageCard(
-                    label = language.nativeName,
-                    isSelected = currentLang == language.tag,
-                    onClick = { viewModel.setAppLanguage(language.tag) },
-                    modifier = Modifier.width(140.dp)
-                )
-            }
-        }
+        AppLanguagePicker(
+            selectedTag = currentLang,
+            isAr = currentLang == "ar",
+            onSelect = { viewModel.setAppLanguage(it) }
+        )
 
         if (isShortScreen) {
             Spacer(modifier = Modifier.height(24.dp))
@@ -181,38 +167,6 @@ fun LanguageStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
             )
             Spacer(modifier = Modifier.width(8.dp))
             Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
-        }
-    }
-}
-
-@Composable
-fun LanguageCard(
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    OutlinedCard(
-        onClick = onClick,
-        modifier = modifier.height(100.dp),
-        colors = CardDefaults.outlinedCardColors(
-            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
-        ),
-        border = CardDefaults.outlinedCardBorder(isSelected).let { border ->
-            if (isSelected) {
-                border.copy(brush = Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)))
-            } else {
-                border
-            }
-        }
-    ) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(
-                text = label, 
-                fontWeight = FontWeight.Bold, 
-                fontSize = 20.sp,
-                color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onBackground
-            )
         }
     }
 }
