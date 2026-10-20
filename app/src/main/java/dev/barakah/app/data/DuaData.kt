@@ -199,7 +199,7 @@ object DuaData {
                     }
 
                     if (match != null) {
-                        englishByArabic[match.second] = enDua.translation
+                        englishByArabic[normalizeArabic(match.arabic)] = enDua.translation
                     }
 
                     if (match != null && match.targetCount > 1) {

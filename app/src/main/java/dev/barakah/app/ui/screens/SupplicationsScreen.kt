@@ -558,9 +558,9 @@ fun SupplicationsScreen(
                                                 dua.arabic
                                             )
                                         }
+                                        val translatedText = selectedTranslation ?: englishText
                                         val translationFallback = duaTranslationLanguage.isNotEmpty() &&
                                                 translatedText.isBlank()
-                                        val translatedText = selectedTranslation ?: englishText
                                         val translationRtl = duaTranslationLanguage == "fa" ||
                                                 duaTranslationLanguage == "ckb" ||
                                                 duaTranslationLanguage == "ur"
