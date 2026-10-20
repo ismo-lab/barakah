@@ -67,8 +67,10 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     private val _isFirstRun = MutableStateFlow(prefs.getBoolean(AppPrefs.IS_FIRST_RUN, true))
     val isFirstRun: StateFlow<Boolean> = _isFirstRun
 
-    // Language state: "ar" or "en"
-    private val _appLanguage = MutableStateFlow(prefs.getString(AppPrefs.APP_LANG, "ar") ?: "ar")
+    // Language state. First launch follows the device locale; unsupported locales use Arabic.
+    private val _appLanguage = MutableStateFlow(
+        prefs.getString(AppPrefs.APP_LANG, null) ?: UiLanguages.forDeviceLocale()
+    )
     val appLanguage: StateFlow<String> = _appLanguage
 
     // Religious text languages. Empty means "show no translation". Until the reader explicitly
@@ -480,9 +482,9 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             Log.e(TAG, "Unable to watch for location services being switched on or off", e)
         }
 
-        // Guarantee app default language is arabic when first open
+        // Persist the device-derived first-launch language. A later explicit pick overwrites it.
         if (!prefs.contains(AppPrefs.APP_LANG)) {
-            prefs.edit { putString(AppPrefs.APP_LANG, "ar") }
+            prefs.edit { putString(AppPrefs.APP_LANG, _appLanguage.value) }
         }
         UiStrings.setCurrentLanguage(_appLanguage.value)
 
