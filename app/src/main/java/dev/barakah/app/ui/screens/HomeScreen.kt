@@ -1,5 +1,7 @@
 package dev.barakah.app.ui.screens
 
+import dev.barakah.app.data.UiStrings
+
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -177,7 +179,7 @@ fun HomeScreen(
             return prayerTranslations[clean] ?: clean
         }
         // In English, remove (Nafilah) suffix as the UI badge handles it
-        return clean.replace("(Nafilah)", "").trim()
+        return UiStrings.of(clean.replace("(Nafilah)", "").trim())
     }
 
     val subtitleTranslations = mapOf(
@@ -315,7 +317,7 @@ fun HomeScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Place,
-                            contentDescription = if (isAr) "الموقع الحالي" else "Current location",
+                            contentDescription = if (isAr) "الموقع الحالي" else UiStrings.of("Current location"),
                             tint = MaterialTheme.colorScheme.secondary,
                             modifier = Modifier.size(16.dp)
                         )
@@ -359,7 +361,7 @@ fun HomeScreen(
                         text = (if (isAr) {
                             "تاريخ محسوب — قد يختلف بيوم، ويمكن ضبطه من الإعدادات."
                         } else {
-                            "Calculated — may differ by a day; adjustable in Settings."
+                            UiStrings.of("Calculated — may differ by a day; adjustable in Settings.")
                         }).localize(isAr, useWesternNumbersInArabic),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
@@ -380,7 +382,7 @@ fun HomeScreen(
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = Icons.Default.Settings,
-                            contentDescription = if (isAr) "الإعدادات" else "Settings",
+                            contentDescription = if (isAr) "الإعدادات" else UiStrings.of("Settings"),
                             tint = MaterialTheme.colorScheme.onSecondaryContainer,
                             modifier = Modifier.size(24.dp)
                         )
@@ -534,7 +536,7 @@ fun HomeScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = if (isAr) "حديث شريف" else "Hadith of the Day",
+                        text = if (isAr) "حديث شريف" else UiStrings.of("Hadith of the Day"),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.secondary,
                         fontWeight = FontWeight.Bold,
@@ -572,7 +574,7 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = if (isAr) "مواقيت الصلاة" else "Prayer Schedule",
+                    text = if (isAr) "مواقيت الصلاة" else UiStrings.of("Prayer Schedule"),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
@@ -650,7 +652,7 @@ fun HomeScreen(
                                         .padding(horizontal = 6.dp, vertical = 2.dp)
                                 ) {
                                     Text(
-                                        text = if (isAr) "نافلة" else "Nafilah",
+                                        text = if (isAr) "نافلة" else UiStrings.of("Nafilah"),
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onSecondaryContainer
@@ -793,7 +795,7 @@ fun HomeScreen(
                         ) {
                             Icon(
                                 imageVector = if (isAlertEnabled) Icons.Outlined.NotificationsActive else Icons.Outlined.Notifications,
-                                contentDescription = "Toggle alert for $name",
+                                contentDescription = UiStrings.format("Toggle alert for %s", name),
                                 tint = if (isCurrent) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                                 modifier = Modifier.size(22.dp)
                             )
@@ -833,7 +835,7 @@ data class Quadruple<A, B, C, D>(
 fun DailyEssentialsSection(navController: androidx.navigation.NavController, viewModel: BarakahViewModel, isAr: Boolean) {
     Column(modifier = Modifier.padding(vertical = 4.dp, horizontal = 4.dp)) {
         Text(
-            text = if (isAr) "أذكار اليوم" else "Daily Essentials",
+            text = if (isAr) "أذكار اليوم" else UiStrings.of("Daily Essentials"),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
@@ -844,8 +846,8 @@ fun DailyEssentialsSection(navController: androidx.navigation.NavController, vie
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            val morningCat = if (isAr) "أَذْكَارُ الصَّبَاحِ" else "In the morning and evening"
-            val eveningCat = if (isAr) "أَذْكَارُ المَسَاءِ" else "In the morning and evening"
+            val morningCat = if (isAr) "أَذْكَارُ الصَّبَاحِ" else UiStrings.of("In the morning and evening")
+            val eveningCat = if (isAr) "أَذْكَارُ المَسَاءِ" else UiStrings.of("In the morning and evening")
             
             // Morning Card
             Card(
@@ -864,10 +866,10 @@ fun DailyEssentialsSection(navController: androidx.navigation.NavController, vie
                 )
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Icon(Icons.Default.WbSunny, contentDescription = if (isAr) "أذكار الصباح" else "Morning Adhkar", tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(28.dp))
+                    Icon(Icons.Default.WbSunny, contentDescription = if (isAr) "أذكار الصباح" else UiStrings.of("Morning Adhkar"), tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(28.dp))
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = if (isAr) "أذكار الصباح" else "Morning Adhkar",
+                        text = if (isAr) "أذكار الصباح" else UiStrings.of("Morning Adhkar"),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -892,10 +894,10 @@ fun DailyEssentialsSection(navController: androidx.navigation.NavController, vie
                 )
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Icon(Icons.Default.NightsStay, contentDescription = if (isAr) "أذكار المساء" else "Evening Adhkar", tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(28.dp))
+                    Icon(Icons.Default.NightsStay, contentDescription = if (isAr) "أذكار المساء" else UiStrings.of("Evening Adhkar"), tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(28.dp))
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = if (isAr) "أذكار المساء" else "Evening Adhkar",
+                        text = if (isAr) "أذكار المساء" else UiStrings.of("Evening Adhkar"),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -910,7 +912,7 @@ fun DailyEssentialsSection(navController: androidx.navigation.NavController, vie
 fun ExploreMoreSection(navController: androidx.navigation.NavController, isAr: Boolean) {
     Column(modifier = Modifier.padding(vertical = 4.dp, horizontal = 4.dp)) {
         Text(
-            text = if (isAr) "استكشف المزيد" else "Explore More",
+            text = if (isAr) "استكشف المزيد" else UiStrings.of("Explore More"),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
@@ -950,7 +952,7 @@ fun ExploreMoreSection(navController: androidx.navigation.NavController, isAr: B
                     ) {
                         Icon(
                             imageVector = Icons.Default.Widgets,
-                            contentDescription = if (isAr) "أيقونة أخرى" else "Others icon",
+                            contentDescription = if (isAr) "أيقونة أخرى" else UiStrings.of("Others icon"),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
@@ -958,13 +960,13 @@ fun ExploreMoreSection(navController: androidx.navigation.NavController, isAr: B
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
                         Text(
-                            text = if (isAr) "أخرى" else "Others",
+                            text = if (isAr) "أخرى" else UiStrings.of("Others"),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = if (isAr) "أسماء الله الحسنى والمناسبات الإسلامية" else "Allah's Names & Islamic Occasions",
+                            text = if (isAr) "أسماء الله الحسنى والمناسبات الإسلامية" else UiStrings.of("Allah's Names & Islamic Occasions"),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -972,7 +974,7 @@ fun ExploreMoreSection(navController: androidx.navigation.NavController, isAr: B
                 }
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = if (isAr) "عرض المزيد" else "View more",
+                    contentDescription = if (isAr) "عرض المزيد" else UiStrings.of("View more"),
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
@@ -992,9 +994,12 @@ fun CountdownCardView(
     val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsStateWithLifecycle()
 
     val labelText = if (!isLocationSet) {
-        if (isAr) "الصلاة القادمة: --" else "NEXT: --"
+        if (isAr) "الصلاة القادمة: --" else UiStrings.of("NEXT: --")
     } else {
-        if (isAr) "الصلاة القادمة: ${translatePrayer(nextPrayerName)}" else "NEXT: $nextPrayerName".uppercase()
+        if (isAr) "الصلاة القادمة: ${translatePrayer(nextPrayerName)}" else
+            UiStrings.format("NEXT: %s", translatePrayer(nextPrayerName)).let {
+                if (UiStrings.language == "en") it.uppercase() else it
+            }
     }
 
     val countdownText = remember(countdown, isAr, useWesternNumbersInArabic, isLocationSet) {
@@ -1105,9 +1110,9 @@ fun AdhkarOffsetSelector(
 ) {
     val offsets = listOf(0, 15, 30, 45, 60, 90, 120)
     val labelBase = if (isMorning) {
-        if (isAr) "بعد الفجر بـ" else "after Fajr"
+        if (isAr) "بعد الفجر بـ" else UiStrings.of("after Fajr")
     } else {
-        if (isAr) "بعد العصر بـ" else "after Asr"
+        if (isAr) "بعد العصر بـ" else UiStrings.of("after Asr")
     }
 
     Column(
@@ -1119,7 +1124,7 @@ fun AdhkarOffsetSelector(
             text = if (isAr) {
                 if (currentOffset == 0) "وقت التنبيه: عند الأذان مباشرة" else "وقت التنبيه: $labelBase ${currentOffset.toString().localize(true, useWesternNumbersInArabic)} دقيقة"
             } else {
-                if (currentOffset == 0) "Reminder Time: Exactly at Adhan" else "Reminder Time: $currentOffset mins $labelBase"
+                if (currentOffset == 0) UiStrings.of("Reminder Time: Exactly at Adhan") else UiStrings.format("Reminder Time: %s mins %s", currentOffset, labelBase)
             },
             style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.SemiBold,
@@ -1135,11 +1140,11 @@ fun AdhkarOffsetSelector(
             items(offsets) { offset ->
                 val isSelected = currentOffset == offset
                 val chipText = if (offset == 0) {
-                    if (isAr) "عند الأذان" else "At Adhan"
+                    if (isAr) "عند الأذان" else UiStrings.of("At Adhan")
                 } else if (offset == 30) {
-                    if (isAr) "${30.localize(true, useWesternNumbersInArabic)} د (افتراضي)" else "30m (Default)"
+                    if (isAr) "${30.localize(true, useWesternNumbersInArabic)} د (افتراضي)" else UiStrings.of("30m (Default)")
                 } else {
-                    if (isAr) "${offset.toString().localize(true, useWesternNumbersInArabic)} د" else "${offset}m"
+                    if (isAr) "${offset.toString().localize(true, useWesternNumbersInArabic)} د" else UiStrings.format("%s m", offset)
                 }
 
                 Surface(

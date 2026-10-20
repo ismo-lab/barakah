@@ -1,5 +1,7 @@
 package dev.barakah.app.widget
 
+import dev.barakah.app.data.UiStrings
+
 import dev.barakah.app.util.ClockTime
 import dev.barakah.app.util.PrayerCalculator
 import dev.barakah.app.util.localize
@@ -78,17 +80,17 @@ object NextPrayerCountdown {
         return if (isArabic) {
             "متبقي $hours ساعة و $minutes دقيقة"
         } else {
-            "Starts in $hours hr $minutes min"
+            UiStrings.format("Starts in %s hr %s min", hours, minutes)
         }
     }
 
     /** The countdown line before a location has been chosen. */
     fun describeWithoutLocation(isArabic: Boolean): String =
-        if (isArabic) "متبقي --" else "Starts in --"
+        if (isArabic) "متبقي --" else UiStrings.of("Starts in --")
 
     /** The prayer name in the user's language; anything unknown is passed through. */
     fun displayName(name: String, isArabic: Boolean): String {
-        if (!isArabic) return name
+        if (!isArabic) return UiStrings.of(name)
         return when (name) {
             "Fajr" -> "الفجر"
             "Sunrise" -> "الشروق"

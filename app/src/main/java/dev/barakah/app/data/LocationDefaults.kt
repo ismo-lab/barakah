@@ -24,10 +24,12 @@ object LocationDefaults {
 
     /** The label a location gets when nothing has been chosen, in the app's language. */
     fun unsetLabel(isArabic: Boolean): String =
-        if (isArabic) "الموقع غير محدد" else "No Location Selected"
+        if (isArabic) "الموقع غير محدد" else UiStrings.of("No Location Selected")
 
     /** True for the default coordinates, the "unset" texts, and anything empty. */
-    fun isPlaceholder(label: String?): Boolean = label.isNullOrEmpty() || label in placeholderLabels
+    fun isPlaceholder(label: String?): Boolean =
+        label.isNullOrEmpty() || label in placeholderLabels ||
+            label == UiStrings.of("No Location Selected")
 
     fun isSet(label: String?): Boolean = !isPlaceholder(label)
 }

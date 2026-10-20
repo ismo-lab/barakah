@@ -1,5 +1,7 @@
 package dev.barakah.app.ui.screens
 
+import dev.barakah.app.data.UiStrings
+
 import androidx.activity.compose.BackHandler
 import android.content.Context
 import android.os.Build
@@ -53,6 +55,7 @@ fun SupplicationsScreen(
     val filteredDuas by viewModel.filteredDuas.collectAsStateWithLifecycle()
     val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
     val isAr = appLanguage == "ar"
+    val duaTranslationLanguage by viewModel.duaTranslationLanguage.collectAsStateWithLifecycle()
     val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
@@ -63,7 +66,7 @@ fun SupplicationsScreen(
 
     val categoryList = remember(isAr, dev.barakah.app.data.DuaData.duasAr.isNotEmpty(), dev.barakah.app.data.DuaData.duasEn.isNotEmpty()) {
         val list = mutableListOf<String>()
-        list.add(if (isAr) "الأذكار المحفوظة" else "Bookmarks")
+        list.add(if (isAr) "الأذكار المحفوظة" else UiStrings.of("Bookmarks"))
         val currentList = if (isAr) dev.barakah.app.data.DuaData.duasAr else dev.barakah.app.data.DuaData.duasEn
         list.addAll(currentList.map { if (isAr) it.categoryAr else it.categoryEn }.distinct())
         list
@@ -158,7 +161,7 @@ fun SupplicationsScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = if (isAr) "حصن المسلم" else "Hisnul Muslim",
+                        text = if (isAr) "حصن المسلم" else UiStrings.of("Hisnul Muslim"),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.onPrimary,
@@ -170,17 +173,17 @@ fun SupplicationsScreen(
                         onValueChange = { viewModel.updateDuaSearch(it) },
                         placeholder = { 
                             Text(
-                                text = if (isAr) "ابحث..." else "Search...",
+                                text = if (isAr) "ابحث..." else UiStrings.of("Search..."),
                                 style = MaterialTheme.typography.bodyMedium,
                                 maxLines = 1,
                                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                             ) 
                         },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = if (isAr) "بحث" else "Search icon", tint = MaterialTheme.colorScheme.primary) },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = if (isAr) "بحث" else UiStrings.of("Search icon"), tint = MaterialTheme.colorScheme.primary) },
                         trailingIcon = {
                             if (searchPattern.isNotEmpty()) {
                                 IconButton(onClick = { viewModel.updateDuaSearch("") }) {
-                                    Icon(Icons.Default.Clear, contentDescription = "Clear search", tint = MaterialTheme.colorScheme.outline)
+                                    Icon(Icons.Default.Clear, contentDescription = UiStrings.of("Clear search"), tint = MaterialTheme.colorScheme.outline)
                                 }
                             }
                         },
@@ -208,7 +211,7 @@ fun SupplicationsScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                contentDescription = if (isAr) "الرجوع إلى الأقسام" else "Back to categories",
+                                contentDescription = if (isAr) "الرجوع إلى الأقسام" else UiStrings.of("Back to categories"),
                                 tint = MaterialTheme.colorScheme.onPrimary
                             )
                         }
@@ -221,7 +224,7 @@ fun SupplicationsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = if (isAr) "حصن المسلم" else "Hisnul Muslim",
+                            text = if (isAr) "حصن المسلم" else UiStrings.of("Hisnul Muslim"),
                             style = if (denseHeader) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineLarge,
                             fontWeight = FontWeight.ExtraBold,
                             color = MaterialTheme.colorScheme.onPrimary,
@@ -237,7 +240,7 @@ fun SupplicationsScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                    contentDescription = if (isAr) "الرجوع إلى الأقسام" else "Back to categories",
+                                    contentDescription = if (isAr) "الرجوع إلى الأقسام" else UiStrings.of("Back to categories"),
                                     tint = MaterialTheme.colorScheme.onPrimary
                                 )
                             }
@@ -246,7 +249,7 @@ fun SupplicationsScreen(
                     
                     if (!denseHeader) {
                         Text(
-                            text = if (isAr) "الأدعية والأذكار اليومية الصحيحة" else "Authentic daily supplications",
+                            text = if (isAr) "الأدعية والأذكار اليومية الصحيحة" else UiStrings.of("Authentic daily supplications"),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.82f)
                         )
@@ -261,17 +264,17 @@ fun SupplicationsScreen(
                         onValueChange = { viewModel.updateDuaSearch(it) },
                         placeholder = { 
                             Text(
-                                text = if (isAr) "ابحث في عنوان الذكر أو النص..." else "Search title, keywords...",
+                                text = if (isAr) "ابحث في عنوان الذكر أو النص..." else UiStrings.of("Search title, keywords..."),
                                 style = MaterialTheme.typography.bodyLarge,
                                 maxLines = 1,
                                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                             ) 
                         },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = if (isAr) "بحث" else "Search icon", tint = MaterialTheme.colorScheme.primary) },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = if (isAr) "بحث" else UiStrings.of("Search icon"), tint = MaterialTheme.colorScheme.primary) },
                         trailingIcon = {
                             if (searchPattern.isNotEmpty()) {
                                 IconButton(onClick = { viewModel.updateDuaSearch("") }) {
-                                    Icon(Icons.Default.Clear, contentDescription = "Clear search", tint = MaterialTheme.colorScheme.outline)
+                                    Icon(Icons.Default.Clear, contentDescription = UiStrings.of("Clear search"), tint = MaterialTheme.colorScheme.outline)
                                 }
                             }
                         },
@@ -293,7 +296,33 @@ fun SupplicationsScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
+
+        ReligiousTextLanguagePicker(
+            labelEn = "Supplication language",
+            labelAr = "لغة الدعاء",
+            selectedTag = duaTranslationLanguage,
+            options = dev.barakah.app.data.ReligiousTextLanguages.duaOptions(),
+            isAr = isAr,
+            onSelect = { viewModel.setDuaTranslationLanguage(it) },
+            modifier = Modifier.padding(horizontal = 8.dp)
+        )
+
+        if (duaTranslationLanguage == "ru" ||
+            duaTranslationLanguage == "fa" ||
+            duaTranslationLanguage == "ckb"
+        ) {
+            Text(
+                text = if (isAr) {
+                    "الترجمة: MuslimData (Apache 2.0)"
+                } else {
+                    UiStrings.of("Translation: MuslimData (Apache-2.0)")
+                },
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+        }
 
         val twoPane = currentWindowWidth().showsTwoPanes
 
@@ -312,7 +341,7 @@ fun SupplicationsScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = if (isAr) "لا توجد تصنيفات مطابقة" else "No matching categories",
+                                    text = if (isAr) "لا توجد تصنيفات مطابقة" else UiStrings.of("No matching categories"),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.outline
                                 )
@@ -321,7 +350,7 @@ fun SupplicationsScreen(
                     } else {
                         item {
                             Text(
-                                text = if (isAr) "حدد تصنيفاً لعرض الأذكار:" else "Select a category:",
+                                text = if (isAr) "حدد تصنيفاً لعرض الأذكار:" else UiStrings.of("Select a category:"),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(bottom = 8.dp)
@@ -356,7 +385,7 @@ fun SupplicationsScreen(
                                         Box(contentAlignment = Alignment.Center) {
                                             Icon(
                                                 imageVector = icon,
-                                                contentDescription = if (isAr) "أيقونة القسم" else "Category icon",
+                                                contentDescription = if (isAr) "أيقونة القسم" else UiStrings.of("Category icon"),
                                                 tint = color,
                                                 modifier = Modifier.size(24.dp)
                                             )
@@ -375,7 +404,7 @@ fun SupplicationsScreen(
                                     
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                        contentDescription = if (isAr) "فتح القسم" else "Open category",
+                                        contentDescription = if (isAr) "فتح القسم" else UiStrings.of("Open category"),
                                         tint = MaterialTheme.colorScheme.outline
                                     )
                                 }
@@ -397,7 +426,7 @@ fun SupplicationsScreen(
                             ) {
                                 Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
                                     Text(
-                                        text = if (isAr) "عرض جميع الأذكار" else "Show All Supplications",
+                                        text = if (isAr) "عرض جميع الأذكار" else UiStrings.of("Show All Supplications"),
                                         style = MaterialTheme.typography.labelLarge,
                                         color = MaterialTheme.colorScheme.primary,
                                         fontWeight = FontWeight.Bold
@@ -420,13 +449,13 @@ fun SupplicationsScreen(
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
                             Icon(
                                 imageVector = Icons.Default.Search,
-                                contentDescription = if (isAr) "لا توجد نتائج" else "No results",
+                                contentDescription = if (isAr) "لا توجد نتائج" else UiStrings.of("No results"),
                                 modifier = Modifier.size(64.dp),
                                 tint = MaterialTheme.colorScheme.outline
                             )
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
-                                text = if (isAr) "لا توجد أذكار مطابقة" else "No Supplications found",
+                                text = if (isAr) "لا توجد أذكار مطابقة" else UiStrings.of("No Supplications found"),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -513,21 +542,69 @@ fun SupplicationsScreen(
                                             modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
                                         )
 
-                                        if (!isAr) {
-                                            Text(
-                                                text = dua.transliteration,
-                                                style = MaterialTheme.typography.bodyMedium.copy(
-                                                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
-                                                    color = MaterialTheme.colorScheme.secondary
-                                                ),
-                                                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                                        val englishText = if (dua.translation.isNotBlank()) {
+                                            dua.translation
+                                        } else {
+                                            dev.barakah.app.data.DuaData.englishTranslation(dua.arabic) ?: ""
+                                        }
+                                        val selectedTranslation = if (
+                                            duaTranslationLanguage.isEmpty() ||
+                                            duaTranslationLanguage == "en"
+                                        ) {
+                                            null
+                                        } else {
+                                            dev.barakah.app.data.DuaData.translationFor(
+                                                duaTranslationLanguage,
+                                                dua.arabic
                                             )
+                                        }
+                                        val translatedText = selectedTranslation ?: englishText
+                                        val translationFallback = duaTranslationLanguage.isNotEmpty() &&
+                                                translatedText.isBlank()
+                                        val translationRtl = duaTranslationLanguage == "fa" ||
+                                                duaTranslationLanguage == "ckb" ||
+                                                duaTranslationLanguage == "ur"
+
+                                        if (duaTranslationLanguage.isNotEmpty()) {
+                                            if (!isAr) {
+                                                Text(
+                                                    text = dua.transliteration,
+                                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                                                        color = MaterialTheme.colorScheme.secondary
+                                                    ),
+                                                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                                                )
+                                            }
                                             Text(
-                                                text = dua.translation,
+                                                text = translatedText,
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+                                                textAlign = if (translationRtl) TextAlign.Right else TextAlign.Start,
+                                                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
                                             )
+                                            if (translationFallback) {
+                                                Text(
+                                                    text = when {
+                                                        isAr && englishText.isBlank() ->
+                                                            "الترجمة غير متوفرة لهذا الدعاء."
+                                                        isAr ->
+                                                            "الترجمة غير متوفرة بهذه اللغة. يتم عرض الإنجليزية."
+                                                        englishText.isBlank() ->
+                                                            "Translation not available for this supplication."
+                                                        else ->
+                                                            "Translation not available in ${
+                                                                dev.barakah.app.data.ReligiousTextLanguages.name(
+                                                                    duaTranslationLanguage,
+                                                                    false
+                                                                )
+                                                            }. Showing English."
+                                                    },
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MaterialTheme.colorScheme.error,
+                                                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+                                                )
+                                            }
                                         }
 
                                         HorizontalDivider(
@@ -536,7 +613,7 @@ fun SupplicationsScreen(
                                         )
 
                                         Text(
-                                            text = if (isAr) "الأثر والفضل النبوي:" else "Benefit / Virtue:",
+                                            text = if (isAr) "الأثر والفضل النبوي:" else UiStrings.of("Benefit / Virtue:"),
                                             style = MaterialTheme.typography.labelMedium,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.primary,
@@ -568,7 +645,7 @@ fun SupplicationsScreen(
                                         ) {
                                             Column {
                                                 Text(
-                                                    text = if (isAr) "التكرار المطلوب" else "Target Count",
+                                                    text = if (isAr) "التكرار المطلوب" else UiStrings.of("Target Count"),
                                                     style = MaterialTheme.typography.labelSmall,
                                                     color = MaterialTheme.colorScheme.outline
                                                 )
@@ -576,7 +653,7 @@ fun SupplicationsScreen(
                                                     text = if (isAr) {
                                                         "${dua.targetCount} مرات".localize(true, useWesternNumbersInArabic)
                                                     } else {
-                                                        "${dua.targetCount} times"
+                                                        UiStrings.format("%s times", dua.targetCount)
                                                     },
                                                     style = MaterialTheme.typography.titleMedium,
                                                     fontWeight = FontWeight.Bold,
@@ -598,7 +675,7 @@ fun SupplicationsScreen(
                                                     ) {
                                                         Icon(
                                                             imageVector = Icons.Default.Refresh,
-                                                            contentDescription = if (isAr) "إعادة تعيين العداد" else "Reset Count",
+                                                            contentDescription = if (isAr) "إعادة تعيين العداد" else UiStrings.of("Reset Count"),
                                                             tint = MaterialTheme.colorScheme.outline,
                                                             modifier = Modifier.size(18.dp)
                                                         )
@@ -618,7 +695,7 @@ fun SupplicationsScreen(
                                                 ) {
                                                     Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                                                         if (isDone) {
-                                                            Icon(imageVector = Icons.Default.Done, contentDescription = if (isAr) "مكتمل" else "Completed", modifier = Modifier.size(24.dp))
+                                                            Icon(imageVector = Icons.Default.Done, contentDescription = if (isAr) "مكتمل" else UiStrings.of("Completed"), modifier = Modifier.size(24.dp))
                                                         } else {
                                                             val rawText = "$currentCount/${dua.targetCount}"
                                                             Text(
@@ -699,7 +776,7 @@ private fun DuaPanePlaceholder(
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = if (isAr) "اختر تصنيفاً من القائمة" else "Choose a category from the list",
+                text = if (isAr) "اختر تصنيفاً من القائمة" else UiStrings.of("Choose a category from the list"),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center

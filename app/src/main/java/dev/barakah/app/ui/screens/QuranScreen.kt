@@ -1,5 +1,7 @@
 package dev.barakah.app.ui.screens
 
+import dev.barakah.app.data.UiStrings
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
@@ -40,6 +42,7 @@ import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.barakah.app.data.QuranData
+import dev.barakah.app.data.ReligiousTextLanguages
 import dev.barakah.app.R
 import dev.barakah.app.util.PrayerCalculator
 import dev.barakah.app.data.Surah
@@ -49,6 +52,14 @@ import dev.barakah.app.ui.theme.quranFontFamilyFor
 import dev.barakah.app.ui.theme.quranLineHeightFor
 import dev.barakah.app.util.localize
 import kotlinx.coroutines.launch
+
+private data class TafseerDialogState(
+    val surahId: Int,
+    val verse: dev.barakah.app.data.Verse,
+    val text: String,
+    val usedEnglishFallback: Boolean,
+    val language: String
+)
 
 @OptIn(ExperimentalAnimationApi::class, ExperimentalFoundationApi::class)
 @Composable
@@ -69,7 +80,7 @@ fun QuranScreen(
     val selectedSurahForReading: Surah? = selectedSurahId?.let { QuranData.getSurahById(it) }
     
     // Dialog for individual verse Tafseer
-    var showVerseTafseerDialog by remember { mutableStateOf<Pair<dev.barakah.app.data.Verse, String>?>(null) }
+    var showVerseTafseerDialog by remember { mutableStateOf<TafseerDialogState?>(null) }
     
     BackHandler(enabled = selectedSurahForReading != null) {
         selectedSurahId = null
@@ -88,6 +99,8 @@ fun QuranScreen(
     val quranLineHeight = quranLineHeightFor(quranFont)
     val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
     val isAr = appLanguage == "ar"
+    val quranTranslationLanguage by viewModel.quranTranslationLanguage.collectAsStateWithLifecycle()
+    val tafsirLanguage by viewModel.tafsirLanguage.collectAsStateWithLifecycle()
     val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsStateWithLifecycle()
 
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
@@ -155,14 +168,14 @@ fun QuranScreen(
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                         Icon(
                             imageVector = Icons.Outlined.Book,
-                            contentDescription = if (isAr) "أيقونة آخر قراءة" else "Last read icon",
+                            contentDescription = if (isAr) "أيقونة آخر قراءة" else UiStrings.of("Last read icon"),
                             tint = MaterialTheme.colorScheme.secondary,
                             modifier = Modifier.size(28.dp)
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = if (isAr) "آخر ما قرأت / متابعة" else "LAST READ / RESUME",
+                                text = if (isAr) "آخر ما قرأت / متابعة" else UiStrings.of("LAST READ / RESUME"),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.secondary
@@ -171,10 +184,10 @@ fun QuranScreen(
                                 text = lastReadingState?.let { 
                                     val s = QuranData.getSurahById(it.surahId)
                                     val surahName = if (isAr) s?.arabic else s?.name
-                                    val ayahLabel = if (isAr) "آية" else "Ayah"
+                                    val ayahLabel = if (isAr) "آية" else UiStrings.of("Ayah")
                                     val ayahNum = it.ayahNumber.toString()
                                     "$surahName - $ayahLabel $ayahNum".localize(isAr, useWesternNumbersInArabic)
-                                } ?: (if (isAr) "سورة الفاتحة" else "Surah Al-Fatihah"),
+                                } ?: (if (isAr) "سورة الفاتحة" else UiStrings.of("Surah Al-Fatihah")),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
@@ -182,7 +195,7 @@ fun QuranScreen(
                     }
                     Icon(
                         imageVector = Icons.Default.PlayArrow,
-                        contentDescription = if (isAr) "متابعة القراءة" else "Resume reading",
+                        contentDescription = if (isAr) "متابعة القراءة" else UiStrings.of("Resume reading"),
                         tint = MaterialTheme.colorScheme.secondary
                     )
                 }
@@ -223,7 +236,7 @@ fun QuranScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = if (isAr) "القرآن الكريم" else "The Holy Quran",
+                                text = if (isAr) "القرآن الكريم" else UiStrings.of("The Holy Quran"),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimary
@@ -232,14 +245,14 @@ fun QuranScreen(
                     } else {
                         Column {
                             Text(
-                                text = if (isAr) "القرآن الكريم" else "The Holy Quran",
+                                text = if (isAr) "القرآن الكريم" else UiStrings.of("The Holy Quran"),
                                 style = MaterialTheme.typography.headlineLarge,
                                 fontFamily = FontFamily.SansSerif,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = MaterialTheme.colorScheme.onPrimary
                             )
                             Text(
-                                text = if (isAr) "اقرأ وتدبر واجمع عظيم الأجور والبركات" else "Read, reflect, and gather countless blessings",
+                                text = if (isAr) "اقرأ وتدبر واجمع عظيم الأجور والبركات" else UiStrings.of("Read, reflect, and gather countless blessings"),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                             )
@@ -263,17 +276,17 @@ fun QuranScreen(
                             onValueChange = { searchQuery = it },
                             placeholder = { 
                                 Text(
-                                    text = if (isAr) "ابحث عن السور..." else "Search Surah...",
+                                    text = if (isAr) "ابحث عن السور..." else UiStrings.of("Search Surah..."),
                                     style = MaterialTheme.typography.bodyMedium,
                                     maxLines = 1,
                                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                 ) 
                             },
-                            leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = if (isAr) "بحث" else "Search icon") },
+                            leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = if (isAr) "بحث" else UiStrings.of("Search icon")) },
                             trailingIcon = {
                                 if (searchQuery.isNotEmpty()) {
                                     IconButton(onClick = { searchQuery = "" }) {
-                                        Icon(Icons.Default.Clear, contentDescription = if (isAr) "مسح البحث" else "Clear search")
+                                        Icon(Icons.Default.Clear, contentDescription = if (isAr) "مسح البحث" else UiStrings.of("Clear search"))
                                     }
                                 }
                             },
@@ -300,8 +313,8 @@ fun QuranScreen(
                                 .padding(2.dp)
                         ) {
                             val items = listOf(
-                                if (isAr) "كل السور" else "All Surahs",
-                                if (isAr) "المحفوظات (${bookmarks.size})" else "Bookmarks (${bookmarks.size})"
+                                if (isAr) "كل السور" else UiStrings.of("All Surahs"),
+                                if (isAr) "المحفوظات (${bookmarks.size})" else UiStrings.format("Bookmarks (%s)", bookmarks.size)
                             )
                             items.forEachIndexed { index, title ->
                                 val selected = activeFilterTab == index
@@ -337,17 +350,17 @@ fun QuranScreen(
                             onValueChange = { searchQuery = it },
                             placeholder = { 
                                 Text(
-                                    text = if (isAr) "ابحث عن اسم السورة..." else "Search Surah name, number, meaning...",
+                                    text = if (isAr) "ابحث عن اسم السورة..." else UiStrings.of("Search Surah name, number, meaning..."),
                                     style = MaterialTheme.typography.bodyLarge,
                                     maxLines = 1,
                                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                 ) 
                             },
-                            leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = if (isAr) "بحث" else "Search icon") },
+                            leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = if (isAr) "بحث" else UiStrings.of("Search icon")) },
                             trailingIcon = {
                                 if (searchQuery.isNotEmpty()) {
                                     IconButton(onClick = { searchQuery = "" }) {
-                                        Icon(Icons.Default.Clear, contentDescription = if (isAr) "مسح البحث" else "Clear search")
+                                        Icon(Icons.Default.Clear, contentDescription = if (isAr) "مسح البحث" else UiStrings.of("Clear search"))
                                     }
                                 }
                             },
@@ -375,8 +388,8 @@ fun QuranScreen(
                                 .padding(4.dp)
                         ) {
                             val items = listOf(
-                                if (isAr) "كل السور" else "All Surahs",
-                                if (isAr) "المحفوظات (${bookmarks.size})" else "Bookmarks (${bookmarks.size})"
+                                if (isAr) "كل السور" else UiStrings.of("All Surahs"),
+                                if (isAr) "المحفوظات (${bookmarks.size})" else UiStrings.format("Bookmarks (%s)", bookmarks.size)
                             )
                             items.forEachIndexed { index, title ->
                                 val selected = activeFilterTab == index
@@ -455,13 +468,13 @@ fun QuranScreen(
                                     )
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         val typeTranslated = if (surah.type == "Meccan") {
-                                            if (isAr) "مكية" else "Meccan"
+                                            if (isAr) "مكية" else UiStrings.of("Meccan")
                                         } else {
-                                            if (isAr) "مدنية" else "Medinan"
+                                            if (isAr) "مدنية" else UiStrings.of("Medinan")
                                         }
                                         val versesCountStr = surah.versesCount.toString().localize(isAr, useWesternNumbersInArabic)
                                         Text(
-                                            text = "$typeTranslated • $versesCountStr ${if (isAr) "آية" else "Verses"}",
+                                            text = "$typeTranslated • $versesCountStr ${if (isAr) "آية" else UiStrings.of("Verses")}",
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -521,12 +534,16 @@ fun QuranScreen(
             // DETAIL ACTIVE READING VIEW
             val context = androidx.compose.ui.platform.LocalContext.current
             var surahWithVerses by remember(currentSurah.id) { mutableStateOf(currentSurah) }
-            
-            LaunchedEffect(currentSurah.id) {
-                val verses = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                    QuranData.loadVersesForSurah(context, currentSurah.id)
+            var translationFallback by remember(currentSurah.id, quranTranslationLanguage) {
+                mutableStateOf(false)
+            }
+
+            LaunchedEffect(currentSurah.id, quranTranslationLanguage) {
+                val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    QuranData.loadVersesForSurah(context, currentSurah.id, quranTranslationLanguage)
                 }
-                surahWithVerses = currentSurah.copy(versesList = verses)
+                surahWithVerses = currentSurah.copy(versesList = result.verses)
+                translationFallback = result.usedEnglishFallback
             }
             
             val surah = surahWithVerses
@@ -576,7 +593,7 @@ fun QuranScreen(
                                 onClick = { selectedSurahId = null },
                                 modifier = Modifier.testTag("back_to_catalog")
                             ) {
-                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = if (isAr) "رجوع" else "Back")
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = if (isAr) "رجوع" else UiStrings.of("Back"))
                             }
                         }
                         Spacer(modifier = Modifier.width(12.dp))
@@ -604,6 +621,43 @@ fun QuranScreen(
                 }
 
                 // 3. VERSES LIST READER
+                ReligiousTextLanguagePicker(
+                    labelEn = "Quran translation",
+                    labelAr = "ترجمة القرآن",
+                    selectedTag = quranTranslationLanguage,
+                    options = ReligiousTextLanguages.quranOptions(),
+                    isAr = isAr,
+                    onSelect = { viewModel.setQuranTranslationLanguage(it) },
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+
+                if (quranTranslationLanguage.isNotEmpty()) {
+                    val translationSource = ReligiousTextLanguages
+                        .byTag(quranTranslationLanguage)
+                        ?.quranEdition
+                    if (translationSource != null) {
+                        Text(
+                            text = translationSource,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                    }
+                }
+
+                if (translationFallback) {
+                    Text(
+                        text = if (isAr) {
+                            "الترجمة غير متوفرة بهذه اللغة. يتم عرض الإنجليزية."
+                        } else {
+                            UiStrings.format("Translation not available in %s. Showing English.", ReligiousTextLanguages.name(quranTranslationLanguage, false))
+                        },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
+                    )
+                }
+
                 LazyColumn(
                     modifier = Modifier
                         .weight(1f)
@@ -647,12 +701,19 @@ fun QuranScreen(
                                         // Reading the tafseer touches a bundled asset, so the dialog is
                                         // opened from a coroutine that hops off the main thread.
                                         scope.launch {
-                                            val taf = if (isAr) {
-                                                QuranData.loadTafseer(context, surah.id, verse.index)
-                                            } else {
-                                                QuranData.loadEnglishTafseer(context, surah.id, verse.index)
-                                            }
-                                            showVerseTafseerDialog = Pair(verse, taf)
+                                            val result = QuranData.loadTafsir(
+                                                context,
+                                                surah.id,
+                                                verse.index,
+                                                tafsirLanguage
+                                            )
+                                            showVerseTafseerDialog = TafseerDialogState(
+                                                surahId = surah.id,
+                                                verse = verse,
+                                                text = result.text,
+                                                usedEnglishFallback = result.usedEnglishFallback,
+                                                language = tafsirLanguage
+                                            )
                                         }
                                     }
                                 )
@@ -702,14 +763,17 @@ fun QuranScreen(
                                     .padding(bottom = 8.dp)
                             )
 
-                            if (!isAr) {
+                            if (quranTranslationLanguage.isNotEmpty()) {
+                                val translationRtl = quranTranslationLanguage == "ur" ||
+                                        quranTranslationLanguage == "fa"
                                 Text(
                                     text = verse.english,
                                     style = androidx.compose.ui.text.TextStyle(
                                         fontSize = englishFontSize.sp,
                                         fontFamily = FontFamily.SansSerif,
                                         lineHeight = (englishFontSize * 1.35).sp,
-                                        textAlign = TextAlign.Left
+                                        textDirection = if (translationRtl) TextDirection.Rtl else TextDirection.Ltr,
+                                        textAlign = if (translationRtl) TextAlign.Right else TextAlign.Left
                                     ),
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.fillMaxWidth()
@@ -774,24 +838,29 @@ fun QuranScreen(
     }
 
     if (showVerseTafseerDialog != null) {
-        val (verse, tafseer) = showVerseTafseerDialog!!
+        val dialogState = showVerseTafseerDialog!!
+        val verse = dialogState.verse
+        val tafseer = dialogState.text
+        val tafsirRtl = !dialogState.usedEnglishFallback &&
+                (dialogState.language == "ar" || dialogState.language == "fa")
         val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
         val configuration = androidx.compose.ui.platform.LocalConfiguration.current
         val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
-        
+        val context = androidx.compose.ui.platform.LocalContext.current
+
         AlertDialog(
             onDismissRequest = { showVerseTafseerDialog = null },
             icon = {
                 Icon(
                     imageVector = Icons.Default.Info,
-                    contentDescription = if (isAr) "معلومات التفسير" else "Tafseer information",
+                    contentDescription = if (isAr) "معلومات التفسير" else UiStrings.of("Tafseer information"),
                     tint = MaterialTheme.colorScheme.primary
                 )
             },
             title = {
                 val verseNum = verse.index.toString().localize(isAr, useWesternNumbersInArabic)
                 Text(
-                    text = if (isAr) "تفسير الآية $verseNum" else "Tafseer of Ayah ${verse.index}",
+                    text = if (isAr) "تفسير الآية $verseNum" else UiStrings.format("Tafseer of Ayah %s", verse.index),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
@@ -807,6 +876,44 @@ fun QuranScreen(
                         .verticalScroll(androidx.compose.foundation.rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    ReligiousTextLanguagePicker(
+                        labelEn = "Tafsir language",
+                        labelAr = "لغة التفسير",
+                        selectedTag = dialogState.language,
+                        options = ReligiousTextLanguages.tafsirOptions(),
+                        isAr = isAr,
+                        allowNone = false,
+                        onSelect = { language ->
+                            viewModel.setTafsirLanguage(language)
+                            scope.launch {
+                                val result = QuranData.loadTafsir(
+                                    context,
+                                    dialogState.surahId,
+                                    dialogState.verse.index,
+                                    language
+                                )
+                                showVerseTafseerDialog = dialogState.copy(
+                                    text = result.text,
+                                    usedEnglishFallback = result.usedEnglishFallback,
+                                    language = language
+                                )
+                            }
+                        }
+                    )
+
+                    if (dialogState.usedEnglishFallback) {
+                        Text(
+                            text = if (isAr) {
+                                "التفسير غير متوفر بهذه اللغة. يتم عرض الإنجليزية."
+                            } else {
+                                UiStrings.format("Tafsir not available in %s. Showing English.", ReligiousTextLanguages.name(dialogState.language, false))
+                            },
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
                     Text(
                         text = verse.arabic,
                         style = androidx.compose.ui.text.TextStyle(
@@ -834,17 +941,22 @@ fun QuranScreen(
                                 style = androidx.compose.ui.text.TextStyle(
                                     fontSize = (englishFontSize + 1).sp,
                                     fontFamily = FontFamily.SansSerif,
-                                    textDirection = if (isAr) TextDirection.Rtl else TextDirection.Ltr,
-                                    textAlign = if (isAr) TextAlign.Right else TextAlign.Left,
+                                    textDirection = if (tafsirRtl) TextDirection.Rtl else TextDirection.Ltr,
+                                    textAlign = if (tafsirRtl) TextAlign.Right else TextAlign.Left,
                                     lineHeight = (englishFontSize + 7).sp
                                 )
                             )
                             Spacer(modifier = Modifier.height(8.dp))
+                            val source = if (dialogState.usedEnglishFallback) {
+                                ReligiousTextLanguages.english.tafsirSource
+                            } else {
+                                ReligiousTextLanguages.byTag(dialogState.language)?.tafsirSource
+                            } ?: "Tafsir"
                             Text(
-                                text = if (isAr) "المصدر: التفسير الميسر" else "Source: Tafsir al-Jalalayn",
+                                text = if (isAr) "المصدر: $source" else UiStrings.format("Source: %s", source),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
-                                textAlign = if (isAr) TextAlign.Right else TextAlign.Left,
+                                textAlign = if (tafsirRtl) TextAlign.Right else TextAlign.Left,
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
@@ -858,12 +970,12 @@ fun QuranScreen(
                         showVerseTafseerDialog = null
                     }
                 ) {
-                    Text(if (isAr) "نسخ التفسير" else "Copy Tafseer")
+                    Text(if (isAr) "نسخ التفسير" else UiStrings.of("Copy Tafseer"))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showVerseTafseerDialog = null }) {
-                    Text(if (isAr) "إغلاق" else "Close")
+                    Text(if (isAr) "إغلاق" else UiStrings.of("Close"))
                 }
             },
             shape = RoundedCornerShape(28.dp),
@@ -909,7 +1021,7 @@ private fun ReaderPlaceholder(
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = if (isAr) "اختر سورة من القائمة" else "Choose a surah from the list",
+                text = if (isAr) "اختر سورة من القائمة" else UiStrings.of("Choose a surah from the list"),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center

@@ -1,5 +1,8 @@
 package dev.barakah.app.ui.screens
 
+import dev.barakah.app.data.UiLanguages
+import dev.barakah.app.data.UiStrings
+
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -176,13 +179,13 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                     IconButton(onClick = { onDismiss() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = UiStrings.of("Back"),
                             tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = if (isAr) "الضبط والإعدادات" else "Settings & Preferences",
+                        text = if (isAr) "الضبط والإعدادات" else UiStrings.of("Settings & Preferences"),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
@@ -210,7 +213,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                     Icon(Icons.Default.Palette, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        text = if (isAr) "اللغة ومظهر التطبيق" else "Language & Theme",
+                                        text = if (isAr) "اللغة ومظهر التطبيق" else UiStrings.of("Language & Theme"),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary
@@ -218,46 +221,38 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                 }
 
                                 Text(
-                                    text = if (isAr) "لغة التطبيق" else "App Language",
+                                    text = if (isAr) "لغة التطبيق" else UiStrings.of("App Language"),
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.SemiBold
                                 )
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    OutlinedButton(
-                                        onClick = { viewModel.setAppLanguage("ar") },
-                                        modifier = Modifier.weight(1f),
-                                        colors = ButtonDefaults.outlinedButtonColors(
-                                            containerColor = if (currentLang == "ar") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
-                                        ),
-                                        border = androidx.compose.foundation.BorderStroke(
-                                            width = if (currentLang == "ar") 2.dp else 1.dp,
-                                            color = if (currentLang == "ar") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                                        )
-                                    ) {
-                                        Text("العربية", fontWeight = FontWeight.Bold, color = if (currentLang == "ar") MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface)
-                                    }
-                                    OutlinedButton(
-                                        onClick = { viewModel.setAppLanguage("en") },
-                                        modifier = Modifier.weight(1f),
-                                        colors = ButtonDefaults.outlinedButtonColors(
-                                            containerColor = if (currentLang == "en") MaterialTheme.colorScheme.primaryContainer else Color.Transparent
-                                        ),
-                                        border = androidx.compose.foundation.BorderStroke(
-                                            width = if (currentLang == "en") 2.dp else 1.dp,
-                                            color = if (currentLang == "en") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                                        )
-                                    ) {
-                                        Text("English", fontWeight = FontWeight.Bold, color = if (currentLang == "en") MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface)
+                                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    items(UiLanguages.all) { language ->
+                                        OutlinedButton(
+                                            onClick = { viewModel.setAppLanguage(language.tag) },
+                                            modifier = Modifier.width(120.dp),
+                                            colors = ButtonDefaults.outlinedButtonColors(
+                                                containerColor = if (currentLang == language.tag) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                                            ),
+                                            border = androidx.compose.foundation.BorderStroke(
+                                                width = if (currentLang == language.tag) 2.dp else 1.dp,
+                                                color = if (currentLang == language.tag) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                            )
+                                        ) {
+                                            Text(
+                                                text = language.nativeName,
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 12.sp,
+                                                maxLines = 2,
+                                                color = if (currentLang == language.tag) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                            )
+                                        }
                                     }
                                 }
 
                                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
 
                                 Text(
-                                    text = if (isAr) "الوضع العام" else "Dark / Light Mode",
+                                    text = if (isAr) "الوضع العام" else UiStrings.of("Dark / Light Mode"),
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -265,7 +260,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
-                                    listOf("light" to (if (isAr) "مضيء" else "Light"), "dark" to (if (isAr) "مظلم" else "Dark"), "system" to (if (isAr) "تلقائي" else "System")).forEach { (mode, flag) ->
+                                    listOf("light" to (if (isAr) "مضيء" else UiStrings.of("Light")), "dark" to (if (isAr) "مظلم" else UiStrings.of("Dark")), "system" to (if (isAr) "تلقائي" else UiStrings.of("System"))).forEach { (mode, flag) ->
                                         OutlinedButton(
                                             onClick = { viewModel.setAppTheme(mode) },
                                             modifier = Modifier.weight(1f),
@@ -289,7 +284,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text(
-                                        text = if (isAr) "مظهر AMOLED أسود بالكامل" else "AMOLED Black Theme",
+                                        text = if (isAr) "مظهر AMOLED أسود بالكامل" else UiStrings.of("AMOLED Black Theme"),
                                         style = MaterialTheme.typography.bodyMedium
                                     )
                                     Switch(
@@ -304,7 +299,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text(
-                                        text = if (isAr) "الألوان الديناميكية من النظام" else "Dynamic Device Colors",
+                                        text = if (isAr) "الألوان الديناميكية من النظام" else UiStrings.of("Dynamic Device Colors"),
                                         style = MaterialTheme.typography.bodyMedium
                                     )
                                     Switch(
@@ -332,7 +327,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                     Icon(Icons.Default.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        text = if (isAr) "التنبيهات والصلوات المستحبة" else "Notifications & Voluntary",
+                                        text = if (isAr) "التنبيهات والصلوات المستحبة" else UiStrings.of("Notifications & Voluntary"),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary
@@ -347,13 +342,13 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = if (isAr) "صوت الأذان" else "Adhan Sound",
+                                            text = if (isAr) "صوت الأذان" else UiStrings.of("Adhan Sound"),
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.onSurface
                                         )
                                         Text(
-                                            text = if (isAr) "تشغيل الأذان عند دخول وقت الصلاة" else "Play the Adhan when a prayer time begins",
+                                            text = if (isAr) "تشغيل الأذان عند دخول وقت الصلاة" else UiStrings.of("Play the Adhan when a prayer time begins"),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -376,7 +371,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                                 onClick = { viewModel.setAdhanAudioMode("full") }
                                             )
                                             Text(
-                                                text = if (isAr) "الأذان كاملًا" else "Full Adhan",
+                                                text = if (isAr) "الأذان كاملًا" else UiStrings.of("Full Adhan"),
                                                 style = MaterialTheme.typography.bodyMedium
                                             )
                                         }
@@ -389,13 +384,13 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                                 onClick = { viewModel.setAdhanAudioMode("short") }
                                             )
                                             Text(
-                                                text = if (isAr) "أول ١٥ ثانية فقط" else "First 15 seconds",
+                                                text = if (isAr) "أول ١٥ ثانية فقط" else UiStrings.of("First 15 seconds"),
                                                 style = MaterialTheme.typography.bodyMedium
                                             )
                                         }
 
                                         Text(
-                                            text = if (isAr) "مستوى الصوت المتحكّم به" else "Volume controlled by",
+                                            text = if (isAr) "مستوى الصوت المتحكّم به" else UiStrings.of("Volume controlled by"),
                                             style = MaterialTheme.typography.labelMedium,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -411,11 +406,11 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                             )
                                             Column {
                                                 Text(
-                                                    text = if (isAr) "صوت التنبيهات (موصى به)" else "Notification volume (recommended)",
+                                                    text = if (isAr) "صوت التنبيهات (موصى به)" else UiStrings.of("Notification volume (recommended)"),
                                                     style = MaterialTheme.typography.bodyMedium
                                                 )
                                                 Text(
-                                                    text = if (isAr) "يُكتم في الوضع الصامت وعدم الإزعاج" else "Muted in silent mode and Do Not Disturb",
+                                                    text = if (isAr) "يُكتم في الوضع الصامت وعدم الإزعاج" else UiStrings.of("Muted in silent mode and Do Not Disturb"),
                                                     style = MaterialTheme.typography.bodySmall,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
@@ -431,11 +426,11 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                             )
                                             Column {
                                                 Text(
-                                                    text = if (isAr) "صوت المنبّه" else "Alarm volume",
+                                                    text = if (isAr) "صوت المنبّه" else UiStrings.of("Alarm volume"),
                                                     style = MaterialTheme.typography.bodyMedium
                                                 )
                                                 Text(
-                                                    text = if (isAr) "يعمل حتى في الوضع الصامت وعدم الإزعاج" else "Plays even in silent mode and Do Not Disturb",
+                                                    text = if (isAr) "يعمل حتى في الوضع الصامت وعدم الإزعاج" else UiStrings.of("Plays even in silent mode and Do Not Disturb"),
                                                     style = MaterialTheme.typography.bodySmall,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
@@ -453,13 +448,13 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = if (isAr) "عرض النوافل وقيام الليل" else "Show Voluntary Prayers",
+                                            text = if (isAr) "عرض النوافل وقيام الليل" else UiStrings.of("Show Voluntary Prayers"),
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.onSurface
                                         )
                                         Text(
-                                            text = if (isAr) "تضمين الضحى وقيام الليل والوتر والتهجد لجدول الصلوات" else "Include Duha, Qiyam-ul-Layl, Witr & Tahajjud in schedule",
+                                            text = if (isAr) "تضمين الضحى وقيام الليل والوتر والتهجد لجدول الصلوات" else UiStrings.of("Include Duha, Qiyam-ul-Layl, Witr & Tahajjud in schedule"),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -480,13 +475,13 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                     ) {
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(
-                                                text = if (isAr) "تنبيهات صلوات النوافل" else "Nawafil Notifications",
+                                                text = if (isAr) "تنبيهات صلوات النوافل" else UiStrings.of("Nawafil Notifications"),
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 fontWeight = FontWeight.Bold,
                                                 color = MaterialTheme.colorScheme.onSurface
                                             )
                                             Text(
-                                                text = if (isAr) "تنبيهات للضحى والوتر والتهجد وقيام الليل" else "Notifications for Duha, Witr, Tahajjud & Qiyam-ul-Layl",
+                                                text = if (isAr) "تنبيهات للضحى والوتر والتهجد وقيام الليل" else UiStrings.of("Notifications for Duha, Witr, Tahajjud & Qiyam-ul-Layl"),
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -508,13 +503,13 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = if (isAr) "تنبيهات أذكار الصباح" else "Morning Adhkar Notifications",
+                                            text = if (isAr) "تنبيهات أذكار الصباح" else UiStrings.of("Morning Adhkar Notifications"),
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.onSurface
                                         )
                                         Text(
-                                            text = if (isAr) "تنبيه يومي لقراءة أذكار الصباح" else "Daily reminder to recite Morning Adhkar",
+                                            text = if (isAr) "تنبيه يومي لقراءة أذكار الصباح" else UiStrings.of("Daily reminder to recite Morning Adhkar"),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -546,13 +541,13 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = if (isAr) "تنبيهات أذكار المساء" else "Evening Adhkar Notifications",
+                                            text = if (isAr) "تنبيهات أذكار المساء" else UiStrings.of("Evening Adhkar Notifications"),
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.onSurface
                                         )
                                         Text(
-                                            text = if (isAr) "تنبيه يومي لقراءة أذكار المساء" else "Daily reminder to recite Evening Adhkar",
+                                            text = if (isAr) "تنبيه يومي لقراءة أذكار المساء" else UiStrings.of("Daily reminder to recite Evening Adhkar"),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -584,13 +579,13 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = (if (isAr) "تنبيه قبل الأذان بـ ١٥ دقيقة" else "Pre-Adhan Reminders").localize(isAr, useWesternNumbersInArabic),
+                                            text = (if (isAr) "تنبيه قبل الأذان بـ ١٥ دقيقة" else UiStrings.of("Pre-Adhan Reminders")).localize(isAr, useWesternNumbersInArabic),
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.onSurface
                                         )
                                         Text(
-                                            text = (if (isAr) "تنبيه تمهيدي قبل أذان كل صلاة مفروضة بـ ١٥ دقيقة للاستعداد" else "Notify 15 minutes before every fard prayer time to prepare").localize(isAr, useWesternNumbersInArabic),
+                                            text = (if (isAr) "تنبيه تمهيدي قبل أذان كل صلاة مفروضة بـ ١٥ دقيقة للاستعداد" else UiStrings.of("Notify 15 minutes before every fard prayer time to prepare")).localize(isAr, useWesternNumbersInArabic),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -611,13 +606,13 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = if (isAr) "تنبيهات الأعياد والمناسبات" else "Eid & Occasion Alerts",
+                                            text = if (isAr) "تنبيهات الأعياد والمناسبات" else UiStrings.of("Eid & Occasion Alerts"),
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.onSurface
                                         )
                                         Text(
-                                            text = if (isAr) "تذكير بالمناسبات والأعياد الإسلامية قبل حلولها بليلة" else "Receive notifications of key Islamic calendar events a day before",
+                                            text = if (isAr) "تذكير بالمناسبات والأعياد الإسلامية قبل حلولها بليلة" else UiStrings.of("Receive notifications of key Islamic calendar events a day before"),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -638,13 +633,13 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = if (isAr) "تنبيه صيام الإثنين والخميس" else "Fast Reminders (Mon/Thu)",
+                                            text = if (isAr) "تنبيه صيام الإثنين والخميس" else UiStrings.of("Fast Reminders (Mon/Thu)"),
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.onSurface
                                         )
                                         Text(
-                                            text = if (isAr) "تنبيه لصيام يومي الإثنين والخميس قبل حلولها بليلة" else "Receive reminders to fast on Sunnah Mondays and Thursdays a day before",
+                                            text = if (isAr) "تنبيه لصيام يومي الإثنين والخميس قبل حلولها بليلة" else UiStrings.of("Receive reminders to fast on Sunnah Mondays and Thursdays a day before"),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -665,13 +660,13 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = if (isAr) "تنبيه يوم الجمعة المبارك" else "Friday Jumu'ah Reminder",
+                                            text = if (isAr) "تنبيه يوم الجمعة المبارك" else UiStrings.of("Friday Jumu'ah Reminder"),
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.onSurface
                                         )
                                         Text(
-                                            text = if (isAr) "تنبيه خاص لصلاة الجمعة وقراءة سورة الكهف والصلاة على النبي" else "Special notification for Friday prayer, reciting Surah Al-Kahf & Salawat",
+                                            text = if (isAr) "تنبيه خاص لصلاة الجمعة وقراءة سورة الكهف والصلاة على النبي" else UiStrings.of("Special notification for Friday prayer, reciting Surah Al-Kahf & Salawat"),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -692,13 +687,13 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = if (isAr) "تنبيه السحور" else "Suhur Reminder",
+                                            text = if (isAr) "تنبيه السحور" else UiStrings.of("Suhur Reminder"),
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.onSurface
                                         )
                                         Text(
-                                            text = if (isAr) "تنبيه بوقت السحور قبل أذان الفجر" else "Special notification for Suhur before Fajr",
+                                            text = if (isAr) "تنبيه بوقت السحور قبل أذان الفجر" else UiStrings.of("Special notification for Suhur before Fajr"),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -719,13 +714,13 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = if (isAr) "تنبيه الإفطار" else "Iftar Reminder",
+                                            text = if (isAr) "تنبيه الإفطار" else UiStrings.of("Iftar Reminder"),
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.onSurface
                                         )
                                         Text(
-                                            text = if (isAr) "تنبيه بوقت الإفطار عند أذان المغرب" else "Special notification for Iftar at Maghrib",
+                                            text = if (isAr) "تنبيه بوقت الإفطار عند أذان المغرب" else UiStrings.of("Special notification for Iftar at Maghrib"),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -746,13 +741,13 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = if (isAr) "الاهتزاز واللمس" else "Global Haptic Feedback",
+                                            text = if (isAr) "الاهتزاز واللمس" else UiStrings.of("Global Haptic Feedback"),
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.onSurface
                                         )
                                         Text(
-                                            text = if (isAr) "تشغيل الاهتزاز والتفاعل اللمسي في السبحة والأدعية والقبلة" else "Enable vibrations in Tasbih subhah, Dua counters, and Qiblah alignment",
+                                            text = if (isAr) "تشغيل الاهتزاز والتفاعل اللمسي في السبحة والأدعية والقبلة" else UiStrings.of("Enable vibrations in Tasbih subhah, Dua counters, and Qiblah alignment"),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -785,7 +780,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                     Icon(Icons.Default.Place, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        text = if (isAr) "تحديد الموقع الجغرافي" else "Location Settings",
+                                        text = if (isAr) "تحديد الموقع الجغرافي" else UiStrings.of("Location Settings"),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary
@@ -793,7 +788,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                 }
 
                                 Text(
-                                    text = if (isAr) "الموقع الحالي: $locationLabel" else "Selected: $locationLabel",
+                                    text = if (isAr) "الموقع الحالي: $locationLabel" else UiStrings.format("Selected: %s", locationLabel),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.primary,
                                     fontWeight = FontWeight.Bold
@@ -824,7 +819,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                     ) {
                                         Icon(Icons.Default.MyLocation, contentDescription = null, modifier = Modifier.size(16.dp))
                                         Spacer(modifier = Modifier.width(4.dp))
-                                        Text(if (isAr) "تلقائي (GPS)" else "Auto (GPS)", style = MaterialTheme.typography.bodySmall)
+                                        Text(if (isAr) "تلقائي (GPS)" else UiStrings.of("Auto (GPS)"), style = MaterialTheme.typography.bodySmall)
                                     }
 
                                     OutlinedButton(
@@ -840,7 +835,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                     ) {
                                         Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(16.dp))
                                         Spacer(modifier = Modifier.width(4.dp))
-                                        Text(if (isAr) "يدوي بالبحث" else "Manual Search", style = MaterialTheme.typography.bodySmall)
+                                        Text(if (isAr) "يدوي بالبحث" else UiStrings.of("Manual Search"), style = MaterialTheme.typography.bodySmall)
                                     }
                                 }
 
@@ -851,7 +846,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                             locationQuery = it
                                             citySuggestions = emptyList()
                                         },
-                                        placeholder = { Text(if (isAr) "ابحث عن مدينة..." else "Search city name...") },
+                                        placeholder = { Text(if (isAr) "ابحث عن مدينة..." else UiStrings.of("Search city name...")) },
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .height(56.dp),
@@ -922,7 +917,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                     Icon(Icons.Default.School, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        text = if (isAr) "المذهب والحساب الفقهي" else "Juristic Calculations",
+                                        text = if (isAr) "المذهب والحساب الفقهي" else UiStrings.of("Juristic Calculations"),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary
@@ -930,7 +925,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                 }
 
                                 Text(
-                                    text = if (isAr) "صلاة العصر: حساب الجمهور أم الحنفي" else "Asr Prayer: Standard vs Hanafi School",
+                                    text = if (isAr) "صلاة العصر: حساب الجمهور أم الحنفي" else UiStrings.of("Asr Prayer: Standard vs Hanafi School"),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -949,7 +944,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                             color = if (asrMethod == "standard") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
                                         )
                                     ) {
-                                        Text(if (isAr) "الجمهور (شافعي، مالكي...)" else "Standard (Shafi'i)", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                                        Text(if (isAr) "الجمهور (شافعي، مالكي...)" else UiStrings.of("Standard (Shafi'i)"), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
                                     }
                                     OutlinedButton(
                                         onClick = { viewModel.setAsrMethod("hanafi") },
@@ -962,14 +957,14 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                             color = if (asrMethod == "hanafi") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
                                         )
                                     ) {
-                                        Text(if (isAr) "حنفي" else "Hanafi", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                                        Text(if (isAr) "حنفي" else UiStrings.of("Hanafi"), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
                                     }
                                 }
 
                                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
 
                                 Text(
-                                    text = if (isAr) "صلاة العشاء: التقدير الفلكي أم الحنفي (زاوية 18°)" else "Isha Prayer: Standard Angle vs Hanafi Angle (18°)",
+                                    text = if (isAr) "صلاة العشاء: التقدير الفلكي أم الحنفي (زاوية 18°)" else UiStrings.of("Isha Prayer: Standard Angle vs Hanafi Angle (18°)"),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -988,7 +983,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                             color = if (ishaMethod == "standard") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
                                         )
                                     ) {
-                                        Text(if (isAr) "طريقة الحساب فلكياً" else "Calculation", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                                        Text(if (isAr) "طريقة الحساب فلكياً" else UiStrings.of("Calculation"), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
                                     }
                                     OutlinedButton(
                                         onClick = { viewModel.setIshaMethod("hanafi") },
@@ -1001,7 +996,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                             color = if (ishaMethod == "hanafi") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
                                         )
                                     ) {
-                                        Text(if (isAr) "حنفي (18 درجة)" else "Hanafi Angle (18°)", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                                        Text(if (isAr) "حنفي (18 درجة)" else UiStrings.of("Hanafi Angle (18°)"), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }
@@ -1024,7 +1019,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                     Icon(Icons.Default.Schedule, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        text = if (isAr) "تعديل الدقائق يدويًّا" else "Manual Adjustments",
+                                        text = if (isAr) "تعديل الدقائق يدويًّا" else UiStrings.of("Manual Adjustments"),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary
@@ -1032,7 +1027,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                 }
 
                                 Text(
-                                    text = if (isAr) "أضف أو نقص دقائق مخصصة لكل صلاة حسب مدينتك بدقة" else "Add or deduct minutes manually for each prayer calculation",
+                                    text = if (isAr) "أضف أو نقص دقائق مخصصة لكل صلاة حسب مدينتك بدقة" else UiStrings.of("Add or deduct minutes manually for each prayer calculation"),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -1048,13 +1043,13 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = if (isAr) "توقيت الهاتف" else "Phone clock",
+                                            text = if (isAr) "توقيت الهاتف" else UiStrings.of("Phone clock"),
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.Bold
                                         )
                                         Text(
                                             text = if (isAr) "إن كان الهاتف ما زال على التوقيت القديم، أزح كل الصلوات بنفس المقدار."
-                                            else "Shift every prayer at once if the phone still uses the old time zone rules.",
+                                            else UiStrings.of("Shift every prayer at once if the phone still uses the old time zone rules."),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -1070,13 +1065,13 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                         ) {
                                             Icon(
                                                 Icons.Default.Remove,
-                                                contentDescription = if (isAr) "ساعة أقل" else "An hour earlier",
+                                                contentDescription = if (isAr) "ساعة أقل" else UiStrings.of("An hour earlier"),
                                                 modifier = Modifier.size(16.dp)
                                             )
                                         }
                                         val globalPrefix = if (adjGlobal > 0) "+" else ""
                                         Text(
-                                            text = if (adjGlobal == 0) "0" else "$globalPrefix${adjGlobal / 60} " + (if (isAr) "س" else "h"),
+                                            text = if (adjGlobal == 0) "0" else "$globalPrefix${adjGlobal / 60} " + (if (isAr) "س" else UiStrings.of("h")),
                                             style = MaterialTheme.typography.bodySmall,
                                             fontWeight = FontWeight.Bold,
                                             textAlign = TextAlign.Center,
@@ -1089,7 +1084,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                         ) {
                                             Icon(
                                                 Icons.Default.Add,
-                                                contentDescription = if (isAr) "ساعة أكثر" else "An hour later",
+                                                contentDescription = if (isAr) "ساعة أكثر" else UiStrings.of("An hour later"),
                                                 modifier = Modifier.size(16.dp)
                                             )
                                         }
@@ -1111,11 +1106,11 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                 }
 
                                 val adjList = listOf(
-                                    Quadruple("Fajr", if (isAr) "الفجر" else "Fajr", adjFajr) { v: Int -> viewModel.setAdjFajr(v) },
-                                    Quadruple("Dhuhr", if (isAr) "الظهر" else "Dhuhr", adjDhuhr) { v: Int -> viewModel.setAdjDhuhr(v) },
-                                    Quadruple("Asr", if (isAr) "العصر" else "Asr", adjAsr) { v: Int -> viewModel.setAdjAsr(v) },
-                                    Quadruple("Maghrib", if (isAr) "المغرب" else "Maghrib", adjMaghrib) { v: Int -> viewModel.setAdjMaghrib(v) },
-                                    Quadruple("Isha", if (isAr) "العشاء" else "Isha", adjIsha) { v: Int -> viewModel.setAdjIsha(v) }
+                                    Quadruple("Fajr", if (isAr) "الفجر" else UiStrings.of("Fajr"), adjFajr) { v: Int -> viewModel.setAdjFajr(v) },
+                                    Quadruple("Dhuhr", if (isAr) "الظهر" else UiStrings.of("Dhuhr"), adjDhuhr) { v: Int -> viewModel.setAdjDhuhr(v) },
+                                    Quadruple("Asr", if (isAr) "العصر" else UiStrings.of("Asr"), adjAsr) { v: Int -> viewModel.setAdjAsr(v) },
+                                    Quadruple("Maghrib", if (isAr) "المغرب" else UiStrings.of("Maghrib"), adjMaghrib) { v: Int -> viewModel.setAdjMaghrib(v) },
+                                    Quadruple("Isha", if (isAr) "العشاء" else UiStrings.of("Isha"), adjIsha) { v: Int -> viewModel.setAdjIsha(v) }
                                 )
 
                                 var fineTuningOpen by rememberSaveable { mutableStateOf(false) }
@@ -1129,7 +1124,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text(
-                                        text = if (isAr) "ضبط دقيق لكل صلاة" else "Fine tuning per prayer",
+                                        text = if (isAr) "ضبط دقيق لكل صلاة" else UiStrings.of("Fine tuning per prayer"),
                                         style = MaterialTheme.typography.bodySmall,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary
@@ -1183,11 +1178,11 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                                     enabled = adjItem.third > -99,
                                                     modifier = Modifier.size(32.dp)
                                                 ) {
-                                                    Icon(Icons.Default.Remove, contentDescription = "Deduct minute", modifier = Modifier.size(16.dp))
+                                                    Icon(Icons.Default.Remove, contentDescription = UiStrings.of("Deduct minute"), modifier = Modifier.size(16.dp))
                                                 }
                                                 val prefix = if (adjItem.third > 0) "+" else ""
                                                 Text(
-                                                    text = ("$prefix${adjItem.third} " + (if (isAr) "د" else "m")).localize(isAr, useWesternNumbersInArabic),
+                                                    text = ("$prefix${adjItem.third} " + (if (isAr) "د" else UiStrings.of("m"))).localize(isAr, useWesternNumbersInArabic),
                                                     style = MaterialTheme.typography.bodySmall,
                                                     fontWeight = FontWeight.Bold,
                                                     textAlign = TextAlign.Center,
@@ -1198,7 +1193,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                                     enabled = adjItem.third < 99,
                                                     modifier = Modifier.size(32.dp)
                                                 ) {
-                                                    Icon(Icons.Default.Add, contentDescription = "Add minute", modifier = Modifier.size(16.dp))
+                                                    Icon(Icons.Default.Add, contentDescription = UiStrings.of("Add minute"), modifier = Modifier.size(16.dp))
                                                 }
                                             }
                                         }
@@ -1225,7 +1220,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                     Icon(Icons.Default.DateRange, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        text = if (isAr) "التاريخ الهجري" else "Hijri Date",
+                                        text = if (isAr) "التاريخ الهجري" else UiStrings.of("Hijri Date"),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary
@@ -1233,7 +1228,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                 }
 
                                 Text(
-                                    text = if (isAr) "التاريخ محسوب على أم القرى، ويُزاح تلقائياً في البلدان التي تعتمد الرؤية المحلية. عدّله هنا عند الحاجة، واضغط الرقم للرجوع إلى التلقائي." else "The date is calculated from Umm al-Qura, shifted automatically for countries that follow a local sighting. Override it here if needed; tap the number to go back to automatic.",
+                                    text = if (isAr) "التاريخ محسوب على أم القرى، ويُزاح تلقائياً في البلدان التي تعتمد الرؤية المحلية. عدّله هنا عند الحاجة، واضغط الرقم للرجوع إلى التلقائي." else UiStrings.of("The date is calculated from Umm al-Qura, shifted automatically for countries that follow a local sighting. Override it here if needed; tap the number to go back to automatic."),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -1248,7 +1243,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text(
-                                        text = if (isAr) "الإزاحة" else "Adjustment",
+                                        text = if (isAr) "الإزاحة" else UiStrings.of("Adjustment"),
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -1261,13 +1256,13 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                             enabled = hijriAdjustment > -2,
                                             modifier = Modifier.size(32.dp)
                                         ) {
-                                            Icon(Icons.Default.Remove, contentDescription = if (isAr) "يوم أقل" else "One day earlier", modifier = Modifier.size(16.dp))
+                                            Icon(Icons.Default.Remove, contentDescription = if (isAr) "يوم أقل" else UiStrings.of("One day earlier"), modifier = Modifier.size(16.dp))
                                         }
                                         val adjustmentLabel = when {
-                                            !hijriAdjustmentIsManual -> if (isAr) "تلقائي" else "Auto"
-                                            hijriAdjustment == 0 -> if (isAr) "محسوب" else "Calculated"
-                                            hijriAdjustment > 0 -> "+$hijriAdjustment " + (if (isAr) "يوم" else "d")
-                                            else -> "$hijriAdjustment " + (if (isAr) "يوم" else "d")
+                                            !hijriAdjustmentIsManual -> if (isAr) "تلقائي" else UiStrings.of("Auto")
+                                            hijriAdjustment == 0 -> if (isAr) "محسوب" else UiStrings.of("Calculated")
+                                            hijriAdjustment > 0 -> "+$hijriAdjustment " + (if (isAr) "يوم" else UiStrings.of("d"))
+                                            else -> "$hijriAdjustment " + (if (isAr) "يوم" else UiStrings.of("d"))
                                         }
                                         Text(
                                             text = adjustmentLabel.localize(isAr, useWesternNumbersInArabic),
@@ -1285,7 +1280,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                             enabled = hijriAdjustment < 2,
                                             modifier = Modifier.size(32.dp)
                                         ) {
-                                            Icon(Icons.Default.Add, contentDescription = if (isAr) "يوم أكثر" else "One day later", modifier = Modifier.size(16.dp))
+                                            Icon(Icons.Default.Add, contentDescription = if (isAr) "يوم أكثر" else UiStrings.of("One day later"), modifier = Modifier.size(16.dp))
                                         }
                                     }
                                 }
@@ -1294,7 +1289,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                 val previewDate = dev.barakah.app.util.HijriCalendarHelper
                                     .getTodayHijriDateString(isAr, hijriAdjustment)
                                 Text(
-                                    text = ((if (isAr) "اليوم: " else "Today: ") + previewDate)
+                                    text = ((if (isAr) "اليوم: " else UiStrings.of("Today: ")) + previewDate)
                                         .localize(isAr, useWesternNumbersInArabic),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1321,7 +1316,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                     Icon(Icons.Default.TextFields, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        text = if (isAr) "تنسيق ونوع خط المصحف" else "Quran Font & Styling",
+                                        text = if (isAr) "تنسيق ونوع خط المصحف" else UiStrings.of("Quran Font & Styling"),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary
@@ -1332,7 +1327,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(text = if (isAr) "الخط العربي: " else "Arabic: ", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(100.dp))
+                                    Text(text = if (isAr) "الخط العربي: " else UiStrings.of("Arabic: "), style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(100.dp))
                                     Slider(
                                         value = fontAr,
                                         onValueChange = { viewModel.setArabicFontSize(it) },
@@ -1346,7 +1341,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(text = if (isAr) "الترجمة الإنجليزية: " else "English: ", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(100.dp))
+                                    Text(text = if (isAr) "الترجمة الإنجليزية: " else UiStrings.of("English: "), style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(100.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Slider(
                                         value = fontEn,
@@ -1364,7 +1359,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = if (isAr) "خط المصحف: " else "Quran font: ",
+                                        text = if (isAr) "خط المصحف: " else UiStrings.of("Quran font: "),
                                         style = MaterialTheme.typography.bodySmall,
                                         modifier = Modifier.width(100.dp)
                                     )
@@ -1374,7 +1369,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                             onClick = { viewModel.setQuranFont(QURAN_FONT_SYSTEM) },
                                             label = {
                                                 Text(
-                                                    text = if (isAr) "الافتراضي" else "System",
+                                                    text = if (isAr) "الافتراضي" else UiStrings.of("System"),
                                                     style = MaterialTheme.typography.labelMedium
                                                 )
                                             }
@@ -1384,7 +1379,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                             onClick = { viewModel.setQuranFont(QURAN_FONT_AMIRI) },
                                             label = {
                                                 Text(
-                                                    text = if (isAr) "الخط العثماني" else "Amiri Quran",
+                                                    text = if (isAr) "الخط العثماني" else UiStrings.of("Amiri Quran"),
                                                     style = MaterialTheme.typography.labelMedium
                                                 )
                                             }
@@ -1411,7 +1406,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                         verticalArrangement = Arrangement.spacedBy(10.dp)
                                     ) {
                                         Text(
-                                            text = if (isAr) "معاينة خط المصحف والتراجم" else "Quran Font & Translation Preview",
+                                            text = if (isAr) "معاينة خط المصحف والتراجم" else UiStrings.of("Quran Font & Translation Preview"),
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.primary,
                                             fontWeight = FontWeight.Bold,
@@ -1469,7 +1464,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                         Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text(
-                                            text = if (isAr) "عن التطبيق" else "About this App",
+                                            text = if (isAr) "عن التطبيق" else UiStrings.of("About this App"),
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.primary
@@ -1491,14 +1486,44 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
 
                                 Text(
                                     text = if (isAr) "هذا التطبيق مجاني بالكامل ومفتوح المصدر (FOSS)، خالي من الإعلانات إلى الأبد، ويحترم خصوصيتك. لقد قمت ببرمجة هذا التطبيق كعمل صالح للتقرب إلى الله، وأرجو من كل من يستخدمه أن يدعو لي بالخير. شكرًا لكم وجزاكم الله خيرًا."
-                                            else "This application is fully Free and Open Source Software (FOSS), forever ad-free, and respects your privacy. I made this app for a good deed, and I hope whoever uses it will do dua for me. Thank you and Jazakum Allah Khair.",
+                                            else UiStrings.of("This application is fully Free and Open Source Software (FOSS), forever ad-free, and respects your privacy. I made this app for a good deed, and I hope whoever uses it will do dua for me. Thank you and Jazakum Allah Khair."),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     lineHeight = 18.sp
                                 )
 
                                 Text(
-                                    text = if (isAr) "بيانات المدن: GeoNames cities500، بترخيص CC BY 4.0." else "City data: GeoNames cities500, licensed under CC BY 4.0.",
+                                    text = if (isAr) "بيانات المدن: GeoNames cities500، بترخيص CC BY 4.0." else UiStrings.of("City data: GeoNames cities500, licensed under CC BY 4.0."),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+
+                                Text(
+                                    text = if (isAr) {
+                                        "ترجمات القرآن: وزارة الشؤون الدينية الإندونيسية (QuranEnc)، محمد جناغرهي، أبو بكر زكريا، مسلم شاهين، فريق Islamhouse.com الفارسي، أبوبكر محمود جومي، عبدالله محمد بسميه، علي محسن البرواني (Tanzil)."
+                                    } else {
+                                        UiStrings.of("Quran translations: Indonesian Ministry of Religious Affairs (QuranEnc), Muhammad Junagarhi, Abu Bakr Zakaria, Muslim Shahin, Islamhouse.com Persian Team, Abubakar Mahmood Jummi, Abdullah Muhammad Basmeih, Ali Muhsin Al Barwani (Tanzil).")
+                                    },
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+
+                                Text(
+                                    text = if (isAr) {
+                                        "التفسير: الجلالين (QUL وAltafsir) ونسخ المختصر عبر Tarteel QUL."
+                                    } else {
+                                        UiStrings.of("Tafsir: Jalalayn (QUL / Altafsir) and Al-Mukhtasar editions via Tarteel QUL.")
+                                    },
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+
+                                Text(
+                                    text = if (isAr) {
+                                        "ترجمات الأدعية: MuslimData بترخيص Apache 2.0 (الروسية والفارسية والكردية السورانية)."
+                                    } else {
+                                        UiStrings.of("Supplication translations: MuslimData, Apache License 2.0 (Russian, Persian, Sorani Kurdish).")
+                                    },
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -1516,7 +1541,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = if (isAr) "رمز المصدر (GitHub)" else "Source Code (GitHub)",
+                                        text = if (isAr) "رمز المصدر (GitHub)" else UiStrings.of("Source Code (GitHub)"),
                                         style = MaterialTheme.typography.labelMedium,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -1534,12 +1559,12 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Refresh,
-                                contentDescription = "Reset Settings",
+                                contentDescription = UiStrings.of("Reset Settings"),
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = if (isAr) "إعادة الضبط الافتراضي" else "Reset to Defaults",
+                                text = if (isAr) "إعادة الضبط الافتراضي" else UiStrings.of("Reset to Defaults"),
                                 fontWeight = FontWeight.Bold
                             )
                         }

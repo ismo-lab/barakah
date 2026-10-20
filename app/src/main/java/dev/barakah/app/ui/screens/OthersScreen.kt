@@ -1,5 +1,7 @@
 package dev.barakah.app.ui.screens
 
+import dev.barakah.app.data.UiStrings
+
 import android.os.Build
 import android.os.Vibrator
 import android.os.VibrationEffect
@@ -223,8 +225,8 @@ fun OthersScreen(
 
     var selectedTabIndex by rememberSaveable { mutableStateOf(0) }
     val tabTitles = listOf(
-        if (isAr) "أسماء الله الحسنى" else "Names of Allah",
-        if (isAr) "المناسبات والأعياد" else "Occasions & Eids"
+        if (isAr) "أسماء الله الحسنى" else UiStrings.of("Names of Allah"),
+        if (isAr) "المناسبات والأعياد" else UiStrings.of("Occasions & Eids")
     )
 
     // Only the ids are kept across a configuration change; the entries are looked up from the same
@@ -245,7 +247,7 @@ fun OthersScreen(
             TopAppBar(
                 title = { 
                     Text(
-                        text = if (isAr) "أخرى" else "Others",
+                        text = if (isAr) "أخرى" else UiStrings.of("Others"),
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleLarge
                     )
@@ -260,7 +262,7 @@ fun OthersScreen(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = if (isAr) "رجوع" else "Back"
+                            contentDescription = if (isAr) "رجوع" else UiStrings.of("Back")
                         )
                     }
                 },
@@ -360,7 +362,7 @@ fun OthersScreen(
                     triggerVibration()
                     selectedNameId = null 
                 }) {
-                    Text(if (isAr) "إغلاق" else "Close")
+                    Text(if (isAr) "إغلاق" else UiStrings.of("Close"))
                 }
             },
             title = {
@@ -412,7 +414,7 @@ fun OthersScreen(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
-                                text = if (isAr) "الشرح والدلالة" else "Meaning & Significance",
+                                text = if (isAr) "الشرح والدلالة" else UiStrings.of("Meaning & Significance"),
                                 fontWeight = FontWeight.Bold,
                                 style = MaterialTheme.typography.titleSmall,
                                 color = MaterialTheme.colorScheme.primary
@@ -442,7 +444,7 @@ fun OthersScreen(
                     triggerVibration()
                     selectedOccasionId = null 
                 }) {
-                    Text(if (isAr) "تم" else "Dismiss")
+                    Text(if (isAr) "تم" else UiStrings.of("Dismiss"))
                 }
             },
             title = {
@@ -459,10 +461,10 @@ fun OthersScreen(
                         if (isAr) {
                             "التاريخ الهجري: ${holiday.hijriDateAr} • الموافق $miladi م"
                         } else {
-                            "Hijri: ${holiday.hijriDateEn} • Equal: $miladi AD"
+                            UiStrings.format("Hijri: %s • Equal: %s AD", holiday.hijriDateEn, miladi)
                         }
                     } else {
-                        if (isAr) "التاريخ الهجري: ${holiday.hijriDateAr}" else "Date: ${holiday.hijriDateEn}"
+                        if (isAr) "التاريخ الهجري: ${holiday.hijriDateAr}" else UiStrings.format("Date: %s", holiday.hijriDateEn)
                     }
                     Text(
                         text = formattedDate.localize(isAr, useWesternNumbersInArabic),
@@ -534,21 +536,21 @@ fun NamesOfAllahPane(
                 ) {
                     Icon(
                         imageVector = Icons.Default.AutoAwesome,
-                        contentDescription = if (isAr) "أيقونة" else "Stars icon",
+                        contentDescription = if (isAr) "أيقونة" else UiStrings.of("Stars icon"),
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = if (isAr) "إن لله تسعة وتسعين اسماً" else "99 Names of Allah",
+                            text = if (isAr) "إن لله تسعة وتسعين اسماً" else UiStrings.of("99 Names of Allah"),
                             fontWeight = FontWeight.ExtraBold,
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.primary
                         )
                         Text(
                             text = if (isAr) "من أحصاها دخل الجنة. اضغط على أي اسم لقراءة شرحه ودلالاته." 
-                                   else "Whosoever memorizes and acts upon them will enter Paradise. Tap any name to read its meaning.",
+                                   else UiStrings.of("Whosoever memorizes and acts upon them will enter Paradise. Tap any name to read its meaning."),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -678,7 +680,7 @@ fun CalendarAndOccasionsPane(
 
         item {
             Text(
-                text = if (isAr) "أبرز المناسبات والأعياد" else "Major Occasions & Eids",
+                text = if (isAr) "أبرز المناسبات والأعياد" else UiStrings.of("Major Occasions & Eids"),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,
@@ -693,7 +695,7 @@ fun CalendarAndOccasionsPane(
                 text = (if (isAr) {
                     "تواريخ محسوبة — قد تختلف بيوم، ويمكن ضبطها من الإعدادات."
                 } else {
-                    "Calculated dates — may differ by a day; adjustable in Settings."
+                    UiStrings.of("Calculated dates — may differ by a day; adjustable in Settings.")
                 }).localize(isAr, useWesternNumbersInArabic),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
@@ -742,7 +744,7 @@ fun CalendarAndOccasionsPane(
                         Spacer(modifier = Modifier.height(2.dp))
                         val miladi = getMiladiDateString(item, isAr, hijriAdjustment)
                         val displayDate = if (miladi.isNotEmpty()) {
-                            if (isAr) "${item.hijriDateAr} • الموافق $miladi م" else "${item.hijriDateEn} • Eq: $miladi"
+                            if (isAr) "${item.hijriDateAr} • الموافق $miladi م" else UiStrings.format("%s • Eq: %s", item.hijriDateEn, miladi)
                         } else {
                             if (isAr) item.hijriDateAr else item.hijriDateEn
                         }
@@ -756,7 +758,7 @@ fun CalendarAndOccasionsPane(
 
                     Icon(
                         imageVector = Icons.Default.Info,
-                        contentDescription = if (isAr) "تفاصيل" else "Details",
+                        contentDescription = if (isAr) "تفاصيل" else UiStrings.of("Details"),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                         modifier = Modifier.size(20.dp)
                     )

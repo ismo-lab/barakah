@@ -1,5 +1,7 @@
 package dev.barakah.app.widget
 
+import dev.barakah.app.data.UiStrings
+
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
@@ -36,6 +38,7 @@ class NawafilWidget : GlanceAppWidget() {
             val refreshToken = currentState<Preferences>()[WidgetRefreshState.refreshToken] ?: 0L
             // Glance can reuse an active session and recompose this block without rerunning provideGlance.
             val prefs = context.getSharedPreferences(AppPrefs.FILE, Context.MODE_PRIVATE)
+            UiStrings.setCurrentLanguage(prefs.getString(AppPrefs.APP_LANG, "ar") ?: "ar")
             val isAr = prefs.getString(AppPrefs.APP_LANG, "ar") == "ar"
             val defaultLabel = LocationDefaults.unsetLabel(isAr)
             val lat = prefs.getFloat(AppPrefs.LOC_LAT, LocationDefaults.LATITUDE.toFloat()).toDouble()
@@ -162,10 +165,10 @@ class NawafilWidget : GlanceAppWidget() {
                 modifier = GlanceModifier.fillMaxWidth().padding(vertical = 12.dp)
             ) {
                 val timeFontSize = if (is24Hour) 11.sp else 9.5.sp
-                NawafilItem(GlanceModifier.defaultWeight(), if (isAr) "الضحى" else "Duha", duha, labelColor, timeColor, timeFontSize)
-                NawafilItem(GlanceModifier.defaultWeight(), if (isAr) "القيام" else "Qiyam", qiyam, labelColor, timeColor, timeFontSize)
-                NawafilItem(GlanceModifier.defaultWeight(), if (isAr) "التهجد" else "Tahajjud", tahajjud, labelColor, timeColor, timeFontSize)
-                NawafilItem(GlanceModifier.defaultWeight(), if (isAr) "الوتر" else "Witr", witr, labelColor, timeColor, timeFontSize)
+                NawafilItem(GlanceModifier.defaultWeight(), if (isAr) "الضحى" else UiStrings.of("Duha"), duha, labelColor, timeColor, timeFontSize)
+                NawafilItem(GlanceModifier.defaultWeight(), if (isAr) "القيام" else UiStrings.of("Qiyam"), qiyam, labelColor, timeColor, timeFontSize)
+                NawafilItem(GlanceModifier.defaultWeight(), if (isAr) "التهجد" else UiStrings.of("Tahajjud"), tahajjud, labelColor, timeColor, timeFontSize)
+                NawafilItem(GlanceModifier.defaultWeight(), if (isAr) "الوتر" else UiStrings.of("Witr"), witr, labelColor, timeColor, timeFontSize)
             }
         }
     }

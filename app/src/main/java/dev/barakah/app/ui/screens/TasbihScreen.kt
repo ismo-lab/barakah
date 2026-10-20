@@ -1,5 +1,7 @@
 package dev.barakah.app.ui.screens
 
+import dev.barakah.app.data.UiStrings
+
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.animation.*
@@ -117,7 +119,7 @@ fun TasbihScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = if (isAr) "مسبحة الذكر" else "Tasbih Counter",
+                            text = if (isAr) "مسبحة الذكر" else UiStrings.of("Tasbih Counter"),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.ExtraBold,
                             color = MaterialTheme.colorScheme.onBackground
@@ -188,7 +190,7 @@ fun TasbihScreen(
                             textDirection = androidx.compose.ui.text.style.TextDirection.Ltr
                         ),
                         hintStyle = MaterialTheme.typography.labelSmall,
-                        hintText = if (isAr) "اضغط للتسبيح" else "TAP TO COUNT",
+                        hintText = if (isAr) "اضغط للتسبيح" else UiStrings.of("TAP TO COUNT"),
                         contentPadding = 16.dp,
                         hintSpacing = 4.dp,
                         onTap = {
@@ -223,7 +225,7 @@ fun TasbihScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                text = if (isAr) "مسبحة الذكر" else "Tasbih Counter",
+                text = if (isAr) "مسبحة الذكر" else UiStrings.of("Tasbih Counter"),
                 style = if (isShortScreen) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onBackground,
@@ -232,7 +234,7 @@ fun TasbihScreen(
             )
             if (!isShortScreen) {
                 Text(
-                    text = if (isAr) "حافظ على أورادك اليومية وأذكارك بسهولة" else "Keep track of your acts of remembrance",
+                    text = if (isAr) "حافظ على أورادك اليومية وأذكارك بسهولة" else UiStrings.of("Keep track of your acts of remembrance"),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -280,7 +282,7 @@ fun TasbihScreen(
                     textDirection = androidx.compose.ui.text.style.TextDirection.Ltr
                 ),
                 hintStyle = MaterialTheme.typography.labelMedium,
-                hintText = if (isAr) "اضغط في أي مكان للتسبيح" else "TAP ANYWHERE TO COUNT",
+                hintText = if (isAr) "اضغط في أي مكان للتسبيح" else UiStrings.of("TAP ANYWHERE TO COUNT"),
                 contentPadding = 24.dp,
                 hintSpacing = 8.dp,
                 onTap = {
@@ -320,7 +322,7 @@ fun TasbihScreen(
             onDismissRequest = { showDhikrDropdown = false },
             title = {
                 Text(
-                    text = if (isAr) "اختر الورد / الذكر" else "Choose Dhikr/Dua Phrase",
+                    text = if (isAr) "اختر الورد / الذكر" else UiStrings.of("Choose Dhikr/Dua Phrase"),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Start,
@@ -405,7 +407,7 @@ fun TasbihScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showDhikrDropdown = false }) {
-                    Text(if (isAr) "إغلاق" else "Close")
+                    Text(if (isAr) "إغلاق" else UiStrings.of("Close"))
                 }
             },
             shape = RoundedCornerShape(24.dp),
@@ -493,7 +495,7 @@ private fun TasbihDhikrCard(
             Spacer(modifier = Modifier.width(gapBeforeIcon))
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
-                contentDescription = if (isAr) "اختر الذكر" else "Select Dhikr",
+                contentDescription = if (isAr) "اختر الذكر" else UiStrings.of("Select Dhikr"),
                 tint = MaterialTheme.colorScheme.primary
             )
         }
@@ -527,7 +529,7 @@ private fun TasbihTapBlob(
             .testTag("tap_zone_blob")
             .semantics {
                 role = androidx.compose.ui.semantics.Role.Button
-                onClick(label = if (isAr) "التسبيح" else "Increment count") {
+                onClick(label = if (isAr) "التسبيح" else UiStrings.of("Increment count")) {
                     onTap()
                     true
                 }
@@ -603,7 +605,7 @@ private fun TasbihTargetControls(
         val targets = listOf(33, 99, 100, 0)
         targets.forEach { t ->
             val isSelected = target == t
-            val label = if (t == 0) (if (isAr) "مفتوح" else "∞ Loop") else t.toString().localize(isAr, useWesternNumbersInArabic)
+            val label = if (t == 0) (if (isAr) "مفتوح" else UiStrings.of("∞ Loop")) else t.toString().localize(isAr, useWesternNumbersInArabic)
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -644,12 +646,12 @@ private fun TasbihTargetControls(
         ) {
             Icon(
                 imageVector = Icons.Default.Refresh,
-                contentDescription = if (isAr) "إعادة ضبط العداد" else "Reset Counter",
+                contentDescription = if (isAr) "إعادة ضبط العداد" else UiStrings.of("Reset Counter"),
                 modifier = if (iconSize == null) Modifier else Modifier.size(iconSize)
             )
             Spacer(modifier = Modifier.width(gapAfterIcon))
             Text(
-                text = if (isAr) "إعادة ضبط العداد" else "Reset Progress",
+                text = if (isAr) "إعادة ضبط العداد" else UiStrings.of("Reset Progress"),
                 style = buttonTextStyle,
                 fontWeight = FontWeight.Bold
             )

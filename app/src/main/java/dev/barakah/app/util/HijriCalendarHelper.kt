@@ -1,5 +1,7 @@
 package dev.barakah.app.util
 
+import dev.barakah.app.data.UiStrings
+
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -95,17 +97,22 @@ object HijriCalendarHelper {
             "Jumada al-Awwal", "Jumada al-Thani", "Rajab", "Sha'ban", 
             "Ramadan", "Shawwal", "Dhul-Qi'dah", "Dhul-Hijjah"
         )
-        
-        val monthName = if (isAr) {
-            if (hijri.month in 1..12) monthNamesAr[hijri.month] else "محرم"
-        } else {
-            if (hijri.month in 1..12) monthNamesEn[hijri.month] else "Muharram"
+        val monthNamesId = listOf(
+            "", "Muharam", "Safar", "Rabiul Awal", "Rabiul Akhir",
+            "Jumadil Awal", "Jumadil Akhir", "Rajab", "Syaban",
+            "Ramadan", "Syawal", "Zulkaidah", "Zulhijah"
+        )
+        val isId = UiStrings.language == "id"
+        val monthName = when {
+            isAr -> if (hijri.month in 1..12) monthNamesAr[hijri.month] else "محرم"
+            isId -> if (hijri.month in 1..12) monthNamesId[hijri.month] else "Muharam"
+            else -> if (hijri.month in 1..12) monthNamesEn[hijri.month] else "Muharram"
         }
-        
-        return if (isAr) {
-            "${hijri.day} $monthName ${hijri.year} هـ"
-        } else {
-            "${hijri.day} $monthName ${hijri.year} AH"
+
+        return when {
+            isAr -> "${hijri.day} $monthName ${hijri.year} هـ"
+            isId -> "${hijri.day} $monthName ${hijri.year} H"
+            else -> "${hijri.day} $monthName ${hijri.year} AH"
         }
     }
 
@@ -179,7 +186,9 @@ object HijriCalendarHelper {
         
         val searchYears = listOf(currentYear, currentYear + 1)
         val monthNamesEn = listOf("", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+        val monthNamesId = listOf("", "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des")
         val monthNamesAr = listOf("", "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر")
+        val isId = UiStrings.language == "id"
         
         // Phase 1: Search from today onwards (current or upcoming occurrence)
         for (year in searchYears) {
@@ -194,10 +203,10 @@ object HijriCalendarHelper {
                 for (day in startDayVal..daysInMonth) {
                     val hijri = hijriFor(year, month, day, adjustmentDays)
                     if (hijri.month == hijriMonth && hijri.day == hijriDay) {
-                        return if (isAr) {
-                            "$day ${monthNamesAr[month]} $year"
-                        } else {
-                            "$day ${monthNamesEn[month]} $year"
+                        return when {
+                            isAr -> "$day ${monthNamesAr[month]} $year"
+                            isId -> "$day ${monthNamesId[month]} $year"
+                            else -> "$day ${monthNamesEn[month]} $year"
                         }
                     }
                 }
@@ -215,10 +224,10 @@ object HijriCalendarHelper {
                 for (day in 1..daysInMonth) {
                     val hijri = hijriFor(year, month, day, adjustmentDays)
                     if (hijri.month == hijriMonth && hijri.day == hijriDay) {
-                        return if (isAr) {
-                            "$day ${monthNamesAr[month]} $year"
-                        } else {
-                            "$day ${monthNamesEn[month]} $year"
+                        return when {
+                            isAr -> "$day ${monthNamesAr[month]} $year"
+                            isId -> "$day ${monthNamesId[month]} $year"
+                            else -> "$day ${monthNamesEn[month]} $year"
                         }
                     }
                 }
@@ -240,10 +249,10 @@ object HijriCalendarHelper {
         }
 
         return if (startStr.isNotEmpty() && endStr.isNotEmpty()) {
-            if (isAr) {
-                "من $startStr إلى $endStr"
-            } else {
-                "$startStr to $endStr"
+            when {
+                isAr -> "من $startStr إلى $endStr"
+                UiStrings.language == "id" -> "$startStr hingga $endStr"
+                else -> "$startStr to $endStr"
             }
         } else {
             ""

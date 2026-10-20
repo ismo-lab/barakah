@@ -26,6 +26,23 @@ object AppPrefs {
     const val ENABLE_TASBIH_HAPTICS = "enable_tasbih_haptics"
     const val IS_FIRST_RUN = "is_first_run"
 
+    /**
+     * Language of the religious text itself, kept apart from [APP_LANG] so a reader can keep the
+     * interface in one language and the translation or tafsir in another. An empty value means
+     * no translation is shown.
+     */
+    const val QURAN_TRANSLATION_LANG = "quran_translation_lang"
+    const val TAFSIR_LANG = "tafsir_lang"
+    const val DUA_TRANSLATION_LANG = "dua_translation_lang"
+
+    /**
+     * True once the reader has chosen a religious-text language for one area. Until then the
+     * area follows the interface: Arabic for Arabic, English for every other interface.
+     */
+    const val QURAN_TRANSLATION_EXPLICIT = "quran_translation_explicit"
+    const val TAFSIR_EXPLICIT = "tafsir_explicit"
+    const val DUA_TRANSLATION_EXPLICIT = "dua_translation_explicit"
+
     // Location and prayer calculation
     const val LOCATION_METHOD = "location_method"
     const val LOC_LAT = "loc_lat"

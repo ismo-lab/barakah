@@ -30,7 +30,78 @@ object DuaData {
     val duas: List<Dua>
         get() = duasAr
 
+    /** Non-English supplication translations, keyed by language then normalized Arabic text. */
+    private val duaTranslations = mutableMapOf<String, Map<String, String>>()
+    private var translationsLoaded = false
+
+    /** English text keyed by normalized Arabic, for the Arabic-list rendering path. */
+    private val englishByArabic = mutableMapOf<String, String>()
+
+    /**
+     * Translation for one dua in [language], or null when the language has no translated text for
+     * it (the caller then keeps English and says so). English is not stored here: it is already on
+     * [Dua.translation].
+     */
+    fun translationFor(language: String, arabic: String): String? {
+        if (language.isEmpty() || language == "en") return null
+        return duaTranslations[language]?.get(normalizeArabic(arabic))
+    }
+
+    /** English text for an Arabic entry, needed when the Arabic list is the active one. */
+    fun englishTranslation(arabic: String): String? {
+        return englishByArabic[normalizeArabic(arabic)]?.takeIf { it.isNotBlank() }
+    }
+
+    private fun loadDuaTranslations(context: Context) {
+        if (translationsLoaded) return
+        val resources = mapOf(
+            "id" to R.raw.duas_id,
+            "ru" to R.raw.duas_ru,
+            "fa" to R.raw.duas_fa,
+            "ckb" to R.raw.duas_ckb
+        )
+        for ((language, resourceId) in resources) {
+            try {
+                val raw = context.resources.openRawResource(resourceId)
+                    .bufferedReader()
+                    .use { it.readText() }
+                val clean = if (raw.startsWith("\uFEFF")) raw.substring(1) else raw
+                val obj = JSONObject(clean)
+                val map = mutableMapOf<String, String>()
+                for (key in obj.keys()) {
+                    val value = obj.optString(key, "")
+                    if (value.isNotBlank()) map[key] = value
+                }
+                duaTranslations[language] = map
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to load $language supplication translations", e)
+            }
+        }
+        translationsLoaded = true
+    }
+
+    /** Same normalization as the English matching above: letters only, no diacritics. */
+    private fun normalizeArabic(text: String): String {
+        val sb = java.lang.StringBuilder()
+        for (char in text) {
+            if (char in '\u064B'..'\u065F' || char == '\u0670' || char == '\u0640') {
+                continue
+            }
+            val normalizedChar = when (char) {
+                'أ', 'إ', 'آ' -> 'ا'
+                'ى' -> 'ي'
+                'ة' -> 'ه'
+                else -> char
+            }
+            if (normalizedChar in '\u0621'..'\u064A') {
+                sb.append(normalizedChar)
+            }
+        }
+        return sb.toString()
+    }
+
     fun load(context: Context) {
+        loadDuaTranslations(context)
         if (duasAr.isNotEmpty() && duasEn.isNotEmpty()) return
         
         // 1. Load Arabic Duas from hisn.json
@@ -105,29 +176,11 @@ object DuaData {
                 }
 
                 // Match counts from Arabic dataset to keep rep counts aligned when using English
-                fun normalizeAr(text: String): String {
-                    val sb = java.lang.StringBuilder()
-                    for (char in text) {
-                        if (char in '\u064B'..'\u065F' || char == '\u0670' || char == '\u0640') {
-                            continue
-                        }
-                        val normalizedChar = when (char) {
-                            'أ', 'إ', 'آ' -> 'ا'
-                            'ى' -> 'ي'
-                            'ة' -> 'ه'
-                            else -> char
-                        }
-                        if (normalizedChar in '\u0621'..'\u064A') {
-                            sb.append(normalizedChar)
-                        }
-                    }
-                    return sb.toString()
-                }
-
-                val arNormalizedList = duasAr.map { it to normalizeAr(it.arabic) }
+                val arNormalizedList = duasAr.map { it to normalizeArabic(it.arabic) }
+                englishByArabic.clear()
 
                 val finalEnList = enList.map { enDua ->
-                    val enNorm = normalizeAr(enDua.arabic)
+                    val enNorm = normalizeArabic(enDua.arabic)
                     if (enNorm.length < 5) return@map enDua
 
                     // Try to find matching Arabic dua
@@ -143,6 +196,10 @@ object DuaData {
                             val len = kotlin.math.min(enNorm.length, arNorm.length)
                             len >= 12 && enNorm.substring(0, 12) == arNorm.substring(0, 12)
                         }?.first
+                    }
+
+                    if (match != null) {
+                        englishByArabic[normalizeArabic(match.arabic)] = enDua.translation
                     }
 
                     if (match != null && match.targetCount > 1) {
