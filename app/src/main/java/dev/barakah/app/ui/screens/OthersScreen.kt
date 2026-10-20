@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import dev.barakah.app.data.AllahName
 import dev.barakah.app.data.AllahNamesData
+import dev.barakah.app.data.OthersContent
 import dev.barakah.app.ui.BarakahViewModel
 import dev.barakah.app.util.localize
 import java.util.Calendar
@@ -81,6 +82,7 @@ fun OthersScreen(
     val hijriAdjustment by viewModel.hijriAdjustment.collectAsStateWithLifecycle()
     
     val context = LocalContext.current
+    val othersContent = remember(context) { OthersContent.load(context) }
     val vibrator = remember { context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? Vibrator }
     val isHapticEnabled by viewModel.enableTasbihHaptics.collectAsStateWithLifecycle()
 
@@ -330,6 +332,8 @@ fun OthersScreen(
                 when (targetIndex) {
                     0 -> NamesOfAllahPane(
                         isAr = isAr,
+                        language = appLanguage,
+                        content = othersContent,
                         names = AllahNamesData.names,
                         useWesternNumbersInArabic = useWesternNumbersInArabic,
                         onNameClick = { name ->
@@ -339,6 +343,8 @@ fun OthersScreen(
                     )
                     1 -> CalendarAndOccasionsPane(
                         isAr = isAr,
+                        language = appLanguage,
+                        content = othersContent,
                         occasions = occasions,
                         useWesternNumbersInArabic = useWesternNumbersInArabic,
                         hijriAdjustment = hijriAdjustment,
@@ -355,6 +361,16 @@ fun OthersScreen(
     // Detail Dialogs for Allah's Name
     if (selectedNameForDetail != null) {
         val name = selectedNameForDetail!!
+        val displayMeaning = if (isAr) {
+            name.arabicMeaning
+        } else {
+            othersContent.nameMeaning(name.id, appLanguage, name.englishMeaning)
+        }
+        val displayDetail = if (isAr) {
+            name.arabicMeaning
+        } else {
+            othersContent.nameDetail(name.id, appLanguage, name.englishMeaningDetail)
+        }
         AlertDialog(
             onDismissRequest = { selectedNameId = null },
             confirmButton = {
@@ -396,7 +412,7 @@ fun OthersScreen(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = name.englishMeaning,
+                            text = displayMeaning,
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
@@ -421,7 +437,7 @@ fun OthersScreen(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = if (isAr) name.arabicMeaning else name.englishMeaningDetail,
+                                text = displayDetail,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface,
                                 textAlign = TextAlign.Center,
@@ -437,6 +453,16 @@ fun OthersScreen(
     // Detail Dialogs for occasion
     if (selectedOccasionForDetail != null) {
         val holiday = selectedOccasionForDetail!!
+        val holidayName = if (isAr) {
+            holiday.nameAr
+        } else {
+            othersContent.occasionName(holiday.id, appLanguage, holiday.nameEn)
+        }
+        val holidayDesc = if (isAr) {
+            holiday.descAr
+        } else {
+            othersContent.occasionDescription(holiday.id, appLanguage, holiday.descEn)
+        }
         AlertDialog(
             onDismissRequest = { selectedOccasionId = null },
             confirmButton = {
@@ -450,7 +476,7 @@ fun OthersScreen(
             title = {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = if (isAr) holiday.nameAr else holiday.nameEn,
+                        text = holidayName,
                         fontWeight = FontWeight.ExtraBold,
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.primary
@@ -491,7 +517,7 @@ fun OthersScreen(
                             .verticalScroll(androidx.compose.foundation.rememberScrollState())
                     ) {
                         Text(
-                            text = if (isAr) holiday.descAr else holiday.descEn,
+                            text = holidayDesc,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(16.dp),
@@ -507,6 +533,8 @@ fun OthersScreen(
 @Composable
 fun NamesOfAllahPane(
     isAr: Boolean,
+    language: String,
+    content: OthersContent,
     names: List<AllahName>,
     useWesternNumbersInArabic: Boolean = false,
     onNameClick: (AllahName) -> Unit
@@ -575,6 +603,7 @@ fun NamesOfAllahPane(
                 AllahNameCard(
                     name = name,
                     isAr = isAr,
+                    meaning = if (isAr) "" else content.nameMeaning(name.id, language, name.englishMeaning),
                     useWesternNumbersInArabic = useWesternNumbersInArabic,
                     onCardClick = { onNameClick(name) }
                 )
@@ -590,6 +619,7 @@ fun NamesOfAllahPane(
 fun AllahNameCard(
     name: AllahName,
     isAr: Boolean,
+    meaning: String,
     useWesternNumbersInArabic: Boolean = false,
     onCardClick: () -> Unit
 ) {
@@ -648,7 +678,7 @@ fun AllahNameCard(
 
                 // Primary english meaning
                 Text(
-                    text = name.englishMeaning.split("/")[0].trim(),
+                    text = meaning.split("/")[0].trim(),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -662,6 +692,8 @@ fun AllahNameCard(
 @Composable
 fun CalendarAndOccasionsPane(
     isAr: Boolean,
+    language: String,
+    content: OthersContent,
     occasions: List<IslamicOccasion>,
     useWesternNumbersInArabic: Boolean = false,
     hijriAdjustment: Int = 0,
@@ -736,7 +768,7 @@ fun CalendarAndOccasionsPane(
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = if (isAr) item.nameAr else item.nameEn,
+                            text = if (isAr) item.nameAr else content.occasionName(item.id, language, item.nameEn),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
