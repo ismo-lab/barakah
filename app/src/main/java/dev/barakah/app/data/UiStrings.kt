@@ -11,7 +11,7 @@ object UiStrings {
     @Volatile
     var language: String = "en"
 
-    fun setLanguage(tag: String) {
+    fun setCurrentLanguage(tag: String) {
         language = tag
     }
 

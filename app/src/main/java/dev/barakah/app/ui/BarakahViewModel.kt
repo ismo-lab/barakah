@@ -498,7 +498,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         if (!prefs.contains(AppPrefs.APP_LANG)) {
             prefs.edit { putString(AppPrefs.APP_LANG, "ar") }
         }
-        UiStrings.setLanguage(_appLanguage.value)
+        UiStrings.setCurrentLanguage(_appLanguage.value)
 
         if (!_isFirstRun.value && _locationMethod.value != "auto" && _isLocationSet.value && !prefs.contains(AppPrefs.LOC_TIMEZONE)) {
             viewModelScope.launch {
@@ -733,7 +733,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun setAppLanguage(lang: String) {
-        UiStrings.setLanguage(lang)
+        UiStrings.setCurrentLanguage(lang)
         _appLanguage.value = lang
         prefs.edit { putString(AppPrefs.APP_LANG, lang) }
 

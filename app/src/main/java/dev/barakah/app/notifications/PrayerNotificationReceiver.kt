@@ -84,7 +84,7 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         
         val appPrefs = context.getSharedPreferences(AppPrefs.FILE, Context.MODE_PRIVATE)
-        UiStrings.setLanguage(appPrefs.getString(AppPrefs.APP_LANG, "ar") ?: "ar")
+        UiStrings.setCurrentLanguage(appPrefs.getString(AppPrefs.APP_LANG, "ar") ?: "ar")
         val isAr = appPrefs.getString(AppPrefs.APP_LANG, "ar") == "ar"
 
         // Only the five prayers play the Adhan, and only when adhan audio is enabled.

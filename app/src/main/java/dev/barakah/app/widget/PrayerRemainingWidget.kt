@@ -37,7 +37,7 @@ class PrayerRemainingWidget : GlanceAppWidget() {
             val refreshToken = currentState<Preferences>()[WidgetRefreshState.refreshToken] ?: 0L
             // Glance can reuse an active session and recompose this block without rerunning provideGlance.
             val prefs = context.getSharedPreferences(AppPrefs.FILE, Context.MODE_PRIVATE)
-            UiStrings.setLanguage(prefs.getString(AppPrefs.APP_LANG, "ar") ?: "ar")
+            UiStrings.setCurrentLanguage(prefs.getString(AppPrefs.APP_LANG, "ar") ?: "ar")
             val isAr = prefs.getString(AppPrefs.APP_LANG, "ar") == "ar"
             val defaultLabel = LocationDefaults.unsetLabel(isAr)
             val lat = prefs.getFloat(AppPrefs.LOC_LAT, LocationDefaults.LATITUDE.toFloat()).toDouble()

@@ -57,7 +57,7 @@ class AdhanPlaybackService : Service() {
         }
 
         createNotificationChannel()
-        UiStrings.setLanguage(prefs.getString(AppPrefs.APP_LANG, "ar") ?: "ar")
+        UiStrings.setCurrentLanguage(prefs.getString(AppPrefs.APP_LANG, "ar") ?: "ar")
         val isAr = prefs.getString(AppPrefs.APP_LANG, "ar") == "ar"
         try {
             startForeground(NOTIFICATION_ID, createNotification(prayerName, isAr))
