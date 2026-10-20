@@ -168,9 +168,7 @@ fun HomeScreen(
         "Duha (Nafilah)" to "الضحى",
         "Witr (Nafilah)" to "صلاة الوتر",
         "Qiyam-ul-Layl (Nafilah)" to "قيام الليل",
-        "First Third (Nafilah)" to "الثلث الأول - من الليل",
-        "Midnight (Nafilah)" to "منتصف الليل",
-        "Qiyam Last Third (Nafilah)" to "القيام - الثلث الأخير"
+        "First Third (Nafilah)" to "الثلث الأول - من الليل"
     )
 
     fun translatePrayer(name: String): String {
@@ -186,7 +184,7 @@ fun HomeScreen(
         "Duha Voluntary Prayer" to "صلاة الضحى – ركعتين نافلة",
         "Tahajjud Night Prayer" to "صلاة التهجد – قيام الليل نافلة",
         "Witr Voluntary Prayer" to "صلاة الوتر – ركعة أو ثلاث خاتمة الصلاة",
-        "Late Night Prayer" to "صلاة قيام الليل – تفضل في أول الليل أو وسطه"
+        "Islamic Midnight" to "منتصف الليل الإسلامي – بداية قيام الليل"
     )
 
     fun translateSubtitle(sub: String): String {
@@ -214,58 +212,25 @@ fun HomeScreen(
                 isha = "--:--"
             )
         }
+        val nawafil = if (isLocationSet) NawafilTimes.schedule(times) else null
         val list = mutableListOf(
             Triple("Fajr", displayTimes.fajr, "Dawn Prayer")
         )
         if (showNawafil) {
             list.add(Triple("Sunrise", displayTimes.sunrise, "Sunrise Shuruq"))
-            val duhaTime = if (isLocationSet) TimeUtils.calculateOffsetTime(displayTimes.sunrise, NawafilTimes.DUHA_AFTER_SUNRISE) else "--:--"
-            list.add(Triple("Duha (Nafilah)", duhaTime, "Duha Voluntary Prayer"))
+            list.add(Triple("Duha (Nafilah)", nawafil?.duha ?: "--:--", "Duha Voluntary Prayer"))
         }
         list.add(Triple("Dhuhr", displayTimes.dhuhr, "Midday Prayer"))
         list.add(Triple("Asr", displayTimes.asr, "Afternoon Prayer"))
         list.add(Triple("Maghrib", displayTimes.maghrib, "Sunset Prayer"))
         list.add(Triple("Isha", displayTimes.isha, "Night Prayer"))
-        
+
         if (showNawafil) {
-            try {
-                if (isLocationSet) {
-                    val mParts = displayTimes.maghrib.split(":")
-                    val mMin = mParts[0].toInt() * 60 + mParts[1].toInt()
-                    val fParts = displayTimes.fajr.split(":")
-                    var fMin = fParts[0].toInt() * 60 + fParts[1].toInt()
-                    if (fMin < mMin) fMin += 24 * 60
-                    val diff = fMin - mMin
-                    
-                    val firstThirdMin = mMin + diff / 3
-                    val midMin = mMin + diff / 2
-                    val lastThirdMin = mMin + (diff * 2) / 3
-                    
-                    fun formatMins(min: Int): String {
-                        val h = (min / 60) % 24
-                        val m = min % 60
-                        return String.format(Locale.US, "%02d:%02d", h, m)
-                    }
-                    
-                    val witrStart = TimeUtils.calculateOffsetTime(displayTimes.isha, NawafilTimes.WITR_AFTER_ISHA)
-                    list.add(Triple("Witr (Nafilah)", "$witrStart - ${displayTimes.fajr}", "Witr Voluntary Prayer"))
-                    list.add(Triple("First Third (Nafilah)", formatMins(firstThirdMin), "First Third of the Night"))
-                    list.add(Triple("Midnight (Nafilah)", formatMins(midMin), "Islamic Midnight"))
-                    list.add(Triple("Qiyam Last Third (Nafilah)", formatMins(lastThirdMin), "Late Night Prayer"))
-                } else {
-                    list.add(Triple("Witr (Nafilah)", "--:--", "Witr Voluntary Prayer"))
-                    list.add(Triple("First Third (Nafilah)", "--:--", "First Third of the Night"))
-                    list.add(Triple("Midnight (Nafilah)", "--:--", "Islamic Midnight"))
-                    list.add(Triple("Qiyam Last Third (Nafilah)", "--:--", "Late Night Prayer"))
-                }
-            } catch (e: Exception) {
-                // Fallback if parsing fails
-                val witrTime = if (isLocationSet) TimeUtils.calculateOffsetTime(displayTimes.isha, NawafilTimes.WITR_AFTER_ISHA) else "--:--"
-                list.add(Triple("Witr (Nafilah)", if (isLocationSet) "$witrTime - ${displayTimes.fajr}" else "--:--", "Witr Voluntary Prayer"))
-                list.add(Triple("First Third (Nafilah)", "--:--", "First Third of the Night"))
-                list.add(Triple("Midnight (Nafilah)", "--:--", "Islamic Midnight"))
-                list.add(Triple("Qiyam Last Third (Nafilah)", "--:--", "Late Night Prayer"))
-            }
+            val witr = nawafil?.let { "${it.witr} - ${displayTimes.fajr}" } ?: "--:--"
+            list.add(Triple("Witr (Nafilah)", witr, "Witr Voluntary Prayer"))
+            list.add(Triple("First Third (Nafilah)", nawafil?.firstThird ?: "--:--", "First Third of the Night"))
+            list.add(Triple("Qiyam-ul-Layl (Nafilah)", nawafil?.qiyam ?: "--:--", "Islamic Midnight"))
+            list.add(Triple("Tahajjud (Nafilah)", nawafil?.tahajjud ?: "--:--", "Tahajjud Night Prayer"))
         }
         list
     }

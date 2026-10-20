@@ -137,15 +137,11 @@ object PrayerScheduler {
 
             if (showNawafil) {
                 // Secondary / Nawafil
-                val duhaTime = ClockTime.offset(times.sunrise, NawafilTimes.DUHA_AFTER_SUNRISE, timeZone)
-                val witrTime = ClockTime.offset(times.isha, NawafilTimes.WITR_AFTER_ISHA, timeZone)
-                val tahajjudTime = ClockTime.offset(times.fajr, NawafilTimes.TAHAJJUD_BEFORE_FAJR, timeZone)
-                val qiyamTime = ClockTime.offset(times.fajr, NawafilTimes.QIYAM_BEFORE_FAJR, timeZone)
-                
-                scheduleAlarm(context, "Duha (Nafilah)", duhaTime, 6, notifyNawafil && isEnabled("Duha (Nafilah)"), timeZone)
-                scheduleAlarm(context, "Witr (Nafilah)", witrTime, 7, notifyNawafil && isEnabled("Witr (Nafilah)"), timeZone)
-                scheduleAlarm(context, "Tahajjud (Nafilah)", tahajjudTime, 8, notifyNawafil && isEnabled("Tahajjud (Nafilah)"), timeZone)
-                scheduleAlarm(context, "Qiyam-ul-Layl (Nafilah)", qiyamTime, 9, notifyNawafil && isEnabled("Qiyam-ul-Layl (Nafilah)"), timeZone)
+                val nawafil = NawafilTimes.schedule(times)
+                scheduleAlarm(context, "Duha (Nafilah)", nawafil?.duha ?: "", 6, notifyNawafil && isEnabled("Duha (Nafilah)"), timeZone)
+                scheduleAlarm(context, "Witr (Nafilah)", nawafil?.witr ?: "", 7, notifyNawafil && isEnabled("Witr (Nafilah)"), timeZone)
+                scheduleAlarm(context, "Tahajjud (Nafilah)", nawafil?.tahajjud ?: "", 8, notifyNawafil && isEnabled("Tahajjud (Nafilah)"), timeZone)
+                scheduleAlarm(context, "Qiyam-ul-Layl (Nafilah)", nawafil?.qiyam ?: "", 9, notifyNawafil && isEnabled("Qiyam-ul-Layl (Nafilah)"), timeZone)
             }
 
             // Morning and Evening Adhkar Notifications
