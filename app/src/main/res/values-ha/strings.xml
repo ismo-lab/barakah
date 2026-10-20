@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Barakah</string>
+    <string name="widget_prayer_title">Lokutan Sallah</string>
+    <string name="widget_prayer_desc">Lokutan sallah na yau da kullum.</string>
+    <string name="widget_prayer_remaining_title">Sallah ta gaba</string>
+    <string name="widget_prayer_remaining_desc">Mai bin diddigin sallah ta gaba.</string>
+    <string name="widget_nawafil_title">Lokutan Nawafil</string>
+    <string name="widget_nawafil_desc">Lokutan sallah na son rai na yau da kullum.</string>
+    <string name="widget_preview_fajr">Fajr</string>
+    <string name="widget_preview_dhuhr">Dhuhr</string>
+    <string name="widget_preview_asr">Asr</string>
+    <string name="widget_preview_maghrib">Maghrib</string>
+    <string name="widget_preview_isha">Isha</string>
+    <string name="widget_preview_duha">Duha</string>
+    <string name="widget_preview_qiyam">Qiyam</string>
+    <string name="widget_preview_tahajjud">Tahajjud</string>
+    <string name="widget_preview_witr">Witr</string>
+    <string name="widget_preview_location_sample">Makkah, Saudi Arabiya</string>
+    <string name="widget_next_prayer_label">Sallah ta gaba</string>
+    <string name="widget_sample_next_name">Maghrib</string>
+    <string name="widget_sample_countdown">Zai fara nan da awa 1 da minti 45</string>
+</resources>

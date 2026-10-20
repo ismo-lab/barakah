@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Barakah</string>
+    <string name="widget_prayer_title">Waktu Salat</string>
+    <string name="widget_prayer_desc">Waktu salat harian.</string>
+    <string name="widget_prayer_remaining_title">Salat Berikutnya</string>
+    <string name="widget_prayer_remaining_desc">Pelacak salat berikutnya.</string>
+    <string name="widget_nawafil_title">Waktu Nawafil</string>
+    <string name="widget_nawafil_desc">Waktu salat sunnah harian.</string>
+    <string name="widget_preview_fajr">Subuh</string>
+    <string name="widget_preview_dhuhr">Zuhur</string>
+    <string name="widget_preview_asr">Asar</string>
+    <string name="widget_preview_maghrib">Magrib</string>
+    <string name="widget_preview_isha">Isya</string>
+    <string name="widget_preview_duha">Duha</string>
+    <string name="widget_preview_qiyam">Qiyam</string>
+    <string name="widget_preview_tahajjud">Tahajud</string>
+    <string name="widget_preview_witr">Witir</string>
+    <string name="widget_preview_location_sample">Makkah, Arab Saudi</string>
+    <string name="widget_next_prayer_label">Salat Berikutnya</string>
+    <string name="widget_sample_next_name">Magrib</string>
+    <string name="widget_sample_countdown">Mulai dalam 1 jam 45 menit</string>
+</resources>

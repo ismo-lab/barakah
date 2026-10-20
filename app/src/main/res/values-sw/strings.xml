@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Barakah</string>
+    <string name="widget_prayer_title">Nyakati za Sala</string>
+    <string name="widget_prayer_desc">Nyakati za sala za kila siku.</string>
+    <string name="widget_prayer_remaining_title">Sala Inayofuata</string>
+    <string name="widget_prayer_remaining_desc">Kifuatiliaji cha sala inayofuata.</string>
+    <string name="widget_nawafil_title">Nyakati za Nawafil</string>
+    <string name="widget_nawafil_desc">Nyakati za sala za hiari za kila siku.</string>
+    <string name="widget_preview_fajr">Alfajiri</string>
+    <string name="widget_preview_dhuhr">Adhuhuri</string>
+    <string name="widget_preview_asr">Alasiri</string>
+    <string name="widget_preview_maghrib">Magharibi</string>
+    <string name="widget_preview_isha">Isha</string>
+    <string name="widget_preview_duha">Duha</string>
+    <string name="widget_preview_qiyam">Qiyam</string>
+    <string name="widget_preview_tahajjud">Tahajjud</string>
+    <string name="widget_preview_witr">Witr</string>
+    <string name="widget_preview_location_sample">Makkah, Saudi Arabia</string>
+    <string name="widget_next_prayer_label">Sala Inayofuata</string>
+    <string name="widget_sample_next_name">Magharibi</string>
+    <string name="widget_sample_countdown">Inaanza baada ya saa 1 na dakika 45</string>
+</resources>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Barakah</string>
+    <string name="widget_prayer_title">نماز کے اوقات</string>
+    <string name="widget_prayer_desc">روزانہ نماز کے اوقات۔</string>
+    <string name="widget_prayer_remaining_title">اگلی نماز</string>
+    <string name="widget_prayer_remaining_desc">اگلی نماز کا ٹریکر۔</string>
+    <string name="widget_nawafil_title">نوافل کے اوقات</string>
+    <string name="widget_nawafil_desc">روزانہ نفل نماز کے اوقات۔</string>
+    <string name="widget_preview_fajr">فجر</string>
+    <string name="widget_preview_dhuhr">ظہر</string>
+    <string name="widget_preview_asr">عصر</string>
+    <string name="widget_preview_maghrib">مغرب</string>
+    <string name="widget_preview_isha">عشاء</string>
+    <string name="widget_preview_duha">ضحی</string>
+    <string name="widget_preview_qiyam">قیام</string>
+    <string name="widget_preview_tahajjud">تہجد</string>
+    <string name="widget_preview_witr">وتر</string>
+    <string name="widget_preview_location_sample">مکہ مکرمہ، سعودی عرب</string>
+    <string name="widget_next_prayer_label">اگلی نماز</string>
+    <string name="widget_sample_next_name">مغرب</string>
+    <string name="widget_sample_countdown">1 گھنٹہ 45 منٹ میں شروع ہوگا</string>
+</resources>

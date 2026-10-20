@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Barakah</string>
+    <string name="widget_prayer_title">নামাজের সময়</string>
+    <string name="widget_prayer_desc">প্রতিদিনের নামাজের সময়।</string>
+    <string name="widget_prayer_remaining_title">পরবর্তী নামাজ</string>
+    <string name="widget_prayer_remaining_desc">পরবর্তী নামাজের ট্র্যাকার।</string>
+    <string name="widget_nawafil_title">নফল নামাজের সময়</string>
+    <string name="widget_nawafil_desc">প্রতিদিনের নফল নামাজের সময়।</string>
+    <string name="widget_preview_fajr">ফজর</string>
+    <string name="widget_preview_dhuhr">যোহর</string>
+    <string name="widget_preview_asr">আসর</string>
+    <string name="widget_preview_maghrib">মাগরিব</string>
+    <string name="widget_preview_isha">ইশা</string>
+    <string name="widget_preview_duha">দুহা</string>
+    <string name="widget_preview_qiyam">কিয়াম</string>
+    <string name="widget_preview_tahajjud">তাহাজ্জুদ</string>
+    <string name="widget_preview_witr">বিতর</string>
+    <string name="widget_preview_location_sample">মক্কা, সৌদি আরব</string>
+    <string name="widget_next_prayer_label">পরবর্তী নামাজ</string>
+    <string name="widget_sample_next_name">মাগরিব</string>
+    <string name="widget_sample_countdown">১ ঘণ্টা ৪৫ মিনিটে শুরু হবে</string>
+</resources>

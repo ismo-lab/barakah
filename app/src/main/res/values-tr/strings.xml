@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Barakah</string>
+    <string name="widget_prayer_title">Namaz Vakitleri</string>
+    <string name="widget_prayer_desc">Günlük namaz vakitleri.</string>
+    <string name="widget_prayer_remaining_title">Sonraki Namaz</string>
+    <string name="widget_prayer_remaining_desc">Sonraki namazı takip eder.</string>
+    <string name="widget_nawafil_title">Nafile Vakitleri</string>
+    <string name="widget_nawafil_desc">Günlük nafile namaz vakitleri.</string>
+    <string name="widget_preview_fajr">Sabah</string>
+    <string name="widget_preview_dhuhr">Öğle</string>
+    <string name="widget_preview_asr">İkindi</string>
+    <string name="widget_preview_maghrib">Akşam</string>
+    <string name="widget_preview_isha">Yatsı</string>
+    <string name="widget_preview_duha">Kuşluk</string>
+    <string name="widget_preview_qiyam">Kıyam</string>
+    <string name="widget_preview_tahajjud">Teheccüd</string>
+    <string name="widget_preview_witr">Vitir</string>
+    <string name="widget_preview_location_sample">Mekke, Suudi Arabistan</string>
+    <string name="widget_next_prayer_label">Sonraki Namaz</string>
+    <string name="widget_sample_next_name">Akşam</string>
+    <string name="widget_sample_countdown">1 saat 45 dakika içinde başlıyor</string>
+</resources>

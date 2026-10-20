@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Barakah</string>
+    <string name="widget_prayer_title">Время молитв</string>
+    <string name="widget_prayer_desc">Ежедневное время молитв.</string>
+    <string name="widget_prayer_remaining_title">Следующая молитва</string>
+    <string name="widget_prayer_remaining_desc">Отслеживание следующей молитвы.</string>
+    <string name="widget_nawafil_title">Время навафиль</string>
+    <string name="widget_nawafil_desc">Ежедневное время добровольных молитв.</string>
+    <string name="widget_preview_fajr">Фаджр</string>
+    <string name="widget_preview_dhuhr">Зухр</string>
+    <string name="widget_preview_asr">Аср</string>
+    <string name="widget_preview_maghrib">Магриб</string>
+    <string name="widget_preview_isha">Иша</string>
+    <string name="widget_preview_duha">Духа</string>
+    <string name="widget_preview_qiyam">Кыям</string>
+    <string name="widget_preview_tahajjud">Тахаджуд</string>
+    <string name="widget_preview_witr">Витр</string>
+    <string name="widget_preview_location_sample">Мекка, Саудовская Аравия</string>
+    <string name="widget_next_prayer_label">Следующая молитва</string>
+    <string name="widget_sample_next_name">Магриб</string>
+    <string name="widget_sample_countdown">Начнётся через 1 час 45 минут</string>
+</resources>

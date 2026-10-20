@@ -56,9 +56,10 @@ class AdhanPlaybackService : Service() {
             return START_NOT_STICKY
         }
 
-        createNotificationChannel()
-        UiStrings.setCurrentLanguage(prefs.getString(AppPrefs.APP_LANG, "ar") ?: "ar")
-        val isAr = prefs.getString(AppPrefs.APP_LANG, "ar") == "ar"
+        val appLanguage = prefs.getString(AppPrefs.APP_LANG, "ar") ?: "ar"
+        UiStrings.setCurrentLanguage(appLanguage)
+        val isAr = appLanguage == "ar"
+        createNotificationChannel(appLanguage)
         try {
             startForeground(NOTIFICATION_ID, createNotification(prayerName, isAr))
             releasePlayer()
@@ -112,19 +113,21 @@ class AdhanPlaybackService : Service() {
         return START_NOT_STICKY
     }
 
-    private fun createNotificationChannel() {
+    private fun createNotificationChannel(appLanguage: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val manager = getSystemService(NotificationManager::class.java)
+            val isAr = appLanguage == "ar"
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                if (getSharedPreferences(AppPrefs.FILE, MODE_PRIVATE).getString(AppPrefs.APP_LANG, "ar") == "ar")
-                    "تشغيل الأذان"
-                else
-                    "Adhan playback",
+                if (isAr) "تشغيل الأذان" else UiStrings.of("Adhan playback"),
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
                 setSound(null, null)
-                description = "Shows while the Adhan audio is playing"
+                description = if (isAr) {
+                    "يظهر أثناء تشغيل صوت الأذان"
+                } else {
+                    UiStrings.of("Shows while the Adhan audio is playing")
+                }
             }
             manager.createNotificationChannel(channel)
         }
