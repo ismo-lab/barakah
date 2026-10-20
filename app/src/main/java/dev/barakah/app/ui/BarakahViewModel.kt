@@ -1474,8 +1474,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         } else {
             when {
                 currentTimeInSec < fajrSec -> highlight = "Isha"
-                currentTimeInSec < sunriseSec -> highlight = "Fajr"
-                currentTimeInSec < dhuhrSec -> highlight = "Sunrise"
+                currentTimeInSec < dhuhrSec -> highlight = "Fajr"
                 currentTimeInSec < asrSec -> highlight = "Dhuhr"
                 currentTimeInSec < maghribSec -> highlight = "Asr"
                 currentTimeInSec < ishaSec -> highlight = "Maghrib"
