@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.barakah.app.data.QuranData
 import dev.barakah.app.data.ReligiousTextLanguages
+import dev.barakah.app.data.UiLanguages
 import dev.barakah.app.R
 import dev.barakah.app.util.PrayerCalculator
 import dev.barakah.app.data.Surah
@@ -764,8 +765,7 @@ fun QuranScreen(
                             )
 
                             if (quranTranslationLanguage.isNotEmpty()) {
-                                val translationRtl = quranTranslationLanguage == "ur" ||
-                                        quranTranslationLanguage == "fa"
+                                val translationRtl = UiLanguages.isRtl(quranTranslationLanguage)
                                 Text(
                                     text = verse.english,
                                     style = androidx.compose.ui.text.TextStyle(
@@ -842,7 +842,7 @@ fun QuranScreen(
         val verse = dialogState.verse
         val tafseer = dialogState.text
         val tafsirRtl = !dialogState.usedEnglishFallback &&
-                (dialogState.language == "ar" || dialogState.language == "fa")
+                UiLanguages.isRtl(dialogState.language)
         val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
         val configuration = androidx.compose.ui.platform.LocalConfiguration.current
         val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
