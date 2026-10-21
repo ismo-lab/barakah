@@ -23,7 +23,7 @@ object ReligiousTextLanguages {
         nameEn = "English",
         nameAr = "الإنجليزية",
         quranEdition = "Bundled English translation",
-        tafsirSource = "Tafsir al-Jalalayn (Altafsir)",
+        tafsirSource = "Al-Mukhtasar (Tafsir Center for Quranic Studies)",
         duaTranslations = true
     )
 
@@ -48,7 +48,7 @@ object ReligiousTextLanguages {
         nameEn = "Urdu",
         nameAr = "الأردية",
         quranEdition = "Muhammad Junagarhi (Tanzil)",
-        tafsirSource = "Bayan ul Quran (Urdu, QUL)"
+        tafsirSource = "As-Saadi Urdu (QuranEnc, V1.0.0)"
     )
 
     val bengali = ReligiousLanguage(

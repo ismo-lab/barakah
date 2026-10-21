@@ -29,17 +29,17 @@ Unlicense covers the collection repository, not necessarily every edition's unde
 
 ## Tafsir
 
-Bundled from [spa5k/tafsir_api](https://github.com/spa5k/tafsir_api) (MIT):
+Bundled from [Tarteel QUL](https://qul.tarteel.ai/resources/tafsir), the [Tafsir Center for Quranic Studies](https://tafsir.net), and [QuranEnc](https://quranenc.com). [spa5k/tafsir_api](https://github.com/spa5k/tafsir_api) is MIT-licensed packaging code; that licence does not cover the bundled tafsir text.
 
 | Language | Edition | Upstream |
 | --- | --- | --- |
 | Arabic | Tafsir al-Jalalayn | [QUL / Tarteel](https://qul.tarteel.ai/resources/tafsir/523) |
-| English | Tafsir al-Jalalayn (pre-existing asset) | [Altafsir](https://www.altafsir.com) |
+| English | Al-Mukhtasar (CC BY 4.0) | Tafsir Center for Quranic Studies, via [spa5k/tafsir_api](https://github.com/spa5k/tafsir_api) |
 | Indonesian | Al-Mukhtasar | QUL / Tarteel |
 | Bengali | Al-Mukhtasar | QUL / Tarteel |
 | Turkish | Al-Mukhtasar | QUL / Tarteel |
 | Persian | Al-Mukhtasar | QUL / Tarteel |
-| Urdu | Bayan ul Quran (Dr. Israr Ahmad) | QUL / Tarteel |
+| Urdu | As-Saadi — Urdu edition V1.0.0 (QuranEnc conditional republication terms) | [QuranEnc](https://quranenc.com/en/browse/urdu_saadi) |
 | Russian | Al-Mukhtasar | QUL / Tarteel |
 | Sorani Kurdish | Al-Mukhtasar | QUL / Tarteel |
 
