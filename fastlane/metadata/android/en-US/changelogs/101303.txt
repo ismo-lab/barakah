@@ -1,0 +1,1 @@
+Privacy hardening: Android cloud backup and device-to-device transfer no longer include Barakah data. The app still declares no INTERNET permission, and the Quran, tafsir, duas, adhan audio and city catalog remain fully offline. City search now reveals results above the keyboard while it stays open.

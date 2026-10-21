@@ -62,7 +62,7 @@ runner's fonts and SDK image; dispatch the workflow with `record_screenshots` to
 
 ## 🔒 Privacy Guarantee
 
-* **No Network Permission**: Barakah does not declare `android.permission.INTERNET`, so it has no way to send anything anywhere, even in principle. The Quran, tafseer, supplications and the city catalog are all bundled in the APK.
+* **No Network Permission**: Barakah does not declare `android.permission.INTERNET`, so it has no way to send anything anywhere, even in principle. The Quran, tafseer, supplications and the city catalog are all bundled in the APK. Android cloud backup and device-to-device transfer are disabled, so app data stays on the device.
 * **Zero Telemetry**: No user tracking, analytics nodes, or telemetry collection processes.
 * **Offline Processing**: Real-time astronomical coordinates and physical tracking parameters remain completely local on-device.
 * **Forever Ad-Free & Free**: Absolutely zero ads, monetization models, or dark UI design patterns.
