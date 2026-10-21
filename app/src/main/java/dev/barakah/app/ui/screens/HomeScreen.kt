@@ -467,7 +467,7 @@ fun HomeScreen(
                     "«مَنْ سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الْجَنَّةِ»" to "صحيح مسلم • عن أبي هريرة"
                 ) else listOf(
                     "\"Actions are but by intentions, and every person shall have only that which he intended.\"" to "Sahih al-Bukhari & Muslim • Narrated by Umar bin Al-Khattab",
-                    "\"Make things easy and do not make them difficult, and cheer people up and do not make them voice aversion.\"" to "Sahih al-Bukhari • Narrated by Anas bin Malik",
+                    "\"Make things easy and do not make them difficult, and give glad tidings and do not repel people.\"" to "Sahih al-Bukhari • Narrated by Anas bin Malik",
                     "\"He who believes in Allah and the Last Day must either speak good or remain silent.\"" to "Sahih al-Bukhari • Narrated by Abu Hurayrah",
                     "\"A believer to another believer is like a building whose different parts enforce and support each other.\"" to "Sahih al-Bukhari & Muslim • Narrated by Abu Musa Al-Ash'ari",
                     "\"The best among you are those who learn the Quran and teach it.\"" to "Sahih al-Bukhari • Narrated by Uthman bin Affan",

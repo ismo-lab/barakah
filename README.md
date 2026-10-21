@@ -13,7 +13,7 @@
   <a href="https://github.com/ismo-lab/barakah/actions/workflows/android.yml"><img src="https://github.com/ismo-lab/barakah/actions/workflows/android.yml/badge.svg" alt="Android CI" /></a>
 </p>
 
-**Barakah** is a privacy-respecting, fully Free and Open Source (FOSS) Islamic companion application crafted specifically for Android. By pairing Material 3 aesthetics with local offline-first reliability, **Barakah** serves as an eye-safe, advertisement-free spiritual toolkit for daily routines.
+**Barakah** is a privacy-respecting, open-source (GPL-3.0) Islamic companion application for Android. Its source is free software; bundled Quran translations, tafsir, and supplications keep their own attribution and terms, listed below. By pairing Material 3 aesthetics with local offline-first reliability, **Barakah** serves as an advertisement-free spiritual toolkit for daily routines.
 
 **Get the app:** the latest signed APK is on the [Releases](https://github.com/ismo-lab/barakah/releases) page as `Barakah-v<version>.apk`.
 
@@ -73,10 +73,10 @@ runner's fonts and SDK image; dispatch the workflow with `record_screenshots` to
 
 Barakah relies gratefully on the efforts of the global FOSS Islamic developer community for its offline-ready datasets, reference scripts, and audio assets:
 
-- **Hadith Compilation**: [hadith.json](https://github.com/4thel00z/hadith.json)
+- **Hadith Compilation**: [hadith.json](https://github.com/4thel00z/hadith.json) (GPL-3.0)
 - **Hisnul Muslim Supplications**: [HisnElMuslim](https://github.com/asellam/HisnElMuslim) (MIT) for the Arabic; [Islamic Pro Azkar API](https://github.com/YousefAsalya/Islamic-Pro-azkar-API) (MIT) for the English
 - **Holy Quran Database**: [Quran-Data](https://github.com/rn0x/Quran-Data)
-- **Holy Quran Database & Tafsir**: [Quran-Data](https://github.com/rn0x/Quran-Data) (MIT) for the Arabic text and the Sahih International English translation, attributed to Saheeh International; [tafsir_api](https://github.com/spa5k/tafsir_api) (MIT) for the Arabic *Tafsir al-Jalalayn*, a classical work in the public domain, and for the English *Al-Mukhtasar* by the [Tafsir Center for Quranic Studies](https://tafsir.net) ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)); the Urdu *As-Saadi* edition V1.0.0 comes from [QuranEnc](https://quranenc.com/en/browse/urdu_saadi), whose terms permit unmodified republication with attribution. Urdu, Malay and Swahili translations from [Tanzil](https://tanzil.net) are used under Tanzil's non-commercial terms.
+- **Holy Quran Database & Tafsir**: [Quran-Data](https://github.com/rn0x/Quran-Data) (MIT) for the Arabic text and the Sahih International English translation, attributed to Saheeh International; [tafsir_api](https://github.com/spa5k/tafsir_api) (MIT) for the Arabic *Tafsir al-Jalalayn*, a classical work in the public domain, and for the English *Al-Mukhtasar* by the [Tafsir Center for Quranic Studies](https://tafsir.net) ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)); the Urdu *As-Saadi* edition V1.0.0 comes from [QuranEnc](https://quranenc.com/en/browse/urdu_saadi), whose terms permit unmodified republication with attribution. English, Urdu, Malay and Swahili translations from [Tanzil](https://tanzil.net) are used under Tanzil's non-commercial terms; the app links back to [tanzil.net/trans](https://tanzil.net/trans/) in Settings > About.
 - **Quran Script Font**: [Amiri Quran](https://github.com/aliftype/amiri) © Khaled Hosny and the Amiri Project Authors, licensed under the [SIL Open Font License 1.1](https://openfontlicense.org). The bundled licence text is in [docs/AmiriQuran-OFL.txt](docs/AmiriQuran-OFL.txt).
 - **Astronomical Mathematics**: [Adhan SDK](https://github.com/batoulapps/adhan-java)
 - **Adhan Audio Assets**: two Makkah recordings released under [CC0](https://creativecommons.org/publicdomain/zero/1.0/) on the Internet Archive - [Fajr adhan](https://archive.org/details/28MayFajrAdhanMakkah) and [regular adhan](https://archive.org/details/MakkahAzan-ramadan). See [docs/ADHAN_AUDIO_ATTRIBUTION.md](docs/ADHAN_AUDIO_ATTRIBUTION.md).
