@@ -761,22 +761,16 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     fun setQuranTranslationLanguage(lang: String) {
         _quranTranslationLanguage.value = lang
 
-        // Tafsir follows the Quran choice until the reader changes tafsir on its own.
-        val tafsirTag = if (prefs.getBoolean(AppPrefs.TAFSIR_EXPLICIT, false)) {
-            null
-        } else {
-            ReligiousTextLanguages.tafsirTagForQuran(lang, _appLanguage.value)
-        }
-        if (tafsirTag != null) {
-            _tafsirLanguage.value = tafsirTag
-        }
+        // A Quran change always re-syncs tafsir. The tafsir picker can still override it, but
+        // the next Quran change takes over again.
+        val tafsirTag = ReligiousTextLanguages.tafsirTagForQuran(lang, _appLanguage.value)
+        _tafsirLanguage.value = tafsirTag
 
         prefs.edit {
             putString(AppPrefs.QURAN_TRANSLATION_LANG, lang)
             putBoolean(AppPrefs.QURAN_TRANSLATION_EXPLICIT, true)
-            if (tafsirTag != null) {
-                putString(AppPrefs.TAFSIR_LANG, tafsirTag)
-            }
+            putString(AppPrefs.TAFSIR_LANG, tafsirTag)
+            putBoolean(AppPrefs.TAFSIR_EXPLICIT, false)
         }
     }
 
