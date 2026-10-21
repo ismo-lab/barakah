@@ -91,3 +91,7 @@ This project is licensed under the GNU General Public License v3.0 - see the [LI
 ---
 
 Made as a humble contribution to the Muslim Ummah. May Allah grant Barakah in our lives. 🤲
+
+---
+
+**A note on Google AI Studio:** Barakah started as a small personal app built with Google AI Studio. As it grew into a full application, development moved away from that platform. Any Google AI Studio note or reference left in the repository is historical, not a description of how the project is built today.
