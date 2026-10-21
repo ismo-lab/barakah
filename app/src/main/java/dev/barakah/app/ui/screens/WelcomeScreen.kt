@@ -11,6 +11,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.clickable
@@ -204,7 +205,7 @@ fun LanguageStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
     }
 }
 
-@OptIn(ExperimentalPermissionsApi::class)
+@OptIn(ExperimentalPermissionsApi::class, ExperimentalFoundationApi::class)
 @Composable
  fun LocationStep(viewModel: BarakahViewModel, onFinish: () -> Unit) {
      val currentLang by viewModel.appLanguage.collectAsStateWithLifecycle()
