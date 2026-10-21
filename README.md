@@ -21,7 +21,7 @@
 
 * **Home Dashboard**: View real-time prayer schedule trackers, choose voluntary (Nawafil) prayers to track, configure high-fidelity Mecca Al-Haram Adhan background play, and set flexible reminder notifications.
 * **Hijri Calendar**: The home screen shows today's Hijri date, and the occasions list is dated from it. A ±2-day shift in Settings lines the calendar up with the moon sighting your community follows.
-* **Quran Reader**: Access the complete Holy Quran text alongside Arabic Tafseer or English translations, adjustable font scaling, and an optional Uthmani-script face (Amiri Quran) applied to the Quran text alone.
+* **Quran Reader**: Access the complete Holy Quran text alongside tafsir in Arabic, English, Urdu, Bengali, Kurdish, Persian, Indonesian, Russian and Turkish, adjustable font scaling, and an optional Uthmani-script face (Amiri Quran) applied to the Quran text alone.
 * **Qiblah Compass**: Locate the Kaaba directions instantly using interactive, hardware-sensor calibrated alignment with physical haptic vibrations.
 * **Haptic Tasbih**: Maintain focus during remembrance with a digital counter (misbaha) supporting custom targets and discrete haptic pulses.
 * **Duas (Supplications)**: Read through compiled *Hisnul Muslim* (حصن المسلم) supplications organized by daily activities and scenarios.
@@ -74,9 +74,9 @@ runner's fonts and SDK image; dispatch the workflow with `record_screenshots` to
 Barakah relies gratefully on the efforts of the global FOSS Islamic developer community for its offline-ready datasets, reference scripts, and audio assets:
 
 - **Hadith Compilation**: [hadith.json](https://github.com/4thel00z/hadith.json)
-- **Hisnul Muslim Supplications**: [HisnElMuslim](https://github.com/asellam/HisnElMuslim)
+- **Hisnul Muslim Supplications**: [HisnElMuslim](https://github.com/asellam/HisnElMuslim) (MIT) for the Arabic; [Islamic Pro Azkar API](https://github.com/YousefAsalya/Islamic-Pro-azkar-API) (MIT) for the English
 - **Holy Quran Database**: [Quran-Data](https://github.com/rn0x/Quran-Data)
-- **Holy Quran Database & Tafsir**: [Quran-Data](https://github.com/rn0x/Quran-Data) (MIT) for the text; [tafsir_api](https://github.com/spa5k/tafsir_api) (MIT) for the Arabic *Tafsir al-Jalalayn*, a classical work in the public domain, and for the English *Al-Mukhtasar* by the [Tafsir Center for Quranic Studies](https://tafsir.net) ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)); the Urdu *As-Saadi* edition V1.0.0 comes from [QuranEnc](https://quranenc.com/en/browse/urdu_saadi), whose terms permit unmodified republication with attribution.
+- **Holy Quran Database & Tafsir**: [Quran-Data](https://github.com/rn0x/Quran-Data) (MIT) for the Arabic text and the Sahih International English translation, attributed to Saheeh International; [tafsir_api](https://github.com/spa5k/tafsir_api) (MIT) for the Arabic *Tafsir al-Jalalayn*, a classical work in the public domain, and for the English *Al-Mukhtasar* by the [Tafsir Center for Quranic Studies](https://tafsir.net) ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)); the Urdu *As-Saadi* edition V1.0.0 comes from [QuranEnc](https://quranenc.com/en/browse/urdu_saadi), whose terms permit unmodified republication with attribution. Urdu, Malay and Swahili translations from [Tanzil](https://tanzil.net) are used under Tanzil's non-commercial terms.
 - **Quran Script Font**: [Amiri Quran](https://github.com/aliftype/amiri) © Khaled Hosny and the Amiri Project Authors, licensed under the [SIL Open Font License 1.1](https://openfontlicense.org). The bundled licence text is in [docs/AmiriQuran-OFL.txt](docs/AmiriQuran-OFL.txt).
 - **Astronomical Mathematics**: [Adhan SDK](https://github.com/batoulapps/adhan-java)
 - **Adhan Audio Assets**: two Makkah recordings released under [CC0](https://creativecommons.org/publicdomain/zero/1.0/) on the Internet Archive - [Fajr adhan](https://archive.org/details/28MayFajrAdhanMakkah) and [regular adhan](https://archive.org/details/MakkahAzan-ramadan). See [docs/ADHAN_AUDIO_ATTRIBUTION.md](docs/ADHAN_AUDIO_ATTRIBUTION.md).

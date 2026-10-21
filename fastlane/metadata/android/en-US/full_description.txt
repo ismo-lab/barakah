@@ -2,14 +2,14 @@ Barakah is a privacy-respecting Islamic companion app for Android. Everything it
 
 NO NETWORK PERMISSION
 
-Barakah does not declare the INTERNET permission at all, so it cannot send anything anywhere, even in principle. The Quran, the tafseer, the supplications and the city catalog are bundled inside the APK. There is no advertising, no analytics and no tracking of any kind.
+Barakah does not declare the INTERNET permission at all, so it cannot send anything anywhere, even in principle. The Quran, the tafsir, the supplications and the city catalog are bundled inside the APK. There is no advertising, no analytics and no tracking of any kind.
 
 WHAT IT DOES
 
 * Prayer times - a daily schedule calculated on the device from your coordinates, using the calculation method you choose (Umm al-Qura, Muslim World League, Egyptian, Karachi, ISNA and others). Fajr, Dhuhr, Asr, Maghrib and Isha, with the current prayer and the countdown to the next one on the home screen.
 * Adhan reminders - notifications at each prayer time, or a short reminder before it, or the adhan itself played in the background from bundled recordings. Fajr can be announced with its own recording.
 * Hijri calendar - today's Hijri date and the Islamic occasions dated from it, with a 1-2 day shift in Settings so the calendar lines up with the moon sighting your community follows. The default for countries that usually sight a day later is applied automatically, and can be overridden or cleared.
-* Quran reader - the complete Quran text with Arabic or English tafseer, adjustable font size, and an optional Uthmani-script face (Amiri Quran) used for the Quran text alone.
+* Quran reader - the complete Quran text with tafsir in Arabic, English, Urdu, Bengali, Kurdish, Persian, Indonesian, Russian and Turkish, adjustable font size, and an optional Uthmani-script face (Amiri Quran) used for the Quran text alone.
 * Qibla compass - the direction of the Kaaba from your location, with a compass that uses the device sensors and haptic feedback.
 * Tasbih counter - a digital misbaha with haptic pulses and a target you set yourself.
 * Duas - Hisnul Muslim supplications organised by occasion and daily activity.

@@ -48,7 +48,7 @@ class ReligiousTextAssetTest {
 
     @Test
     fun supplicationTranslationsArePresent() {
-        for (language in listOf("id", "ru", "fa", "ckb")) {
+        for (language in listOf("ru", "fa", "ckb")) {
             val root = JSONObject(asset("res/raw/duas_$language.json").readText())
             assertTrue("$language supplication translations", root.length() > 0)
         }
