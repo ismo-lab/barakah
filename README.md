@@ -21,7 +21,7 @@
 
 * **Home Dashboard**: View real-time prayer schedule trackers, choose voluntary (Nawafil) prayers to track, configure high-fidelity Mecca Al-Haram Adhan background play, and set flexible reminder notifications.
 * **Hijri Calendar**: The home screen shows today's Hijri date, and the occasions list is dated from it. A ±2-day shift in Settings lines the calendar up with the moon sighting your community follows.
-* **Quran Reader**: Access the complete Holy Quran text alongside Arabic Tafseer or English translations, adjustable font scaling, and an optional Uthmani-script face (Amiri Quran) applied to the Quran text alone.
+* **Quran Reader**: Access the complete Holy Quran text alongside tafsir in Arabic, English, Urdu, Bengali, Kurdish, Persian, Indonesian, Russian and Turkish, adjustable font scaling, and an optional Uthmani-script face (Amiri Quran) applied to the Quran text alone.
 * **Qiblah Compass**: Locate the Kaaba directions instantly using interactive, hardware-sensor calibrated alignment with physical haptic vibrations.
 * **Haptic Tasbih**: Maintain focus during remembrance with a digital counter (misbaha) supporting custom targets and discrete haptic pulses.
 * **Duas (Supplications)**: Read through compiled *Hisnul Muslim* (حصن المسلم) supplications organized by daily activities and scenarios.
