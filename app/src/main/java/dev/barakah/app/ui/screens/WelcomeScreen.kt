@@ -321,32 +321,47 @@ fun LanguageStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-                .padding(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            filteredCities.forEach { city ->
-                ElevatedCard(
-                    onClick = {
-                        viewModel.setLocationMethod("manual")
-                        viewModel.updateLocation(city.lat, city.lng, city.displayName(currentLang), timeZoneId = city.timeZoneId, countryCode = city.countryCode)
-                        onFinish()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    ListItem(
-                        headlineContent = { Text(city.displayName(currentLang), fontWeight = FontWeight.Bold) },
-                        supportingContent = { Text(city.countryName) },
-                        leadingContent = { Icon(Icons.Default.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-                        trailingContent = { Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp)) },
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent)
-                    )
+        if (filteredCities.isNotEmpty()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                    .padding(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                filteredCities.forEach { city ->
+                    ElevatedCard(
+                        onClick = {
+                            viewModel.setLocationMethod("manual")
+                            viewModel.updateLocation(city.lat, city.lng, city.displayName(currentLang), timeZoneId = city.timeZoneId, countryCode = city.countryCode)
+                            onFinish()
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        ListItem(
+                            headlineContent = { Text(city.displayName(currentLang), fontWeight = FontWeight.Bold) },
+                            supportingContent = { Text(city.countryName) },
+                            leadingContent = { Icon(Icons.Default.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                            trailingContent = { Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp)) },
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                        )
+                    }
                 }
+            }
+        } else if (query.isNotEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 40.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = if (isAr) "لا توجد نتائج" else UiStrings.of("No results"),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.outline
+                )
             }
         }
         
