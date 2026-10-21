@@ -67,7 +67,6 @@ object DuaData {
     private fun loadDuaTranslations(context: Context) {
         if (translationsLoaded) return
         val resources = mapOf(
-            "id" to R.raw.duas_id,
             "ru" to R.raw.duas_ru,
             "fa" to R.raw.duas_fa,
             "ckb" to R.raw.duas_ckb

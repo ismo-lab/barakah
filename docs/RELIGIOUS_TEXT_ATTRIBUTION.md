@@ -12,6 +12,7 @@ Bundled from the editions published by [fawazahmed0/quran-api](https://github.co
 
 | Language | Edition / translator | Upstream source |
 | --- | --- | --- |
+| English | Sahih International (Saheeh International) | [rn0x/Quran-Data](https://github.com/rn0x/Quran-Data) |
 | Indonesian | Kementerian Agama Republik Indonesia | [QuranEnc](https://quranenc.com/en/browse/indonesian_affairs) |
 | Urdu | Muhammad Junagarhi | [Tanzil](https://tanzil.net) |
 | Bengali | Abu Bakr Zakaria | King Fahd Complex, via QuranEnc |
@@ -21,11 +22,12 @@ Bundled from the editions published by [fawazahmed0/quran-api](https://github.co
 | Malay | Abdullah Muhammad Basmeih | Tanzil |
 | Swahili | Ali Muhsin Al Barwani | Tanzil |
 
-The bundled English translation is the one already shipped in the app's surah assets; its
-translator attribution is not changed here.
-
-Before publishing a build, confirm the redistribution terms of each upstream edition. The
-Unlicense covers the collection repository, not necessarily every edition's underlying text.
+English is the Sahih International translation, attributed to Saheeh International and bundled
+through `rn0x/Quran-Data`. The repository's MIT licence covers its packaging; the translation
+remains attributed to its publisher. The Urdu, Malay and Swahili editions are hosted by
+[Tanzil](https://tanzil.net) and are used under Tanzil's non-commercial redistribution terms;
+Barakah is free and non-commercial. The collection repositories' licences cover packaging, not
+necessarily every edition's underlying text.
 
 ## Tafsir
 
@@ -52,12 +54,25 @@ Occasion names/descriptions and the 99 Allah-name meanings/details are machine-a
 translations in `app/src/main/assets/others_i18n.json`. They are not scripture and do not replace
 the Arabic names. Native-speaker review is required before treating them as final.
 
+## Hisn al-Muslim
+
+The Arabic supplications in `hisn.json` come from
+[asellam/HisnElMuslim](https://github.com/asellam/HisnElMuslim), MIT License; the licence text is in
+[docs/HisnElMuslim-MIT.txt](HisnElMuslim-MIT.txt). The English text in `hisn_en.json` comes from
+[YousefAsalya/Islamic-Pro-azkar-API](https://github.com/YousefAsalya/Islamic-Pro-azkar-API), MIT
+License; the licence text is in [docs/IslamicProAzkar-MIT.txt](IslamicProAzkar-MIT.txt). Hadith
+references from the previous bundled edition are retained where the Arabic text matches exactly;
+the remaining entries show no reference.
+
 ## Supplication translations
 
 Russian, Persian, and Sorani Kurdish translations come from
 [my-prayers/muslim-data-ios](https://github.com/my-prayers/muslim-data-ios), Apache License 2.0.
 Items are matched to the bundled Arabic duas by normalized Arabic text; unmatched items fall back
 to the bundled English translation with an explicit notice.
+
+Indonesian supplication translations were removed because their provenance and licence could not be
+verified. Indonesian now falls back to the bundled English duas with the same explicit notice.
 
 ## Data layout
 

@@ -39,8 +39,7 @@ object ReligiousTextLanguages {
         nameEn = "Indonesian",
         nameAr = "الإندونيسية",
         quranEdition = "Kementerian Agama RI (QuranEnc)",
-        tafsirSource = "Al-Mukhtasar (Tarteel QUL)",
-        duaTranslations = true
+        tafsirSource = "Al-Mukhtasar (Tarteel QUL)"
     )
 
     val urdu = ReligiousLanguage(
