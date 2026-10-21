@@ -1487,7 +1487,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                     text = if (isAr) {
                                         "التفسير: الجلالين (QUL وAltafsir) ونسخ المختصر عبر Tarteel QUL."
                                     } else {
-                                        UiStrings.of("Tafsir: Jalalayn (QUL / Altafsir) and Al-Mukhtasar editions via Tarteel QUL.")
+                                        UiStrings.of("Tafsir: Al-Mukhtasar (Tafsir Center for Quranic Studies) and As-Saadi Urdu (QuranEnc, V1.0.0).")
                                     },
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant

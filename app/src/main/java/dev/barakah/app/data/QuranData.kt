@@ -282,7 +282,7 @@ object QuranData {
         // Fallback: If local file load fails or is missing, fall back to Arabic translation or error message
         val arTafseer = loadTafseer(context, surahId, ayahId)
         if (arTafseer != "التفسير غير متوفر حالياً لهذه الآية.") {
-            return "English Tafseer (Tafsir al-Jalalayn) is not available currently. Here is the Arabic Tafseer:\n\n$arTafseer"
+            return "English Tafsir (Al-Mukhtasar) is not available currently. Here is the Arabic Tafsir:\n\n$arTafseer"
         }
         return "Tafsir is not available for this verse currently."
     }
