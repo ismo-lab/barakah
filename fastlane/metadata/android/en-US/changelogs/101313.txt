@@ -1,0 +1,1 @@
+Replaced the unlicensed English Hisn al-Muslim text with the MIT-licensed Islamic Pro Azkar API edition. Removed the unverified Indonesian supplication translations; Indonesian now falls back to English with an on-screen notice. Updated Quran translation and Hisn attributions. The store description now lists all nine bundled tafsir languages.
