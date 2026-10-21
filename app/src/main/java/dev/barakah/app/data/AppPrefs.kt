@@ -37,7 +37,7 @@ object AppPrefs {
 
     /**
      * True once the reader has chosen a religious-text language for one area. Until then the
-     * area follows the interface: Arabic for Arabic, English for every other interface.
+     * Quran and duas follow the interface, and tafsir follows the chosen Quran language.
      */
     const val QURAN_TRANSLATION_EXPLICIT = "quran_translation_explicit"
     const val TAFSIR_EXPLICIT = "tafsir_explicit"

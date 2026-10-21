@@ -75,7 +75,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     val appLanguage: StateFlow<String> = _appLanguage
 
     // Religious text languages. Empty means "show no translation". Until the reader explicitly
-    // picks one, every area follows the interface language when a bundled edition exists.
+    // picks one, the Quran and duas follow the interface and tafsir follows the Quran choice.
     private fun defaultReligiousLanguage(
         key: String,
         explicitKey: String,
@@ -99,7 +99,10 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         defaultReligiousLanguage(
             AppPrefs.TAFSIR_LANG,
             AppPrefs.TAFSIR_EXPLICIT,
-            ReligiousTextLanguages.tafsirTagFor(_appLanguage.value)
+            ReligiousTextLanguages.tafsirTagForQuran(
+                _quranTranslationLanguage.value,
+                _appLanguage.value
+            )
         )
     )
     val tafsirLanguage: StateFlow<String> = _tafsirLanguage
@@ -730,10 +733,10 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         prefs.edit { putString(AppPrefs.APP_LANG, lang) }
 
         // All three areas follow the interface language when they have a bundled edition, and
-        // fall back to English when they do not. A later per-area pick still wins until the next
-        // interface-language change.
+        // fall back to English when they do not. Tafsir follows the resulting Quran choice. A
+        // later per-area pick still wins until the next interface-language change.
         val quranTag = ReligiousTextLanguages.quranTagFor(lang)
-        val tafsirTag = ReligiousTextLanguages.tafsirTagFor(lang)
+        val tafsirTag = ReligiousTextLanguages.tafsirTagForQuran(quranTag, lang)
         val duaTag = ReligiousTextLanguages.duaTagFor(lang)
         _quranTranslationLanguage.value = quranTag
         _tafsirLanguage.value = tafsirTag
@@ -757,9 +760,23 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
     fun setQuranTranslationLanguage(lang: String) {
         _quranTranslationLanguage.value = lang
+
+        // Tafsir follows the Quran choice until the reader changes tafsir on its own.
+        val tafsirTag = if (prefs.getBoolean(AppPrefs.TAFSIR_EXPLICIT, false)) {
+            null
+        } else {
+            ReligiousTextLanguages.tafsirTagForQuran(lang, _appLanguage.value)
+        }
+        if (tafsirTag != null) {
+            _tafsirLanguage.value = tafsirTag
+        }
+
         prefs.edit {
             putString(AppPrefs.QURAN_TRANSLATION_LANG, lang)
             putBoolean(AppPrefs.QURAN_TRANSLATION_EXPLICIT, true)
+            if (tafsirTag != null) {
+                putString(AppPrefs.TAFSIR_LANG, tafsirTag)
+            }
         }
     }
 
