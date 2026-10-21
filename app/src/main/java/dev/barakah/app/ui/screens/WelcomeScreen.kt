@@ -11,11 +11,14 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -202,13 +205,15 @@ fun LanguageStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
     }
 }
 
-@OptIn(ExperimentalPermissionsApi::class)
+@OptIn(ExperimentalPermissionsApi::class, ExperimentalFoundationApi::class)
 @Composable
  fun LocationStep(viewModel: BarakahViewModel, onFinish: () -> Unit) {
      val currentLang by viewModel.appLanguage.collectAsStateWithLifecycle()
      val isAr = currentLang == "ar"
      var query by rememberSaveable { mutableStateOf("") }
      var filteredCities by remember { mutableStateOf(emptyList<dev.barakah.app.data.CitySuggestion>()) }
+     val firstResult = remember { BringIntoViewRequester() }
+     var hadResults by remember { mutableStateOf(false) }
      var gpsPermissionRequested by rememberSaveable { mutableStateOf(false) }
      val context = androidx.compose.ui.platform.LocalContext.current
 
@@ -217,6 +222,12 @@ fun LanguageStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
          filteredCities = CityData.search(context, query, languageTag = currentLang)
              .filter { it.name.isNotBlank() && it.displayName(currentLang).isNotBlank() }
              .distinctBy { it.id }
+     }
+
+     LaunchedEffect(filteredCities, query) {
+         val hasResults = filteredCities.isNotEmpty() && query.isNotEmpty()
+         if (hasResults && !hadResults) firstResult.bringIntoView()
+         hadResults = hasResults
      }
      
      val locationPermissionState = rememberPermissionState(
@@ -330,14 +341,16 @@ fun LanguageStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
                     .padding(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                filteredCities.forEach { city ->
+                filteredCities.forEachIndexed { index, city ->
                     ElevatedCard(
                         onClick = {
                             viewModel.setLocationMethod("manual")
                             viewModel.updateLocation(city.lat, city.lng, city.displayName(currentLang), timeZoneId = city.timeZoneId, countryCode = city.countryCode)
                             onFinish()
                         },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .then(if (index == 0) Modifier.bringIntoViewRequester(firstResult) else Modifier),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         ListItem(
