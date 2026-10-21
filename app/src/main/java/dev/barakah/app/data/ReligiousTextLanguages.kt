@@ -55,7 +55,7 @@ object ReligiousTextLanguages {
         nameEn = "Bengali",
         nameAr = "البنغالية",
         quranEdition = "Abu Bakr Zakaria (King Fahd Complex)",
-        tafsirSource = "Bengali Al-Mukhtasar (Tarteel QUL)"
+        tafsirSource = "Tafsir Abu Bakr Zakaria (Tarteel QUL)"
     )
 
     val turkish = ReligiousLanguage(

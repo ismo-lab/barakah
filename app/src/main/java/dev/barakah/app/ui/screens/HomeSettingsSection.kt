@@ -1485,9 +1485,9 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
 
                                 Text(
                                     text = if (isAr) {
-                                        "التفسير: الجلالين (QUL وAltafsir) ونسخ المختصر عبر Tarteel QUL."
+                                        "التفسير: الجلالين (QUL وAltafsir)، والمختصر عبر Tarteel QUL، وتفسير أبو بكر زكريا بالبنغالية، والسعدي بالأردية (QuranEnc، الإصدار 1.0.0)."
                                     } else {
-                                        UiStrings.of("Tafsir: Al-Mukhtasar (Tafsir Center for Quranic Studies) and As-Saadi Urdu (QuranEnc, V1.0.0).")
+                                        UiStrings.of("Tafsir: Al-Mukhtasar (Tafsir Center for Quranic Studies), Tafsir Abu Bakr Zakaria (Bengali, QUL), and As-Saadi Urdu (QuranEnc, V1.0.0).")
                                     },
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -1519,6 +1519,15 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                         text = if (isAr) "رمز المصدر (GitHub)" else UiStrings.of("Source Code (GitHub)"),
                                         style = MaterialTheme.typography.labelMedium,
                                         fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                TextButton(
+                                    onClick = { uriHandler.openUri("https://tanzil.net/trans/") },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = if (isAr) "شروط ترجمات Tanzil" else "Tanzil translation terms",
+                                        style = MaterialTheme.typography.labelMedium
                                     )
                                 }
                             }
