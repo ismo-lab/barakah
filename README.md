@@ -73,7 +73,6 @@ runner's fonts and SDK image; dispatch the workflow with `record_screenshots` to
 
 Barakah relies gratefully on the efforts of the global FOSS Islamic developer community for its offline-ready datasets, reference scripts, and audio assets:
 
-- **Hadith Compilation**: [hadith.json](https://github.com/4thel00z/hadith.json) (GPL-3.0)
 - **Hisnul Muslim Supplications**: [HisnElMuslim](https://github.com/asellam/HisnElMuslim) (MIT) for the Arabic; [Islamic Pro Azkar API](https://github.com/YousefAsalya/Islamic-Pro-azkar-API) (MIT) for the English
 - **Holy Quran Database**: [Quran-Data](https://github.com/rn0x/Quran-Data)
 - **Holy Quran Database & Tafsir**: [Quran-Data](https://github.com/rn0x/Quran-Data) (MIT) for the Arabic text and the Sahih International English translation, attributed to Saheeh International; [tafsir_api](https://github.com/spa5k/tafsir_api) (MIT) for the Arabic *Tafsir al-Jalalayn*, a classical work in the public domain, and for the English *Al-Mukhtasar* by the [Tafsir Center for Quranic Studies](https://tafsir.net) ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)); the Urdu *As-Saadi* edition V1.0.0 comes from [QuranEnc](https://quranenc.com/en/browse/urdu_saadi), whose terms permit unmodified republication with attribution. English, Urdu, Malay and Swahili translations from [Tanzil](https://tanzil.net) are used under Tanzil's non-commercial terms; the app links back to [tanzil.net/trans](https://tanzil.net/trans/) in Settings > About.

@@ -16,13 +16,6 @@ class OthersContentTest {
         val content = OthersContent.load(RuntimeEnvironment.getApplication())
         val languages = listOf("id", "de", "ur", "bn", "tr", "fa", "ha", "ms", "sw", "ru", "ckb")
         for (language in languages) {
-            for (id in 1..99) {
-                assertTrue(
-                    "$language missing name $id",
-                    content.nameMeaning(id, language, "fallback") != "fallback" &&
-                        content.nameDetail(id, language, "fallback") != "fallback"
-                )
-            }
             for (id in 1..11) {
                 assertTrue(
                     "$language missing occasion $id",
@@ -31,6 +24,6 @@ class OthersContentTest {
                 )
             }
         }
-        assertEquals("unsupported language fallback", "fallback", content.nameMeaning(1, "xx", "fallback"))
+        assertEquals("unsupported language fallback", "fallback", content.occasionName(1, "xx", "fallback"))
     }
 }

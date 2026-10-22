@@ -13,6 +13,18 @@ class ReligiousAssetIntegrityTest {
     ).first { it.isDirectory }
 
     @Test
+    fun `quran assets contain no control characters`() {
+        val control = Regex("[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F-\\x9F]")
+        val bad = quranDir.walkTopDown()
+            .filter { it.isFile && it.extension == "json" }
+            .filter { control.containsMatchIn(it.readText()) }
+            .map { it.relativeTo(quranDir).path }
+            .toList()
+
+        assertTrue("control characters found in: $bad", bad.isEmpty())
+    }
+
+    @Test
     fun `quran assets contain no replacement characters`() {
         val bad = quranDir.walkTopDown()
             .filter { it.isFile && it.extension == "json" }

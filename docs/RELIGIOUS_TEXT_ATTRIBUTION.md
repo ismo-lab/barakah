@@ -58,9 +58,10 @@ has one falls back to English and says so on screen.
 
 ## Others screen copy
 
-Occasion names/descriptions and the 99 Allah-name meanings/details are machine-assisted
-translations in `app/src/main/assets/others_i18n.json`. They are not scripture and do not replace
-the Arabic names. Native-speaker review is required before treating them as final.
+Occasion names/descriptions are machine-assisted translations in
+`app/src/main/assets/others_i18n.json`. The 99 Allah-name meanings/details use the English source in
+`AllahNamesData.kt` until native-speaker review; the unreviewed localized copies were removed. These
+are not scripture and do not replace the Arabic names.
 
 ## Hisn al-Muslim
 
