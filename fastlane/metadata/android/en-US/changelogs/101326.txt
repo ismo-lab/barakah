@@ -1,0 +1,1 @@
+Corrected the English and Bengali tafsir attribution labels and updated the bundled source documentation. No religious text changed.

@@ -45,9 +45,9 @@ Bundled from [Tarteel QUL](https://qul.tarteel.ai/resources/tafsir), the [Tafsir
 | Language | Edition | Upstream |
 | --- | --- | --- |
 | Arabic | Tafsir al-Jalalayn | [QUL / Tarteel](https://qul.tarteel.ai/resources/tafsir/523) |
-| English | Al-Mukhtasar (CC BY 4.0) | Tafsir Center for Quranic Studies, via [spa5k/tafsir_api](https://github.com/spa5k/tafsir_api) |
+| English | Tafsir al-Jalalayn (English translation; non-free) | [altafsir.com](https://www.altafsir.com/), via [spa5k/tafsir_api](https://github.com/spa5k/tafsir_api) |
 | Indonesian | Al-Mukhtasar | QUL / Tarteel |
-| Bengali | Tafsir Abu Bakr Zakaria | QUL / Tarteel |
+| Bengali | Al-Mukhtasar | QUL / Tarteel |
 | Turkish | Al-Mukhtasar | QUL / Tarteel |
 | Persian | Al-Mukhtasar | QUL / Tarteel |
 | Urdu | As-Saadi — Urdu edition V1.0.0 (QuranEnc conditional republication terms) | [QuranEnc](https://quranenc.com/en/browse/urdu_saadi) |
@@ -56,9 +56,10 @@ Bundled from [Tarteel QUL](https://qul.tarteel.ai/resources/tafsir), the [Tafsir
 
 QUL's FAQ states that resource licensing varies by edition and asks projects to review each
 author's terms. Barakah does not relicense QUL text; the table records the editions and attribution.
-The English Al-Mukhtasar is CC BY 4.0, and the Urdu As-Saadi edition is used under QuranEnc's
-conditional republication terms. Bengali uses Tafsir Abu Bakr Zakaria because the QUL Bengali
-Al-Mukhtasar copy contains legacy font glyphs; the bundled text is the upstream edition, unedited.
+The English tafsir is the Jalalayn English translation published by altafsir.com; it is non-free
+and covered by `NonFreeAssets`. The Urdu As-Saadi edition is used under QuranEnc's conditional
+republication terms. Bengali uses the Bengali Al-Mukhtasar edition; its legacy glyphs were
+normalized for display, with no change to the wording.
 
 The tafsir picker lists only languages with a bundled edition. An old saved selection that no longer
 has one falls back to English and says so on screen.

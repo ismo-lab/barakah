@@ -23,7 +23,7 @@ object ReligiousTextLanguages {
         nameEn = "English",
         nameAr = "الإنجليزية",
         quranEdition = "Bundled English translation",
-        tafsirSource = "Al-Mukhtasar (Tafsir Center for Quranic Studies)",
+        tafsirSource = "Tafsir al-Jalalayn (English, altafsir.com)",
         duaTranslations = true
     )
 
@@ -55,7 +55,7 @@ object ReligiousTextLanguages {
         nameEn = "Bengali",
         nameAr = "البنغالية",
         quranEdition = "Abu Bakr Zakaria (King Fahd Complex)",
-        tafsirSource = "Tafsir Abu Bakr Zakaria (Tarteel QUL)"
+        tafsirSource = "Al-Mukhtasar (Tarteel QUL)"
     )
 
     val turkish = ReligiousLanguage(
