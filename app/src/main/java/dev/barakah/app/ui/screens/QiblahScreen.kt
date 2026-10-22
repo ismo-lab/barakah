@@ -248,7 +248,7 @@ fun QiblahScreen(
                     iconSize = 16.dp,
                     spacerWidth = 8.dp,
                     contentPadding = 10.dp,
-                    shape = 12.dp,
+                    shape = 24.dp,
                     horizontalArrangement = Arrangement.Start,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -258,7 +258,7 @@ fun QiblahScreen(
                     visible = isAligned,
                     isAr = isAr,
                     textStyle = MaterialTheme.typography.bodyMedium,
-                    shape = 10.dp,
+                    shape = 18.dp,
                     textPadding = PaddingValues(6.dp),
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
@@ -275,7 +275,7 @@ fun QiblahScreen(
                     labelStyle = MaterialTheme.typography.labelSmall,
                     valueStyle = MaterialTheme.typography.titleMedium,
                     statusStyle = MaterialTheme.typography.labelSmall,
-                    shape = 16.dp,
+                    shape = 32.dp,
                     containerAlpha = 0.3f,
                     contentPadding = 12.dp,
                     rowSpacing = 8.dp
@@ -339,7 +339,7 @@ fun QiblahScreen(
                     iconSize = 18.dp,
                     spacerWidth = 10.dp,
                     contentPadding = 12.dp,
-                    shape = 16.dp,
+                    shape = 32.dp,
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -380,7 +380,7 @@ fun QiblahScreen(
                     visible = isAligned,
                     isAr = isAr,
                     textStyle = MaterialTheme.typography.titleMedium,
-                    shape = 12.dp,
+                    shape = 24.dp,
                     textPadding = PaddingValues(vertical = 8.dp, horizontal = 16.dp),
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
@@ -395,7 +395,7 @@ fun QiblahScreen(
                     labelStyle = MaterialTheme.typography.labelMedium,
                     valueStyle = MaterialTheme.typography.titleLarge,
                     statusStyle = MaterialTheme.typography.bodySmall,
-                    shape = 20.dp,
+                    shape = 40.dp,
                     containerAlpha = 0.4f,
                     contentPadding = 16.dp,
                     rowSpacing = 12.dp
@@ -629,7 +629,7 @@ private fun QiblahLocationRow(
 ) {
     Surface(
         shape = RoundedCornerShape(shape),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
         modifier = modifier
     ) {
         Row(
@@ -710,7 +710,7 @@ private fun QiblahStatsCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(shape),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = containerAlpha)
+            containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = containerAlpha)
         )
     ) {
         Column(

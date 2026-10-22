@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.*
@@ -153,7 +152,7 @@ fun QuranScreen(
                         }
                     }
                     .testTag("last_read_banner"),
-                shape = RoundedCornerShape(16.dp),
+                shape = MaterialTheme.shapes.large,
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer
@@ -295,7 +294,7 @@ fun QuranScreen(
                                 .weight(0.5f)
                                 .heightIn(min = 52.dp)
                                 .testTag("quran_search_bar"),
-                            shape = RoundedCornerShape(12.dp),
+                            shape = MaterialTheme.shapes.large,
                             singleLine = true,
                             textStyle = MaterialTheme.typography.bodyMedium,
                             colors = OutlinedTextFieldDefaults.colors(
@@ -309,7 +308,7 @@ fun QuranScreen(
                             modifier = Modifier
                                 .weight(0.5f)
                                 .height(40.dp)
-                                .clip(RoundedCornerShape(10.dp))
+                                .clip(MaterialTheme.shapes.medium)
                                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                                 .padding(2.dp)
                         ) {
@@ -323,7 +322,7 @@ fun QuranScreen(
                                     modifier = Modifier
                                         .weight(1f)
                                         .fillMaxHeight()
-                                        .clip(RoundedCornerShape(8.dp))
+                                        .clip(MaterialTheme.shapes.small)
                                         .background(if (selected) MaterialTheme.colorScheme.primary else Color.Transparent)
                                         .clickable { activeFilterTab = index }
                                         .padding(vertical = 4.dp)
@@ -369,7 +368,7 @@ fun QuranScreen(
                                 .fillMaxWidth()
                                 .heightIn(min = 56.dp)
                                 .testTag("quran_search_bar"),
-                            shape = RoundedCornerShape(16.dp),
+                            shape = MaterialTheme.shapes.large,
                             singleLine = true,
                             textStyle = MaterialTheme.typography.bodyLarge,
                             colors = OutlinedTextFieldDefaults.colors(
@@ -384,7 +383,7 @@ fun QuranScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(MaterialTheme.shapes.medium)
                                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                                 .padding(4.dp)
                         ) {
@@ -397,7 +396,7 @@ fun QuranScreen(
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
-                                        .clip(RoundedCornerShape(10.dp))
+                                        .clip(MaterialTheme.shapes.medium)
                                         .background(if (selected) MaterialTheme.colorScheme.primary else Color.Transparent)
                                         .clickable { activeFilterTab = index }
                                         .padding(vertical = 10.dp)
@@ -926,12 +925,12 @@ fun QuranScreen(
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f), shape = RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f), shape = MaterialTheme.shapes.medium)
                             .padding(12.dp)
                     )
                     
                     Surface(
-                        shape = RoundedCornerShape(12.dp),
+                        shape = MaterialTheme.shapes.large,
                         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -978,9 +977,9 @@ fun QuranScreen(
                     Text(if (isAr) "إغلاق" else UiStrings.of("Close"))
                 }
             },
-            shape = RoundedCornerShape(28.dp),
-            containerColor = MaterialTheme.colorScheme.surface,
-            tonalElevation = 6.dp
+            shape = MaterialTheme.shapes.extraLarge,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            tonalElevation = 0.dp
         )
     }
 }

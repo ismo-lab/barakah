@@ -77,11 +77,14 @@ private val LightColorScheme = lightColorScheme(
 )
 
 private val ExpressiveShapes = Shapes(
-    extraSmall = RoundedCornerShape(8.dp),
-    small = RoundedCornerShape(12.dp),
-    medium = RoundedCornerShape(16.dp),
-    large = RoundedCornerShape(24.dp),
-    extraLarge = RoundedCornerShape(32.dp)
+    extraSmall = RoundedCornerShape(14.dp),
+    small = RoundedCornerShape(18.dp),
+    medium = RoundedCornerShape(24.dp),
+    large = RoundedCornerShape(32.dp),
+    extraLarge = RoundedCornerShape(40.dp),
+    largeIncreased = RoundedCornerShape(36.dp),
+    extraLargeIncreased = RoundedCornerShape(48.dp),
+    extraExtraLarge = RoundedCornerShape(56.dp)
 )
 
 @Composable
@@ -120,7 +123,7 @@ fun BarakahTheme(
         )
     }
 
-    // Expressive motion and shapes, with the app's existing brand palette and typography.
+    // Expressive motion, shapes and heavier type, with the app's existing brand palette.
     MaterialExpressiveTheme(
         colorScheme = colorScheme,
         shapes = ExpressiveShapes,

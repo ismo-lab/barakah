@@ -13,9 +13,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.*
@@ -199,9 +196,9 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                            shape = MaterialTheme.shapes.large,
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                            border = null
                         ) {
                             Column(
                                 modifier = Modifier.fillMaxWidth().padding(12.dp),
@@ -290,9 +287,9 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                            shape = MaterialTheme.shapes.large,
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                            border = null
                         ) {
                             Column(
                                 modifier = Modifier.fillMaxWidth().padding(12.dp),
@@ -743,9 +740,9 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                            shape = MaterialTheme.shapes.large,
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                            border = null
                         ) {
                             Column(
                                 modifier = Modifier.fillMaxWidth().padding(12.dp),
@@ -835,7 +832,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                             }
                                         ),
                                         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                                        shape = RoundedCornerShape(12.dp)
+                                        shape = MaterialTheme.shapes.large
                                     )
 
                                     val suggestions = citySuggestions
@@ -851,7 +848,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                                     Row(
                                                     modifier = Modifier
                                                         .fillMaxWidth()
-                                                        .clip(RoundedCornerShape(8.dp))
+                                                        .clip(MaterialTheme.shapes.small)
                                                         .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
                                                         .clickable {
                                                             viewModel.updateLocation(city.lat, city.lng, city.displayName(currentLang), isSuccessFeedback = true, timeZoneId = city.timeZoneId, countryCode = city.countryCode)
@@ -880,9 +877,9 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                            shape = MaterialTheme.shapes.large,
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                            border = null
                         ) {
                             Column(
                                 modifier = Modifier.fillMaxWidth().padding(12.dp),
@@ -982,9 +979,9 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                            shape = MaterialTheme.shapes.large,
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                            border = null
                         ) {
                             Column(
                                 modifier = Modifier.fillMaxWidth().padding(12.dp),
@@ -1010,7 +1007,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clip(RoundedCornerShape(8.dp))
+                                        .clip(MaterialTheme.shapes.small)
                                         .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
                                         .padding(horizontal = 8.dp, vertical = 6.dp),
                                     verticalAlignment = Alignment.CenterVertically,
@@ -1092,7 +1089,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clip(RoundedCornerShape(8.dp))
+                                        .clip(MaterialTheme.shapes.small)
                                         .clickable { fineTuningOpen = !fineTuningOpen }
                                         .padding(horizontal = 4.dp, vertical = 6.dp),
                                     verticalAlignment = Alignment.CenterVertically,
@@ -1121,7 +1118,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .clip(RoundedCornerShape(8.dp))
+                                                .clip(MaterialTheme.shapes.small)
                                                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f))
                                                 .padding(horizontal = 8.dp, vertical = 6.dp),
                                             verticalAlignment = Alignment.CenterVertically,
@@ -1183,9 +1180,9 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)),
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                            shape = MaterialTheme.shapes.large,
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                            border = null
                         ) {
                             Column(
                                 modifier = Modifier.fillMaxWidth().padding(12.dp),
@@ -1211,7 +1208,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clip(RoundedCornerShape(8.dp))
+                                        .clip(MaterialTheme.shapes.small)
                                         .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f))
                                         .padding(horizontal = 8.dp, vertical = 6.dp),
                                     verticalAlignment = Alignment.CenterVertically,
@@ -1279,9 +1276,9 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                            shape = MaterialTheme.shapes.large,
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                            border = null
                         ) {
                             Column(
                                 modifier = Modifier.fillMaxWidth().padding(12.dp),
@@ -1366,12 +1363,12 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clip(RoundedCornerShape(12.dp))
+                                        .clip(MaterialTheme.shapes.medium)
                                         .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.12f))
                                         .border(
                                             1.dp,
                                             MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                                            RoundedCornerShape(12.dp)
+                                            MaterialTheme.shapes.medium
                                         )
                                         .padding(14.dp)
                                 ) {
@@ -1422,9 +1419,9 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                            shape = MaterialTheme.shapes.large,
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                            border = null
                         ) {
                             Column(
                                 modifier = Modifier.fillMaxWidth().padding(12.dp),
@@ -1446,7 +1443,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                         )
                                     }
                                     Surface(
-                                        shape = RoundedCornerShape(8.dp),
+                                        shape = MaterialTheme.shapes.small,
                                         color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f)
                                     ) {
                                         Text(
@@ -1507,7 +1504,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                 OutlinedButton(
                                     onClick = { uriHandler.openUri("https://github.com/ismo-lab/barakah") },
                                     modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                                    shape = RoundedCornerShape(12.dp)
+                                    shape = MaterialTheme.shapes.large
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Code,

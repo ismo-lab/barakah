@@ -14,9 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.*
@@ -335,12 +333,12 @@ fun HomeScreen(
 
                 // Unified Settings Button
                 Surface(
-                    shape = RoundedCornerShape(32.dp),
+                    shape = CircleShape,
                     color = MaterialTheme.colorScheme.secondaryContainer,
                     tonalElevation = 2.dp,
                     modifier = Modifier
                         .size(48.dp)
-                        .clip(RoundedCornerShape(24.dp))
+                        .clip(CircleShape)
                         .clickable { viewModel.setShowSettingsDialog(true) }
                         .testTag("settings_button")
                 ) {
@@ -414,11 +412,11 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 12.dp, horizontal = 4.dp),
-                shape = RoundedCornerShape(32.dp),
+                shape = MaterialTheme.shapes.extraLarge,
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
                 ),
-                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                border = null
             ) {
                 Column(
                     modifier = Modifier
@@ -490,14 +488,14 @@ fun HomeScreen(
                     .fillMaxWidth()
                     .padding(vertical = 6.dp)
                     .testTag("prayer_item_$name"),
-                shape = RoundedCornerShape(24.dp),
+                shape = MaterialTheme.shapes.extraLarge,
                 colors = CardDefaults.cardColors(
                     containerColor = if (isCurrent) {
                         MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.82f)
                     } else if (isNawafil) {
-                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.1f)
+                        MaterialTheme.colorScheme.surfaceContainerLow
                     } else {
-                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f)
+                        MaterialTheme.colorScheme.surfaceContainer
                     },
                     contentColor = if (isCurrent) {
                         MaterialTheme.colorScheme.onPrimaryContainer
@@ -537,7 +535,7 @@ fun HomeScreen(
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Box(
                                     modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
+                                        .clip(MaterialTheme.shapes.small)
                                         .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f))
                                         .padding(horizontal = 6.dp, vertical = 2.dp)
                                 ) {
@@ -750,9 +748,9 @@ fun DailyEssentialsSection(navController: androidx.navigation.NavController, vie
                     }
                 },
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(28.dp),
+                shape = MaterialTheme.shapes.large,
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.35f)
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
                 )
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -778,9 +776,9 @@ fun DailyEssentialsSection(navController: androidx.navigation.NavController, vie
                     }
                 },
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(28.dp),
+                shape = MaterialTheme.shapes.large,
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.35f)
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
                 )
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -818,11 +816,11 @@ fun ExploreMoreSection(navController: androidx.navigation.NavController, isAr: B
                 }
             },
             modifier = Modifier.fillMaxWidth().testTag("explore_others_card"),
-            shape = RoundedCornerShape(28.dp),
+            shape = MaterialTheme.shapes.large,
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
+                containerColor = MaterialTheme.colorScheme.primaryContainer
             ),
-            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+            border = null
         ) {
             Row(
                 modifier = Modifier.padding(16.dp),
@@ -836,7 +834,7 @@ fun ExploreMoreSection(navController: androidx.navigation.NavController, isAr: B
                     Box(
                         modifier = Modifier
                             .size(48.dp)
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(MaterialTheme.shapes.medium)
                             .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
                         contentAlignment = Alignment.Center
                     ) {
@@ -936,7 +934,7 @@ fun CountdownCardContent(labelText: String, countdownText: String) {
             .fillMaxWidth()
             .padding(bottom = if (isShortScreen || isLandscape) 8.dp else 16.dp)
             .testTag("countdown_card"),
-        shape = androidx.compose.foundation.shape.AbsoluteRoundedCornerShape(topLeft = if (isShortScreen || isLandscape) 32.dp else 48.dp, bottomRight = if (isShortScreen || isLandscape) 32.dp else 48.dp, topRight = 16.dp, bottomLeft = 16.dp),
+        shape = androidx.compose.foundation.shape.AbsoluteRoundedCornerShape(topLeft = if (isShortScreen || isLandscape) 40.dp else 56.dp, bottomRight = if (isShortScreen || isLandscape) 40.dp else 56.dp, topRight = 24.dp, bottomLeft = 24.dp),
         colors = androidx.compose.material3.CardDefaults.cardColors(
             containerColor = androidx.compose.material3.MaterialTheme.colorScheme.primary
         )
@@ -974,7 +972,7 @@ fun CountdownCardContent(labelText: String, countdownText: String) {
                     text = countdownText,
                     style = androidx.compose.material3.MaterialTheme.typography.displayLarge.copy(
                         fontSize = if (isShortScreen || isLandscape) 32.sp else 44.sp,
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Black,
                         letterSpacing = 0.sp,
                         lineHeight = if (isShortScreen || isLandscape) 32.sp else 44.sp,
                         textDirection = TextDirection.Ltr,
@@ -1039,8 +1037,8 @@ fun AdhkarOffsetSelector(
 
                 Surface(
                     onClick = { onOffsetSelected(offset) },
-                    shape = RoundedCornerShape(12.dp),
-                    color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    shape = CircleShape,
+                    color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
                     border = BorderStroke(
                         width = 1.dp,
                         color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)

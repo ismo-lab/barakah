@@ -19,7 +19,6 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -411,8 +410,8 @@ fun OthersScreen(
                     }
                     
                     Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
+                        shape = MaterialTheme.shapes.large,
+                        color = MaterialTheme.colorScheme.primaryContainer,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(
@@ -495,8 +494,8 @@ fun OthersScreen(
                 val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
                 val isShortScreen = configuration.screenHeightDp < 600
                 Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    shape = MaterialTheme.shapes.large,
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(max = if (isLandscape || isShortScreen) 160.dp else 420.dp)
@@ -542,8 +541,8 @@ fun NamesOfAllahPane(
         if (!isShortScreen) {
             // Introductory banner
             Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.primaryContainer,
                 modifier = Modifier.fillMaxWidth().testTag("allah_names_intro")
             ) {
                 Row(
@@ -617,11 +616,11 @@ fun AllahNameCard(
             .height(150.dp)
             .clickable { onCardClick() }
             .testTag("allah_name_card_${name.id}"),
-        shape = RoundedCornerShape(20.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f)
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+        border = null
     ) {
         Column(
             modifier = Modifier
@@ -739,11 +738,11 @@ fun CalendarAndOccasionsPane(
                     .fillMaxWidth()
                     .clickable { onOccasionClick(item) }
                     .testTag("occasion_card_${item.id}"),
-                shape = RoundedCornerShape(16.dp),
+                shape = MaterialTheme.shapes.large,
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f)
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
                 ),
-                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
+                border = null
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),
