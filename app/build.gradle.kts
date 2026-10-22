@@ -44,7 +44,7 @@ ksp {
 
 android {
   namespace = "dev.barakah.app"
-  compileSdk = 36
+  compileSdk = 37
 
   defaultConfig {
     applicationId = "dev.barakah.app"
