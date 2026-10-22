@@ -5,6 +5,13 @@ interpretations, labelled as such in the app, never machine translations. When a
 has no bundled edition for a text, the app shows English and states on screen that the requested
 language is unavailable. It never silently substitutes a different language without saying so.
 
+## F-Droid status
+
+The source code is GPL-3.0-only. Some bundled translations and tafsir are non-free content used
+with attribution under non-commercial terms. F-Droid metadata therefore declares
+`AntiFeatures: NonFreeAssets`; Barakah does not relicense those texts. Editions whose upstream
+terms do not permit redistribution must be removed or replaced before submission.
+
 ## Quran translations
 
 Bundled from the editions published by [fawazahmed0/quran-api](https://github.com/fawazahmed0/quran-api)
@@ -58,9 +65,10 @@ has one falls back to English and says so on screen.
 
 ## Others screen copy
 
-Occasion names/descriptions and the 99 Allah-name meanings/details are machine-assisted
-translations in `app/src/main/assets/others_i18n.json`. They are not scripture and do not replace
-the Arabic names. Native-speaker review is required before treating them as final.
+Occasion names/descriptions are machine-assisted translations in
+`app/src/main/assets/others_i18n.json`. The 99 Allah-name meanings/details use the English source in
+`AllahNamesData.kt` until native-speaker review; the unreviewed localized copies were removed. These
+are not scripture and do not replace the Arabic names.
 
 ## Hisn al-Muslim
 

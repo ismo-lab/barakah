@@ -332,8 +332,6 @@ fun OthersScreen(
                 when (targetIndex) {
                     0 -> NamesOfAllahPane(
                         isAr = isAr,
-                        language = appLanguage,
-                        content = othersContent,
                         names = AllahNamesData.names,
                         useWesternNumbersInArabic = useWesternNumbersInArabic,
                         onNameClick = { name ->
@@ -361,16 +359,8 @@ fun OthersScreen(
     // Detail Dialogs for Allah's Name
     if (selectedNameForDetail != null) {
         val name = selectedNameForDetail!!
-        val displayMeaning = if (isAr) {
-            name.arabicMeaning
-        } else {
-            othersContent.nameMeaning(name.id, appLanguage, name.englishMeaning)
-        }
-        val displayDetail = if (isAr) {
-            name.arabicMeaning
-        } else {
-            othersContent.nameDetail(name.id, appLanguage, name.englishMeaningDetail)
-        }
+        val displayMeaning = if (isAr) name.arabicMeaning else name.englishMeaning
+        val displayDetail = if (isAr) name.arabicMeaning else name.englishMeaningDetail
         AlertDialog(
             onDismissRequest = { selectedNameId = null },
             confirmButton = {
@@ -533,8 +523,6 @@ fun OthersScreen(
 @Composable
 fun NamesOfAllahPane(
     isAr: Boolean,
-    language: String,
-    content: OthersContent,
     names: List<AllahName>,
     useWesternNumbersInArabic: Boolean = false,
     onNameClick: (AllahName) -> Unit
@@ -603,7 +591,7 @@ fun NamesOfAllahPane(
                 AllahNameCard(
                     name = name,
                     isAr = isAr,
-                    meaning = if (isAr) "" else content.nameMeaning(name.id, language, name.englishMeaning),
+                    meaning = if (isAr) "" else name.englishMeaning,
                     useWesternNumbersInArabic = useWesternNumbersInArabic,
                     onCardClick = { onNameClick(name) }
                 )
@@ -732,6 +720,16 @@ fun CalendarAndOccasionsPane(
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
             )
+        }
+
+        if (!isAr && language != "en") {
+            item {
+                Text(
+                    text = UiStrings.of("Machine-assisted translation. Verify with a qualified scholar."),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                )
+            }
         }
 
         // List occasions

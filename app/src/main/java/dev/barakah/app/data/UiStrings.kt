@@ -17,6 +17,7 @@ object UiStrings {
 
     private val translations: Map<String, Map<String, String>> = mapOf(
         "id" to mapOf(
+            "Machine-assisted translation. Verify with a qualified scholar." to "Terjemahan berbantuan mesin. Verifikasi dengan ulama yang kompeten.",
             "%s Adhan" to "Azan %s",
             "%s Approaching" to "Menjelang %s",
             "%s m" to "%s mnt",
@@ -299,6 +300,7 @@ object UiStrings {
             "🕌 PERFECTLY ALIGNED!" to "🕌 TEPAT SEJAJAR!",
         ),
         "de" to mapOf(
+            "Machine-assisted translation. Verify with a qualified scholar." to "Maschinell unterstützte Übersetzung. Mit einem qualifizierten Gelehrten prüfen.",
             "%s Adhan" to "%s Adhan",
             "%s Approaching" to "%s Nähert sich",
             "%s m" to "%s m",
@@ -581,6 +583,7 @@ object UiStrings {
             "🕌 PERFECTLY ALIGNED!" to "🕌 PERFEKT AUSGERICHTET!",
         ),
         "ur" to mapOf(
+            "Machine-assisted translation. Verify with a qualified scholar." to "مشینی ترجمہ۔ کسی مستند عالم سے تصدیق کریں۔",
             "%s Adhan" to "%s اذان",
             "%s Approaching" to "%s قریب آ رہا ہے۔",
             "%s m" to "%s m",
@@ -865,6 +868,7 @@ object UiStrings {
             "🕌 PERFECTLY ALIGNED!" to "🕌 مکمل طور پر منسلک!",
         ),
         "bn" to mapOf(
+            "Machine-assisted translation. Verify with a qualified scholar." to "মেশিন-সহায়ক অনুবাদ। একজন যোগ্য আলিমের সাথে যাচাই করুন।",
             "%s Adhan" to "%s আযান",
             "%s Approaching" to "%s কাছাকাছি",
             "%s m" to "%s মি",
@@ -1149,6 +1153,7 @@ object UiStrings {
             "🕌 PERFECTLY ALIGNED!" to "🕌 নিখুঁতভাবে সারিবদ্ধ!",
         ),
         "tr" to mapOf(
+            "Machine-assisted translation. Verify with a qualified scholar." to "Makine destekli çeviri. Yetkin bir alime danışın.",
             "%s Adhan" to "%s Ezan",
             "%s Approaching" to "%s Yaklaşıyor",
             "%s m" to "%s m",
@@ -1433,6 +1438,7 @@ object UiStrings {
             "🕌 PERFECTLY ALIGNED!" to "🕌 MÜKEMMEL HİZALANMIŞ!",
         ),
         "fa" to mapOf(
+            "Machine-assisted translation. Verify with a qualified scholar." to "ترجمه ماشینی. با یک عالم واجد شرایط بررسی کنید.",
             "%s Adhan" to "اذان %s",
             "%s Approaching" to "%s در حال نزدیک شدن است",
             "%s m" to "%s متر",
@@ -1717,6 +1723,7 @@ object UiStrings {
             "🕌 PERFECTLY ALIGNED!" to "🕌 کاملاً هماهنگ است!",
         ),
         "ha" to mapOf(
+            "Machine-assisted translation. Verify with a qualified scholar." to "Fassarar da inji ta taimaka. Tabbatar da wani malami.",
             "%s Adhan" to "%s Adhan",
             "%s Approaching" to "%s Yana Gabatowa",
             "%s m" to "%s m",
@@ -2001,6 +2008,7 @@ object UiStrings {
             "🕌 PERFECTLY ALIGNED!" to "🕌 INGANTATTU!",
         ),
         "ms" to mapOf(
+            "Machine-assisted translation. Verify with a qualified scholar." to "Terjemahan bantuan mesin. Sahkan dengan ulama yang layak.",
             "%s Adhan" to "%s Adzan",
             "%s Approaching" to "%s Mendekati",
             "%s m" to "%s m",
@@ -2285,6 +2293,7 @@ object UiStrings {
             "🕌 PERFECTLY ALIGNED!" to "🕌 SECARA SEMPURNA!",
         ),
         "sw" to mapOf(
+            "Machine-assisted translation. Verify with a qualified scholar." to "Tafsiri iliyosaidiwa na mashine. Thibitisha na mwanachuoni.",
             "%s Adhan" to "%s Adhana",
             "%s Approaching" to "%s Inakaribia",
             "%s m" to "%s m",
@@ -2569,6 +2578,7 @@ object UiStrings {
             "🕌 PERFECTLY ALIGNED!" to "🕌 IMEANDALIWA KABISA!",
         ),
         "ru" to mapOf(
+            "Machine-assisted translation. Verify with a qualified scholar." to "Машинный перевод. Проверьте у квалифицированного учёного.",
             "%s Adhan" to "%s Азан",
             "%s Approaching" to "%s приближается",
             "%s m" to "%s м",
@@ -3137,6 +3147,7 @@ object UiStrings {
             "🕌 PERFECTLY ALIGNED!" to "🕌 بە تەواوی ڕێکخراوە!",
         ),
         "ar" to mapOf(
+            "Machine-assisted translation. Verify with a qualified scholar." to "ترجمة بمساعدة الآلة. تحقق منها مع عالم مؤهل.",
             "%s Adhan" to "%s أذان",
             "%s Approaching" to "يقترب %s",
             "%s m" to "%s م",
