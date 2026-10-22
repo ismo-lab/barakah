@@ -84,6 +84,14 @@ android {
     debug {
       signingConfig = signingConfigs.getByName("sharedConfig")
     }
+    // Test-only variant: installs beside production, keeps the same signing key so it can
+    // update itself, and never ships from main.
+    create("staging") {
+      initWith(getByName("release"))
+      applicationIdSuffix = ".test"
+      versionNameSuffix = "-test"
+      signingConfig = signingConfigs.getByName("sharedConfig")
+    }
   }
   lint {
     // These four only ever say that a newer version exists somewhere, which is true every week
