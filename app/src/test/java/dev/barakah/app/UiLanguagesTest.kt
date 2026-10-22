@@ -3,6 +3,8 @@ package dev.barakah.app
 import dev.barakah.app.data.ReligiousTextLanguages
 import dev.barakah.app.data.UiLanguages
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -34,5 +36,12 @@ class UiLanguagesTest {
         assertEquals("en", ReligiousTextLanguages.tafsirTagForQuran("ha", "en"))
         assertEquals("en", ReligiousTextLanguages.tafsirTagForQuran("", "en"))
         assertEquals("ar", ReligiousTextLanguages.tafsirTagForQuran("", "ar"))
+    }
+
+    @Test
+    fun `bengali tafsir is attributed to Abu Bakr Zakaria`() {
+        val source = ReligiousTextLanguages.bengali.tafsirSource.orEmpty()
+        assertTrue(source.contains("Abu Bakr Zakaria"))
+        assertFalse(source.contains("Al-Mukhtasar"))
     }
 }
