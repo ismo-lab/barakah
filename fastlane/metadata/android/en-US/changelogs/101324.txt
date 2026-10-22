@@ -1,0 +1,1 @@
+Repaired missing Arabic characters in 42 Quran verses and replaced the corrupted Bengali tafsir with a clean edition. The 99 names now use the English source until localized reviews are complete, and machine-assisted occasion descriptions carry a visible warning. Removed the unlocalized hadith card.
