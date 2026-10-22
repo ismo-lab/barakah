@@ -722,6 +722,16 @@ fun CalendarAndOccasionsPane(
             )
         }
 
+        if (!isAr && language != "en") {
+            item {
+                Text(
+                    text = UiStrings.of("Machine-assisted translation. Verify with a qualified scholar."),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                )
+            }
+        }
+
         // List occasions
         items(occasions, key = { it.id }) { item ->
             Card(

@@ -5,6 +5,13 @@ interpretations, labelled as such in the app, never machine translations. When a
 has no bundled edition for a text, the app shows English and states on screen that the requested
 language is unavailable. It never silently substitutes a different language without saying so.
 
+## F-Droid status
+
+The source code is GPL-3.0-only. Some bundled translations and tafsir are non-free content used
+with attribution under non-commercial terms. F-Droid metadata therefore declares
+`AntiFeatures: NonFreeAssets`; Barakah does not relicense those texts. Editions whose upstream
+terms do not permit redistribution must be removed or replaced before submission.
+
 ## Quran translations
 
 Bundled from the editions published by [fawazahmed0/quran-api](https://github.com/fawazahmed0/quran-api)
