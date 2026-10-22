@@ -2,7 +2,9 @@ package dev.barakah.app.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialExpressiveTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -10,6 +12,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 
 private val DarkColorScheme = darkColorScheme(
     primary = GreenPrimaryDark,
@@ -73,6 +76,14 @@ private val LightColorScheme = lightColorScheme(
     surfaceContainerHighest = SurfaceContainerHighestLight
 )
 
+private val ExpressiveShapes = Shapes(
+    extraSmall = RoundedCornerShape(8.dp),
+    small = RoundedCornerShape(12.dp),
+    medium = RoundedCornerShape(16.dp),
+    large = RoundedCornerShape(24.dp),
+    extraLarge = RoundedCornerShape(32.dp)
+)
+
 @Composable
 fun BarakahTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -112,6 +123,7 @@ fun BarakahTheme(
     // Expressive motion and shapes, with the app's existing brand palette and typography.
     MaterialExpressiveTheme(
         colorScheme = colorScheme,
+        shapes = ExpressiveShapes,
         typography = Typography,
         content = content
     )

@@ -266,12 +266,12 @@ fun MainNavigationContainer(
         },
         bottomBar = {
             if (!showNavigationRail) {
-                NavigationBar(
+                ShortNavigationBar(
                     modifier = Modifier.testTag("bottom_nav_bar")
                 ) {
                     navItems.forEach { item ->
                         val isSelected = currentDestination?.route == item.route && !(item.route == "home" && showSettingsDialog)
-                        NavigationBarItem(
+                        ShortNavigationBarItem(
                             selected = isSelected,
                             onClick = {
                                 viewModel.setShowSettingsDialog(false)

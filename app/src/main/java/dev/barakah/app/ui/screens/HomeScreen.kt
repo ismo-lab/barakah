@@ -335,7 +335,7 @@ fun HomeScreen(
 
                 // Unified Settings Button
                 Surface(
-                    shape = RoundedCornerShape(24.dp),
+                    shape = RoundedCornerShape(32.dp),
                     color = MaterialTheme.colorScheme.secondaryContainer,
                     tonalElevation = 2.dp,
                     modifier = Modifier
@@ -414,7 +414,7 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 12.dp, horizontal = 4.dp),
-                shape = RoundedCornerShape(24.dp),
+                shape = RoundedCornerShape(32.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
                 ),
@@ -490,7 +490,7 @@ fun HomeScreen(
                     .fillMaxWidth()
                     .padding(vertical = 6.dp)
                     .testTag("prayer_item_$name"),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = if (isCurrent) {
                         MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.82f)
@@ -750,7 +750,7 @@ fun DailyEssentialsSection(navController: androidx.navigation.NavController, vie
                     }
                 },
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(28.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.35f)
                 )
@@ -778,7 +778,7 @@ fun DailyEssentialsSection(navController: androidx.navigation.NavController, vie
                     }
                 },
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(28.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.35f)
                 )
@@ -818,7 +818,7 @@ fun ExploreMoreSection(navController: androidx.navigation.NavController, isAr: B
                 }
             },
             modifier = Modifier.fillMaxWidth().testTag("explore_others_card"),
-            shape = RoundedCornerShape(20.dp),
+            shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
             ),
@@ -1039,7 +1039,7 @@ fun AdhkarOffsetSelector(
 
                 Surface(
                     onClick = { onOffsetSelected(offset) },
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(12.dp),
                     color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                     border = BorderStroke(
                         width = 1.dp,
