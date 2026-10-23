@@ -269,13 +269,10 @@ object PrayerScheduler {
 
 
     private fun scheduleAlarm(context: Context, name: String, timeStr: String, id: Int, enabled: Boolean, timeZone: TimeZone) {
-        val triggerAt = PrayerAlarmTimes.nextOccurrence(timeStr, System.currentTimeMillis(), timeZone) ?: return
-        
         val intent = Intent(context, PrayerNotificationReceiver::class.java).apply {
             action = "dev.barakah.app.ACTION_PRAYER_NOTIFICATION"
             putExtra("PRAYER_NAME", name)
             putExtra("PRAYER_ID", id)
-            putExtra("SCHEDULED_TIME", triggerAt)
         }
         
         val pendingIntent = PendingIntent.getBroadcast(
@@ -288,6 +285,14 @@ object PrayerScheduler {
             alarmManager.cancel(pendingIntent)
             return
         }
+
+        val triggerAt = PrayerAlarmTimes.nextOccurrence(timeStr, System.currentTimeMillis(), timeZone)
+        if (triggerAt == null) {
+            alarmManager.cancel(pendingIntent)
+            return
+        }
+
+        intent.putExtra("SCHEDULED_TIME", triggerAt)
         
         try {
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
