@@ -44,7 +44,7 @@ ksp {
 
 android {
   namespace = "dev.barakah.app"
-  compileSdk = 36
+  compileSdk = 37
 
   defaultConfig {
     applicationId = "dev.barakah.app"
@@ -82,6 +82,14 @@ android {
       signingConfig = signingConfigs.getByName("sharedConfig")
     }
     debug {
+      signingConfig = signingConfigs.getByName("sharedConfig")
+    }
+    // Test-only variant: installs beside production, keeps the same signing key so it can
+    // update itself, and never ships from main.
+    create("staging") {
+      initWith(getByName("release"))
+      applicationIdSuffix = ".test"
+      versionNameSuffix = "-test"
       signingConfig = signingConfigs.getByName("sharedConfig")
     }
   }
