@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.School
@@ -191,7 +192,7 @@ fun LanguageStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
                 }
             },
             modifier = Modifier.fillMaxWidth().height(56.dp),
-            shape = CircleShape
+            shape = RoundedCornerShape(16.dp)
         ) {
             Text(
                 text = if (currentLang == "ar") "التالي" else UiStrings.of("Next"),
@@ -283,7 +284,7 @@ fun LanguageStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
                  }
              },
              modifier = Modifier.fillMaxWidth().height(56.dp),
-             shape = CircleShape,
+             shape = RoundedCornerShape(16.dp),
              colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
          ) {
              Icon(Icons.Default.GpsFixed, contentDescription = null)
@@ -302,7 +303,7 @@ fun LanguageStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
                  onFinish()
              },
              modifier = Modifier.fillMaxWidth().height(56.dp),
-             shape = CircleShape
+             shape = RoundedCornerShape(16.dp)
          ) {
              Icon(Icons.Default.LocationOn, contentDescription = null)
              Spacer(modifier = Modifier.width(12.dp))
@@ -321,7 +322,7 @@ fun LanguageStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
             placeholder = { Text(if (isAr) "ابحث عن مدينتك..." else UiStrings.of("Search for city...")) },
             modifier = Modifier.fillMaxWidth(),
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-            shape = MaterialTheme.shapes.large,
+            shape = RoundedCornerShape(12.dp),
             singleLine = true,
             maxLines = 1,
             keyboardOptions = KeyboardOptions(
@@ -335,7 +336,7 @@ fun LanguageStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(MaterialTheme.shapes.large)
+                    .clip(RoundedCornerShape(16.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
                     .padding(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -350,7 +351,7 @@ fun LanguageStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .then(if (index == 0) Modifier.bringIntoViewRequester(firstResult) else Modifier),
-                        shape = MaterialTheme.shapes.large
+                        shape = RoundedCornerShape(12.dp)
                     ) {
                         ListItem(
                             headlineContent = { Text(city.displayName(currentLang), fontWeight = FontWeight.Bold) },
@@ -442,7 +443,7 @@ fun NotificationsStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .clip(MaterialTheme.shapes.large)
+                .clip(RoundedCornerShape(16.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)),
             contentPadding = PaddingValues(12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -567,7 +568,7 @@ fun NotificationsStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
         Button(
             onClick = onNext,
             modifier = Modifier.fillMaxWidth().height(56.dp),
-            shape = CircleShape
+            shape = RoundedCornerShape(16.dp)
         ) {
             Text(
                 text = if (isAr) "التالي" else UiStrings.of("Next"),
@@ -590,12 +591,12 @@ fun NotificationToggleCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            containerColor = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface
         ),
-        border = null
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(
@@ -681,9 +682,9 @@ fun CalculationStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.large,
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-                    border = null
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                 ) {
                     Column(
                         modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -744,9 +745,9 @@ fun CalculationStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.large,
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-                    border = null
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                 ) {
                     Column(
                         modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -809,7 +810,7 @@ fun CalculationStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
         Button(
             onClick = onNext,
             modifier = Modifier.fillMaxWidth().height(56.dp),
-            shape = CircleShape
+            shape = RoundedCornerShape(16.dp)
         ) {
             Text(
                 text = if (isAr) "التالي" else UiStrings.of("Next"),

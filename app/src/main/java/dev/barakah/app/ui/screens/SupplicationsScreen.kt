@@ -195,7 +195,7 @@ fun SupplicationsScreen(
                             .weight(0.60f)
                             .heightIn(min = 52.dp)
                             .testTag("dua_search_bar"),
-                        shape = MaterialTheme.shapes.large,
+                        shape = RoundedCornerShape(12.dp),
                         singleLine = true,
                         textStyle = MaterialTheme.typography.bodyMedium,
                         colors = OutlinedTextFieldDefaults.colors(
@@ -286,7 +286,7 @@ fun SupplicationsScreen(
                             .fillMaxWidth()
                             .heightIn(min = 56.dp)
                             .testTag("dua_search_bar"),
-                        shape = MaterialTheme.shapes.large,
+                        shape = RoundedCornerShape(16.dp),
                         singleLine = true,
                         textStyle = MaterialTheme.typography.bodyLarge,
                         colors = OutlinedTextFieldDefaults.colors(
@@ -370,9 +370,9 @@ fun SupplicationsScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(80.dp),
-                                shape = MaterialTheme.shapes.large,
+                                shape = RoundedCornerShape(16.dp),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                                 )
                             ) {
                                 Row(
@@ -423,9 +423,9 @@ fun SupplicationsScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(top = 8.dp),
-                                shape = MaterialTheme.shapes.large,
+                                shape = RoundedCornerShape(12.dp),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
                                 )
                             ) {
                                 Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
@@ -480,9 +480,9 @@ fun SupplicationsScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .testTag("dua_card_${dua.id}"),
-                                shape = MaterialTheme.shapes.extraLarge,
+                                shape = RoundedCornerShape(24.dp),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
                                     contentColor = MaterialTheme.colorScheme.onSurface
                                 ),
                                 border = androidx.compose.foundation.BorderStroke(
@@ -640,7 +640,7 @@ fun SupplicationsScreen(
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .clip(MaterialTheme.shapes.medium)
+                                                .clip(RoundedCornerShape(12.dp))
                                                 .background(
                                                     if (isDone) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
                                                     else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)

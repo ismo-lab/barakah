@@ -132,7 +132,7 @@ fun TasbihScreen(
                             activeDhikr = activeDhikr,
                             translatedTitle = getTranslatedDhikrTitle(activeDhikr.first),
                             onOpenPicker = { showDhikrDropdown = true },
-                            shape = 32.dp,
+                            shape = 16.dp,
                             contentPadding = 12.dp,
                             startAligned = true,
                             arabicOnlyStyle = MaterialTheme.typography.titleMedium,
@@ -158,7 +158,7 @@ fun TasbihScreen(
                             labelStyle = MaterialTheme.typography.labelMedium,
                             spacing = 8.dp,
                             buttonHeight = 44.dp,
-                            buttonShape = 28.dp,
+                            buttonShape = 12.dp,
                             iconSize = 18.dp,
                             gapAfterIcon = 6.dp,
                             buttonTextStyle = MaterialTheme.typography.bodyMedium
@@ -250,7 +250,7 @@ fun TasbihScreen(
                 activeDhikr = activeDhikr,
                 translatedTitle = getTranslatedDhikrTitle(activeDhikr.first),
                 onOpenPicker = { showDhikrDropdown = true },
-                shape = 40.dp,
+                shape = 24.dp,
                 contentPadding = 16.dp,
                 startAligned = false,
                 arabicOnlyStyle = MaterialTheme.typography.titleLarge,
@@ -308,7 +308,7 @@ fun TasbihScreen(
                 labelStyle = MaterialTheme.typography.labelLarge,
                 spacing = 16.dp,
                 buttonHeight = 56.dp,
-                buttonShape = 28.dp,
+                buttonShape = 16.dp,
                 gapAfterIcon = 8.dp,
                 buttonTextStyle = MaterialTheme.typography.titleMedium
             )
@@ -347,7 +347,7 @@ fun TasbihScreen(
                                     viewModel.selectDhikr(dhikr)
                                     showDhikrDropdown = false
                                 },
-                                shape = MaterialTheme.shapes.large,
+                                shape = RoundedCornerShape(12.dp),
                                 colors = CardDefaults.cardColors(
                                     containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
                                 ),
@@ -410,8 +410,8 @@ fun TasbihScreen(
                     Text(if (isAr) "إغلاق" else UiStrings.of("Close"))
                 }
             },
-            shape = MaterialTheme.shapes.extraLarge,
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            shape = RoundedCornerShape(24.dp),
+            containerColor = MaterialTheme.colorScheme.surface
         )
     }
     }
@@ -446,10 +446,10 @@ private fun TasbihDhikrCard(
             .testTag("dhikr_dropdown_trigger"),
         shape = RoundedCornerShape(shape),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
         ),
-        border = null
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.15f))
     ) {
         Row(
             modifier = Modifier
@@ -598,7 +598,7 @@ private fun TasbihTargetControls(
         modifier = Modifier
             .fillMaxWidth()
             .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
             .padding(barPadding),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
