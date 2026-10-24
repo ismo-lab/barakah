@@ -114,7 +114,7 @@ object DuaData {
         titlesLoaded = true
     }
 
-    /** Same normalization as the English matching above: letters only, no diacritics. */
+    /** Arabic normalization for exact cross-edition matching; ambiguous matches are rejected. */
     private fun normalizeArabic(text: String): String {
         val sb = java.lang.StringBuilder()
         for (char in text) {
@@ -212,6 +212,7 @@ object DuaData {
 
                 // Match counts from Arabic dataset to keep rep counts aligned when using English
                 val arNormalizedList = duasAr.map { it to normalizeArabic(it.arabic) }
+                    .groupBy { it.second }
                 englishByArabic.clear()
 
                 val finalEnList = enList.map { enDua ->
@@ -219,20 +220,8 @@ object DuaData {
                     if (enNorm.length < 5) return@map enDua
 
                     // Try to find matching Arabic dua
-                    var match: Dua? = arNormalizedList.firstOrNull { it.second == enNorm }?.first
-                    if (match == null) {
-                        match = arNormalizedList.firstOrNull { 
-                            it.second.isNotEmpty() && (enNorm.contains(it.second) || it.second.contains(enNorm))
-                        }?.first
-                    }
-                    if (match == null) {
-                        match = arNormalizedList.firstOrNull {
-                            val arNorm = it.second
-                            val len = kotlin.math.min(enNorm.length, arNorm.length)
-                            len >= 12 && enNorm.substring(0, 12) == arNorm.substring(0, 12)
-                        }?.first
-                    }
-
+                    val candidates = arNormalizedList[enNorm].orEmpty()
+                    val match = candidates.singleOrNull()?.first
                     if (match != null) {
                         englishByArabic[normalizeArabic(match.arabic)] = enDua.translation
                     }

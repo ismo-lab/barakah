@@ -35,8 +35,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.platform.LocalView
-import android.view.HapticFeedbackConstants
 import dev.barakah.app.ui.BarakahViewModel
 import dev.barakah.app.util.localize
 import kotlinx.coroutines.launch
@@ -55,9 +53,6 @@ fun TasbihScreen(
     val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
     val isAr = appLanguage == "ar"
     
-    val haptic = LocalView.current
-    val view = LocalView.current
-    val enableTasbihHaptics by viewModel.enableTasbihHaptics.collectAsStateWithLifecycle()
     val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsStateWithLifecycle()
 
     var showDhikrDropdown by remember { mutableStateOf(false) }
@@ -195,6 +190,7 @@ fun TasbihScreen(
                         hintSpacing = 4.dp,
                         onTap = {
                             isTapped = true
+                            viewModel.triggerVibration(30)
                             viewModel.incrementTasbih()
                         }
                     )
@@ -287,6 +283,7 @@ fun TasbihScreen(
                 hintSpacing = 8.dp,
                 onTap = {
                     isTapped = true
+                    viewModel.triggerVibration(30)
                     viewModel.incrementTasbih()
                 }
             )

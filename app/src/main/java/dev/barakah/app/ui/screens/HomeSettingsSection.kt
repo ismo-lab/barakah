@@ -49,10 +49,6 @@ import kotlinx.coroutines.delay
 import dev.barakah.app.util.PrayerCalculator
 import dev.barakah.app.util.TimeUtils
 import dev.barakah.app.util.localize
-import dev.barakah.app.ui.theme.QURAN_FONT_AMIRI
-import dev.barakah.app.ui.theme.QURAN_FONT_SYSTEM
-import dev.barakah.app.ui.theme.quranFontFamilyFor
-import dev.barakah.app.ui.theme.quranLineHeightFor
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -89,9 +85,6 @@ fun HomeSettingsSection(
     val appTheme by viewModel.appTheme.collectAsStateWithLifecycle()
     val useDynamicColor by viewModel.useDynamicColor.collectAsStateWithLifecycle()
     val amoledDark by viewModel.amoledDark.collectAsStateWithLifecycle()
-    val quranFont by viewModel.quranFont.collectAsStateWithLifecycle()
-    val fontAr by viewModel.arabicFontSize.collectAsStateWithLifecycle()
-    val fontEn by viewModel.englishFontSize.collectAsStateWithLifecycle()
     val useWesternNumbersInArabic by viewModel.useWesternNumbersInArabic.collectAsStateWithLifecycle()
     val enableTasbihHaptics by viewModel.enableTasbihHaptics.collectAsStateWithLifecycle()
 
@@ -1271,149 +1264,6 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                     modifier = Modifier.fillMaxWidth(),
                                     textAlign = TextAlign.End
                                 )
-                            }
-                        }
-                    }
-
-                    // Card 6: Quran Font Formatting
-                    item {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                        ) {
-                            Column(
-                                modifier = Modifier.fillMaxWidth().padding(12.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Default.TextFields, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = if (isAr) "تنسيق ونوع خط المصحف" else UiStrings.of("Quran Font & Styling"),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(text = if (isAr) "الخط العربي: " else UiStrings.of("Arabic: "), style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(100.dp))
-                                    Slider(
-                                        value = fontAr,
-                                        onValueChange = { viewModel.setArabicFontSize(it) },
-                                        valueRange = 18f..40f,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                    Text(text = "${fontAr.toInt()}sp", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, modifier = Modifier.width(40.dp), textAlign = TextAlign.End)
-                                }
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(text = if (isAr) "الترجمة الإنجليزية: " else UiStrings.of("English: "), style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(100.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Slider(
-                                        value = fontEn,
-                                        onValueChange = { viewModel.setEnglishFontSize(it) },
-                                        valueRange = 12f..28f,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                    Text(text = "${fontEn.toInt()}sp", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, modifier = Modifier.width(40.dp), textAlign = TextAlign.End)
-                                }
-
-                                // Face used for Quran text. The Quran screen is the only
-                                // place it applies; every other screen keeps the system font.
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = if (isAr) "خط المصحف: " else UiStrings.of("Quran font: "),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        modifier = Modifier.width(100.dp)
-                                    )
-                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        FilterChip(
-                                            selected = quranFont == QURAN_FONT_SYSTEM,
-                                            onClick = { viewModel.setQuranFont(QURAN_FONT_SYSTEM) },
-                                            label = {
-                                                Text(
-                                                    text = if (isAr) "الافتراضي" else UiStrings.of("System"),
-                                                    style = MaterialTheme.typography.labelMedium
-                                                )
-                                            }
-                                        )
-                                        FilterChip(
-                                            selected = quranFont == QURAN_FONT_AMIRI,
-                                            onClick = { viewModel.setQuranFont(QURAN_FONT_AMIRI) },
-                                            label = {
-                                                Text(
-                                                    text = if (isAr) "الخط العثماني" else UiStrings.of("Amiri Quran"),
-                                                    style = MaterialTheme.typography.labelMedium
-                                                )
-                                            }
-                                        )
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.12f))
-                                        .border(
-                                            1.dp,
-                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                                            RoundedCornerShape(12.dp)
-                                        )
-                                        .padding(14.dp)
-                                ) {
-                                    Column(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                                    ) {
-                                        Text(
-                                            text = if (isAr) "معاينة خط المصحف والتراجم" else UiStrings.of("Quran Font & Translation Preview"),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            fontWeight = FontWeight.Bold,
-                                            modifier = Modifier.align(Alignment.Start)
-                                         )
-
-                                        // Arabic verse preview
-                                        Text(
-                                            text = "بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ",
-                                            fontSize = fontAr.sp,
-                                            fontFamily = quranFontFamilyFor(quranFont),
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                            // Explicit on purpose: without it this Text inherits
-                                            // bodyLarge's 24sp lineHeight and clips the harakat as
-                                            // soon as the slider goes above 24sp.
-                                            lineHeight = (fontAr * quranLineHeightFor(quranFont)).sp,
-                                            textAlign = TextAlign.Center,
-                                            modifier = Modifier.fillMaxWidth()
-                                        )
-                                         
-                                        // English translation preview
-                                        Text(
-                                            text = "In the name of Allah, the Beneficent, the Merciful",
-                                            fontSize = fontEn.sp,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            textAlign = TextAlign.Center,
-                                            modifier = Modifier.fillMaxWidth()
-                                        )
-                                    }
-                                }
                             }
                         }
                     }

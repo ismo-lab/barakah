@@ -69,6 +69,7 @@ fun QuranScreen(
     modifier: Modifier = Modifier
 ) {
     var searchQuery by rememberSaveable { mutableStateOf("") }
+    var showReaderSettings by rememberSaveable { mutableStateOf(false) }
     val bookmarks by viewModel.bookmarks.collectAsStateWithLifecycle()
     
     // Filters: 0 -> All Surahs, 1 -> Bookmarks Only
@@ -95,6 +96,7 @@ fun QuranScreen(
     val arabicFontSize by viewModel.arabicFontSize.collectAsStateWithLifecycle()
     val englishFontSize by viewModel.englishFontSize.collectAsStateWithLifecycle()
     val quranFont by viewModel.quranFont.collectAsStateWithLifecycle()
+    val quranShowArabic by viewModel.quranShowArabic.collectAsStateWithLifecycle()
     // Only Quran text uses the selected face; the surrounding UI keeps the system font.
     val quranFontFamily = quranFontFamilyFor(quranFont)
     val quranLineHeight = quranLineHeightFor(quranFont)
@@ -242,16 +244,25 @@ fun QuranScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimary
                             )
+                            IconButton(onClick = { showReaderSettings = true }) {
+                                Icon(Icons.Default.Settings, contentDescription = if (isAr) "إعدادات القرآن" else UiStrings.of("Quran settings"), tint = MaterialTheme.colorScheme.onPrimary)
+                            }
                         }
                     } else {
                         Column {
-                            Text(
-                                text = if (isAr) "القرآن الكريم" else UiStrings.of("The Holy Quran"),
-                                style = MaterialTheme.typography.headlineLarge,
-                                fontFamily = FontFamily.SansSerif,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = if (isAr) "القرآن الكريم" else UiStrings.of("The Holy Quran"),
+                                    style = MaterialTheme.typography.headlineLarge,
+                                    fontFamily = FontFamily.SansSerif,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                IconButton(onClick = { showReaderSettings = true }) {
+                                    Icon(Icons.Default.Settings, contentDescription = if (isAr) "إعدادات القرآن" else UiStrings.of("Quran settings"), tint = MaterialTheme.colorScheme.onPrimary)
+                                }
+                            }
                             Text(
                                 text = if (isAr) "اقرأ وتدبر واجمع عظيم الأجور والبركات" else UiStrings.of("Read, reflect, and gather countless blessings"),
                                 style = MaterialTheme.typography.bodyMedium,
@@ -622,16 +633,6 @@ fun QuranScreen(
                 }
 
                 // 3. VERSES LIST READER
-                ReligiousTextLanguagePicker(
-                    labelEn = "Quran translation",
-                    labelAr = "ترجمة القرآن",
-                    selectedTag = quranTranslationLanguage,
-                    options = ReligiousTextLanguages.quranOptions(),
-                    isAr = isAr,
-                    onSelect = { viewModel.setQuranTranslationLanguage(it) },
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                )
-
                 if (quranTranslationLanguage.isNotEmpty()) {
                     val translationSource = ReligiousTextLanguages
                         .byTag(quranTranslationLanguage)
@@ -666,7 +667,7 @@ fun QuranScreen(
                     contentPadding = PaddingValues(16.dp),
                     state = readerListState
                 ) {
-                    if (surah.id != 9) {
+                    if (surah.id != 1 && surah.id != 9) {
                         item {
                             Box(
                                 modifier = Modifier
@@ -684,6 +685,19 @@ fun QuranScreen(
                                         color = MaterialTheme.colorScheme.primary
                                     )
                                 )
+                                val bismillahTranslation = if (quranTranslationLanguage.isNotEmpty()) {
+                                    QuranData.loadVersesForSurah(context, 1, quranTranslationLanguage)
+                                        .verses.firstOrNull { it.index == 1 }?.english
+                                } else null
+                                if (bismillahTranslation != null && quranTranslationLanguage.isNotEmpty()) {
+                                    Text(
+                                        text = bismillahTranslation,
+                                        fontSize = englishFontSize.sp,
+                                        textAlign = TextAlign.Center,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.fillMaxWidth().padding(top = 6.dp)
+                                    )
+                                }
                             }
                         }
                     }
@@ -749,7 +763,7 @@ fun QuranScreen(
 
                             Spacer(modifier = Modifier.height(12.dp))
 
-                            Text(
+                            if (quranShowArabic) Text(
                                 text = verse.arabic,
                                 style = androidx.compose.ui.text.TextStyle(
                                     fontSize = arabicFontSize.sp,
@@ -981,6 +995,46 @@ fun QuranScreen(
             shape = RoundedCornerShape(28.dp),
             containerColor = MaterialTheme.colorScheme.surface,
             tonalElevation = 6.dp
+        )
+    }
+
+    if (showReaderSettings) {
+        AlertDialog(
+            onDismissRequest = { showReaderSettings = false },
+            title = { Text(if (isAr) "إعدادات القرآن" else UiStrings.of("Quran settings")) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    ReligiousTextLanguagePicker(
+                        labelEn = "Quran translation", labelAr = "ترجمة القرآن",
+                        selectedTag = quranTranslationLanguage,
+                        options = ReligiousTextLanguages.quranOptions(), isAr = isAr,
+                        onSelect = { viewModel.setQuranTranslationLanguage(it) }
+                    )
+                    ReligiousTextLanguagePicker(
+                        labelEn = "Tafsir language", labelAr = "لغة التفسير",
+                        selectedTag = tafsirLanguage,
+                        options = ReligiousTextLanguages.tafsirOptions(), isAr = isAr,
+                        onSelect = { viewModel.setTafsirLanguage(it) }
+                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(if (isAr) "الخط العربي" else UiStrings.of("Arabic font size"), modifier = Modifier.weight(1f))
+                        Slider(arabicFontSize, { viewModel.setArabicFontSize(it) }, valueRange = 18f..40f, modifier = Modifier.weight(2f))
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(if (isAr) "حجم الترجمة" else UiStrings.of("Translation font size"), modifier = Modifier.weight(1f))
+                        Slider(englishFontSize, { viewModel.setEnglishFontSize(it) }, valueRange = 12f..28f, modifier = Modifier.weight(2f))
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(if (isAr) "إظهار النص العربي" else UiStrings.of("Show Arabic text"), modifier = Modifier.weight(1f))
+                        Switch(checked = quranShowArabic, onCheckedChange = viewModel::setQuranShowArabic)
+                    }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FilterChip(selected = quranFont == dev.barakah.app.ui.theme.QURAN_FONT_SYSTEM, onClick = { viewModel.setQuranFont(dev.barakah.app.ui.theme.QURAN_FONT_SYSTEM) }, label = { Text(UiStrings.of("System")) })
+                        FilterChip(selected = quranFont == dev.barakah.app.ui.theme.QURAN_FONT_AMIRI, onClick = { viewModel.setQuranFont(dev.barakah.app.ui.theme.QURAN_FONT_AMIRI) }, label = { Text(UiStrings.of("Amiri Quran")) })
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { showReaderSettings = false }) { Text(UiStrings.of("Done")) } }
         )
     }
 }
