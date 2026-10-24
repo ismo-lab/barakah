@@ -139,6 +139,9 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     private val _quranFont = MutableStateFlow(prefs.getString(AppPrefs.QURAN_FONT, "system") ?: "system")
     val quranFont: StateFlow<String> = _quranFont
 
+    private val _quranShowArabic = MutableStateFlow(prefs.getBoolean(AppPrefs.QURAN_SHOW_ARABIC, true))
+    val quranShowArabic: StateFlow<Boolean> = _quranShowArabic
+
     // Selected location method: "auto" or "manual"
     private val _locationMethod = MutableStateFlow(prefs.getString(AppPrefs.LOCATION_METHOD, "manual") ?: "manual")
     val locationMethod: StateFlow<String> = _locationMethod
@@ -514,7 +517,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             QuranData.load(application)
             DuaData.load(application)
-            _filteredDuas.value = if (_appLanguage.value == "ar") DuaData.duasAr else DuaData.duasEn
+            _filteredDuas.value = if (_duaTranslationLanguage.value.isEmpty()) DuaData.duasAr else DuaData.duasEn
         }
         viewModelScope.launch {
             repository.initDefaultAlertSettings()
@@ -550,12 +553,13 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
 
         // Combine Dua search, category, and language
         viewModelScope.launch {
-            combine(_duaSearchQuery, _selectedDuaCategory, _appLanguage, duaBookmarks) { query, category, lang, bookmarks ->
+            combine(_duaSearchQuery, _selectedDuaCategory, _appLanguage, _duaTranslationLanguage, duaBookmarks) { query, category, appLang, duaLang, bookmarks ->
                 val favIds = bookmarks.map { it.duaId }.toSet()
-                val currentDuas = if (lang == "ar") DuaData.duasAr else DuaData.duasEn
+                val currentDuas = if (duaLang.isEmpty()) DuaData.duasAr else DuaData.duasEn
                 val searchResult = currentDuas.filter { dua ->
-                    val title = if (lang == "ar") dua.titleAr else DuaData.titleFor(lang, dua.titleEn)
-                    val localizedCategory = if (lang == "ar") dua.categoryAr else DuaData.titleFor(lang, dua.categoryEn)
+                    val contentLang = duaLang.ifEmpty { "ar" }
+                    val title = if (duaLang.isEmpty()) dua.titleAr else DuaData.titleFor(contentLang, dua.titleEn)
+                    val localizedCategory = if (duaLang.isEmpty()) dua.categoryAr else DuaData.titleFor(contentLang, dua.categoryEn)
                     val matchesQuery = query.isEmpty() || title.contains(query, ignoreCase = true) ||
                             dua.arabic.contains(query) ||
                             dua.transliteration.contains(query, ignoreCase = true) ||
@@ -754,7 +758,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         // match after the switch.
         _duaSearchQuery.value = ""
         _selectedDuaCategory.value = "Menu"
-        _filteredDuas.value = if (lang == "ar") DuaData.duasAr else DuaData.duasEn
+        _filteredDuas.value = if (duaTag.isEmpty()) DuaData.duasAr else DuaData.duasEn
         updateWidgetsGlobally()
     }
 
@@ -788,6 +792,8 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             putString(AppPrefs.DUA_TRANSLATION_LANG, lang)
             putBoolean(AppPrefs.DUA_TRANSLATION_EXPLICIT, true)
         }
+        _duaSearchQuery.value = ""
+        _selectedDuaCategory.value = "Menu"
     }
 
     /**
@@ -868,6 +874,11 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     fun setQuranFont(font: String) {
         _quranFont.value = font
         prefs.edit { putString(AppPrefs.QURAN_FONT, font) }
+    }
+
+    fun setQuranShowArabic(show: Boolean) {
+        _quranShowArabic.value = show
+        prefs.edit { putBoolean(AppPrefs.QURAN_SHOW_ARABIC, show) }
     }
 
     fun setLocationMethod(method: String) {

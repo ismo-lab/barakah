@@ -22,6 +22,7 @@ object AppPrefs {
     const val ARABIC_FONT_SIZE = "arabic_font_size"
     const val ENGLISH_FONT_SIZE = "english_font_size"
     const val QURAN_FONT = "quran_font"
+    const val QURAN_SHOW_ARABIC = "quran_show_arabic"
     const val USE_WESTERN_NUMBERS_IN_ARABIC = "use_western_numbers_in_arabic"
     const val ENABLE_TASBIH_HAPTICS = "enable_tasbih_haptics"
     const val IS_FIRST_RUN = "is_first_run"

@@ -64,13 +64,13 @@ fun SupplicationsScreen(
         context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
     }
 
-    val categoryList = remember(appLanguage, isAr, dev.barakah.app.data.DuaData.duasAr.isNotEmpty(), dev.barakah.app.data.DuaData.duasEn.isNotEmpty()) {
+    val categoryList = remember(appLanguage, isAr, duaTranslationLanguage, dev.barakah.app.data.DuaData.duasAr.isNotEmpty(), dev.barakah.app.data.DuaData.duasEn.isNotEmpty()) {
         val list = mutableListOf<String>()
         list.add(if (isAr) "الأذكار المحفوظة" else UiStrings.of("Bookmarks"))
-        val currentList = if (isAr) dev.barakah.app.data.DuaData.duasAr else dev.barakah.app.data.DuaData.duasEn
+        val currentList = if (duaTranslationLanguage.isEmpty()) dev.barakah.app.data.DuaData.duasAr else dev.barakah.app.data.DuaData.duasEn
         list.addAll(currentList.map {
-            if (isAr) it.categoryAr
-            else dev.barakah.app.data.DuaData.titleFor(appLanguage, it.categoryEn)
+            if (duaTranslationLanguage.isEmpty()) it.categoryAr
+            else dev.barakah.app.data.DuaData.titleFor(duaTranslationLanguage, it.categoryEn)
         }.distinct())
         list
     }
@@ -511,8 +511,8 @@ fun SupplicationsScreen(
 
                                     Column(modifier = Modifier.fillMaxWidth().padding(18.dp)) {
                                         Text(
-                                            text = if (isAr) dua.titleAr
-                                            else dev.barakah.app.data.DuaData.titleFor(appLanguage, dua.titleEn),
+                                            text = if (duaTranslationLanguage.isEmpty()) dua.titleAr
+                                            else dev.barakah.app.data.DuaData.titleFor(duaTranslationLanguage, dua.titleEn),
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.ExtraBold,
                                             color = MaterialTheme.colorScheme.primary,
@@ -524,8 +524,8 @@ fun SupplicationsScreen(
                                             onClick = {},
                                             label = {
                                                 Text(
-                                                    text = if (isAr) dua.categoryAr
-                                            else dev.barakah.app.data.DuaData.titleFor(appLanguage, dua.categoryEn),
+                                                    text = if (duaTranslationLanguage.isEmpty()) dua.categoryAr
+                                            else dev.barakah.app.data.DuaData.titleFor(duaTranslationLanguage, dua.categoryEn),
                                                     style = MaterialTheme.typography.labelSmall
                                                 )
                                             },
