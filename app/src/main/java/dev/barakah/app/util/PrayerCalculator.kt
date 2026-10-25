@@ -52,8 +52,11 @@ object PrayerCalculator {
         val month = calendar.get(Calendar.MONTH) + 1
         val day = calendar.get(Calendar.DAY_OF_MONTH)
 
-        // 1. Calculate Julian Date
-        val jd = julianDate(year, month, day)
+        // 1. Calculate Julian Date, shifted from midnight UT to the moment the sun transits this
+        // longitude. Sampling the solar position at 0h UT instead puts the declination and the
+        // equation of time half a world away from the midday they are used for, which is worth a
+        // minute or two - most of all far from Greenwich, where that offset is largest.
+        val jd = julianDate(year, month, day) - longitude / (15.0 * 24.0)
 
         // 2. Solar calculations
         val d = jd - 2451545.0
@@ -97,15 +100,20 @@ object PrayerCalculator {
         val sunriseTime = dhuhrTime - sunHourAngle
         val maghribTime = dhuhrTime + sunHourAngle
 
-        // A seventh of the night, the usual estimate for Fajr and Isha where their angles are out of
-        // reach - ordinary mid-latitude summers included, where the sun never dips 15 to 18 degrees.
+        // A seventh of the night, the usual estimate for Fajr and Isha where the twilight angles
+        // are out of reach - and the upper bound on how far they may stray even when they are in
+        // reach. A seventh of the night is what every authority caps them at, and it is what adhan
+        // and PrayTimes apply unconditionally.
         val nightSeventh = (24.0 - 2.0 * sunHourAngle) / 7.0
+        val twilightLimit = sunHourAngle + nightSeventh
 
         // Fajr. The fixed offset this replaces ignored the day it was supposed to sit in: five hours
         // before midday against a sunrise at six put Fajr after sunrise, at London in June and above
-        // the Arctic circle alike.
-        val fajrHourAngle = hourAngle(-method.fajrAngle, latitude, declination)
-            ?: (sunHourAngle + nightSeventh)
+        // the Arctic circle alike. The angle resolving is not the same as the angle being usable:
+        // ISNA's 15 degrees are reachable at London in June, so Fajr used to come back as 01:16,
+        // hours before any published timetable.
+        val fajrHourAngle = twilightHourAngle(-method.fajrAngle, latitude, declination, twilightLimit)
+
         val fajrTime = dhuhrTime - fajrHourAngle
 
         // Isha, which had the mirror image of the same bug: a flat 6.2 hours after midday landed it
@@ -116,8 +124,9 @@ object PrayerCalculator {
             maghribTime + if (HijriCalendarHelper.isRamadan(year, month, day)) 2.0 else 1.5
         } else {
             val angle = if (ishaMethod == "hanafi") 18.0 else method.ishaAngle
-            val ishaHourAngle = hourAngle(-angle, latitude, declination)
-                ?: (sunHourAngle + nightSeventh)
+            // The same bound in the other direction: 00:49 was the old answer for London in June,
+            // which is after midnight and before the next Fajr.
+            val ishaHourAngle = twilightHourAngle(-angle, latitude, declination, twilightLimit)
             dhuhrTime + ishaHourAngle
         }
 
@@ -160,6 +169,14 @@ object PrayerCalculator {
         if (cosH < -1.0 || cosH > 1.0) return null
         return Math.toDegrees(acos(cosH)) / 15.0
     }
+
+    /**
+     * A twilight hour angle, capped at a seventh of the night from midday. An angle the sun never
+     * reaches is answered with the cap, and so is one it only barely reaches - the second case is
+     * the one that used to slip through.
+     */
+    private fun twilightHourAngle(angle: Double, latitude: Double, declination: Double, limit: Double): Double =
+        (hourAngle(angle, latitude, declination) ?: limit).coerceAtMost(limit)
 
     private fun formatTime(hours: Double, adjMinutes: Int = 0): String {
         var h = hours + (adjMinutes / 60.0)

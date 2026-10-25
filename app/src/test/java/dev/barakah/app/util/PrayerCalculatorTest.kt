@@ -214,6 +214,39 @@ class PrayerCalculatorTest {
     }
 
     @Test
+    fun `a reachable twilight angle is still held inside a seventh of the night`() {
+        // London on the June solstice with ISNA's 15 degree angles. The sun does dip 15 degrees, so
+        // the raw hour angle resolves - and used to put Fajr at 01:16 and Isha at 00:49, Isha after
+        // midnight and before the next Fajr. A seventh of the night is the cap every authority
+        // applies, and what adhan 4.4.3 returns for the same day (03:40 and 22:25).
+        val times = PrayerCalculator.calculate(
+            51.5074, -0.1278, 1.0, day(2024, 6, 21),
+            method = PrayerCalculator.CalculationMethod.ISNA
+        )
+
+        assertTrue("fajr was ${times.fajr}, expected about 03:40", abs(minutes(times.fajr) - 220) <= 10)
+        assertTrue("isha was ${times.isha}, expected about 22:25", abs(minutes(times.isha) - 1345) <= 10)
+        assertTrue(
+            "fajr ${times.fajr} should precede sunrise ${times.sunrise}",
+            minutes(times.fajr) < minutes(times.sunrise)
+        )
+        assertTrue(
+            "isha ${times.isha} should follow maghrib ${times.maghrib}",
+            minutes(times.isha) > minutes(times.maghrib)
+        )
+    }
+
+    @Test
+    fun `the seventh of the night cap leaves an ordinary day alone`() {
+        // Makkah in March: both twilight angles resolve well inside the cap, so it must change
+        // nothing. If this ever fails, the bound is being applied where it was not needed.
+        val standard = PrayerCalculator.calculate(21.4225, 39.8262, 3.0, day(2024, 3, 11))
+
+        assertTrue("fajr was ${standard.fajr}, expected about 05:19", abs(minutes(standard.fajr) - 319) <= 2)
+        assertTrue("isha was ${standard.isha}, expected about 19:38", abs(minutes(standard.isha) - 1178) <= 2)
+    }
+
+    @Test
     fun `time zone ids fall back when missing or unknown`() {
         assertEquals("Asia/Riyadh", PrayerCalculator.resolveTimeZoneId(null))
         assertEquals("UTC", PrayerCalculator.resolveTimeZoneId(null, "UTC"))
