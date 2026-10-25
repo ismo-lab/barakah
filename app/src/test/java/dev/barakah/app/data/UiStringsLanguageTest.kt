@@ -61,7 +61,8 @@ class UiStringsLanguageTest {
     fun englishReturnsTheSourceText() {
         UiStrings.setCurrentLanguage("en")
         assertEquals("Done", UiStrings.of("Done"))
-        assertEquals("Done", UiStrings.of("Something with no translation"))
+        // An unknown key falls through to itself, not to some other entry.
+        assertEquals("Something with no translation", UiStrings.of("Something with no translation"))
     }
 
     @Test
