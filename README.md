@@ -56,13 +56,14 @@ Gradle runs and that file wins if present. Otherwise one is materialised from
 built on another. Pass `-PsigningDisabled` to skip signing entirely, which is what a build that
 will be signed elsewhere (F-Droid) does.
 
-Version numbers live in `app/version.properties` and are the source of truth for a given commit:
-a rebuild of the same tag must produce the same `versionCode`, because F-Droid refuses one it has
-already published. CI adds the workflow run number on top via `-PciRunNumber` so successive GitHub
-releases stay distinct; that offset is absent on F-Droid's buildserver. Release into F-Droid
-therefore means bumping `BUILD_NUMBER` in that file and tagging the result. Moving between the
-GitHub APK and the F-Droid build needs an uninstall either way, since they are signed with
-different keys. The build recipe and its per-release checklist are in
+Version numbers live in `app/version.properties` and are the only input to the build, so a rebuild
+of a tag always produces the same `versionCode` — which F-Droid requires, since it refuses a code it
+has already published. A release is a tag, not a push: bump `BUILD_NUMBER`, `VERSION_CODE` and
+`VERSION_NAME` (`./gradlew incrementBuildNumber` rewrites all three, and the `incrementMinorVersion`
+/ `incrementMajorVersion` tasks do what their names say), commit, then tag that commit
+`v<versionName>`. CI builds and tests on every push to `main`, but only publishes from a tag, and it
+fails if the tag and the file disagree. Moving between the GitHub APK and the F-Droid build needs an
+uninstall either way, since they are signed with different keys. The build recipe is in
 [docs/fdroid/dev.barakah.app.yml](docs/fdroid/dev.barakah.app.yml).
 
 The screenshot tests compare against the reference images in `app/src/test/screenshots`, which

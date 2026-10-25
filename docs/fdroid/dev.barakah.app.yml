@@ -6,8 +6,9 @@
 # copy of it.
 #
 # Updating for a release:
-#   1. Bump BUILD_NUMBER (and VERSION_CODE) in app/version.properties and commit.
-#   2. Tag that commit.
+#   1. Bump BUILD_NUMBER, VERSION_CODE and VERSION_NAME in app/version.properties and commit.
+#   2. Tag that commit v<VERSION_NAME> (e.g. v1.0.0.1344). CI fails if the tag and the file
+#      disagree, and only a tag publishes a GitHub release.
 #   3. Copy the tag's versionCode/versionName here, point commit at the tag, and bump
 #      CurrentVersion/CurrentVersionCode.
 #

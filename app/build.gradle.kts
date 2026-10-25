@@ -21,24 +21,21 @@ val majorVersion = versionProps.getProperty("MAJOR", "1").toInt()
 val minorVersion = versionProps.getProperty("MINOR", "0").toInt()
 val patchVersion = versionProps.getProperty("PATCH", "0").toInt()
 val buildNumber = versionProps.getProperty("BUILD_NUMBER", "1006").toInt()
-// A given commit has to produce the same versionCode every time it is built: F-Droid rebuilds from
-// the tag and refuses a version code it has already published. So version.properties is the source
-// of truth and nothing is read implicitly from the environment.
+// A given commit has to produce the same version every time it is built: F-Droid rebuilds from the
+// tag and refuses a version code it has already published, and the tag has to name what it points
+// at. So version.properties is the only input a release build reads.
 //
-// CI still needs successive GitHub releases to carry different codes, so it passes -PciRunNumber
-// (mapped from ORG_GRADLE_PROJECT_ciRunNumber in the workflows). F-Droid passes no such property
-// and gets the file's number untouched. Moving between the two channels needs a reinstall anyway,
-// because the APKs are signed with different keys.
-val ciRunOffset = (findProperty("ciRunNumber") as String?)?.toIntOrNull() ?: 0
+// Releasing means bumping those numbers, committing, and tagging that commit with
+// v<MAJOR>.<MINOR>.<PATCH>.<BUILD_NUMBER>. The workflows refuse a tag that does not match. The
+// -PbarakahVersionName override exists only for the test-release workflow's staging APK.
 val signingStorePassword = System.getenv("BARAKAH_KEYSTORE_PASSWORD") ?: "android"
 val signingKeyAlias = System.getenv("BARAKAH_KEY_ALIAS") ?: "androiddebugkey"
 val signingKeyPassword = System.getenv("BARAKAH_KEY_PASSWORD") ?: "android"
 
 val currentVersionCode = (findProperty("barakahVersionCode") as String?)?.toIntOrNull()
-  ?: (majorVersion * 100000 + minorVersion * 10000 + patchVersion * 100 + buildNumber + ciRunOffset)
+  ?: (majorVersion * 100000 + minorVersion * 10000 + patchVersion * 100 + buildNumber)
 val currentVersionName = (findProperty("barakahVersionName") as String?)?.takeIf { it.isNotEmpty() }
-  ?: System.getenv("DYNAMIC_VERSION")?.takeIf { it.isNotEmpty() }
-  ?: "$majorVersion.$minorVersion.$patchVersion"
+  ?: "$majorVersion.$minorVersion.$patchVersion.$buildNumber"
 
 // F-Droid signs the finished APK itself, so a build can opt out with -PsigningDisabled and never
 // looks for a key at all. Otherwise the keystore is materialised in the build directory instead of
@@ -271,7 +268,7 @@ tasks.register("incrementBuildNumber") {
     val bld = props.getProperty("BUILD_NUMBER", "1004").toInt() + 1
 
     val newCode = maj * 100000 + min * 10000 + pat * 100 + bld
-    val newName = "$maj.$min.$pat"
+    val newName = "$maj.$min.$pat.$bld"
 
     props.setProperty("MAJOR", maj.toString())
     props.setProperty("MINOR", min.toString())
@@ -301,7 +298,7 @@ tasks.register("incrementMinorVersion") {
     val bld = props.getProperty("BUILD_NUMBER", "1004").toInt() + 1
 
     val newCode = maj * 100000 + min * 10000 + pat * 100 + bld
-    val newName = "$maj.$min.$pat"
+    val newName = "$maj.$min.$pat.$bld"
 
     props.setProperty("MAJOR", maj.toString())
     props.setProperty("MINOR", min.toString())
@@ -331,7 +328,7 @@ tasks.register("incrementMajorVersion") {
     val bld = props.getProperty("BUILD_NUMBER", "1004").toInt() + 1
 
     val newCode = maj * 100000 + min * 10000 + pat * 100 + bld
-    val newName = "$maj.$min.$pat"
+    val newName = "$maj.$min.$pat.$bld"
 
     props.setProperty("MAJOR", maj.toString())
     props.setProperty("MINOR", min.toString())

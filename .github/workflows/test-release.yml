@@ -34,9 +34,10 @@ jobs:
 
     - name: Determine test version
       run: |
+        # A test tag is test-v<versionName>; the APK keeps the versionCode from version.properties,
+        # but the staging applicationId means it installs beside the release build anyway.
         VERSION_NAME="${GITHUB_REF_NAME#test-v}"
         echo "VERSION_NAME=${VERSION_NAME}" >> "$GITHUB_ENV"
-        echo "DYNAMIC_VERSION=${VERSION_NAME}" >> "$GITHUB_ENV"
         echo "Test version: ${VERSION_NAME}"
 
     - name: Restore Signing Keystore
@@ -59,12 +60,11 @@ jobs:
 
     - name: Build staging APK
       env:
-        DYNAMIC_VERSION: ${{ env.DYNAMIC_VERSION }}
-        ORG_GRADLE_PROJECT_ciRunNumber: ${{ github.run_number }}
         BARAKAH_KEYSTORE_PASSWORD: ${{ secrets.BARAKAH_KEYSTORE_PASSWORD }}
         BARAKAH_KEY_ALIAS: ${{ secrets.BARAKAH_KEY_ALIAS }}
         BARAKAH_KEY_PASSWORD: ${{ secrets.BARAKAH_KEY_PASSWORD }}
-      run: ./gradlew assembleStaging --stacktrace
+      # The only version input a build takes, and only for a staging APK: no release path passes it.
+      run: ./gradlew assembleStaging --stacktrace "-PbarakahVersionName=${{ env.VERSION_NAME }}"
 
     - name: Rename compiled APK
       run: |
