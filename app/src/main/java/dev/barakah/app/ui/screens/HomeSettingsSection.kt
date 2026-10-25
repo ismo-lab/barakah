@@ -113,6 +113,8 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
     val notifyNawafil by viewModel.notifyNawafil.collectAsStateWithLifecycle()
     val notifyMorningAdhkar by viewModel.notifyMorningAdhkar.collectAsStateWithLifecycle()
     val notifyEveningAdhkar by viewModel.notifyEveningAdhkar.collectAsStateWithLifecycle()
+    val notifyDailyVerse by viewModel.notifyDailyVerse.collectAsStateWithLifecycle()
+    val notifyDailyHadith by viewModel.notifyDailyHadith.collectAsStateWithLifecycle()
     val morningAdhkarOffset by viewModel.morningAdhkarOffset.collectAsStateWithLifecycle()
     val eveningAdhkarOffset by viewModel.eveningAdhkarOffset.collectAsStateWithLifecycle()
     val layoutDirection = remember(currentLang) {
@@ -536,6 +538,17 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                         isMorning = false,
                                         useWesternNumbersInArabic = useWesternNumbersInArabic
                                     )
+                                }
+
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                                listOf(
+                                    Triple(if (isAr) "آية اليوم" else UiStrings.of("Today's Verse"), notifyDailyVerse, viewModel::setNotifyDailyVerse),
+                                    Triple(if (isAr) "حديث اليوم" else UiStrings.of("Today's Hadith"), notifyDailyHadith, viewModel::setNotifyDailyHadith)
+                                ).forEach { (label, checked, onChecked) ->
+                                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                        Text(label, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                                        Switch(checked = checked, onCheckedChange = onChecked)
+                                    }
                                 }
 
                                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))

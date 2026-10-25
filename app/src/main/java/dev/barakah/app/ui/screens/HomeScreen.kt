@@ -454,6 +454,31 @@ fun HomeScreen(
             }
         }
 
+        // Restore random Hadith card removed during home layout edits.
+        item {
+            val hadiths = remember(isAr) {
+                if (isAr) listOf(
+                    "«إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ، وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى»" to "صحيح البخاري ومسلم • عن عمر بن الخطاب",
+                    "«يَسِّرُوا وَلاَ تُعَسِّرُوا، وَبَشِّرُوا وَلاَ تُنَفِّرُوا»" to "صحيح البخاري • عن أنس بن مالك",
+                    "«مَنْ كَانَ يُؤْمِنُ بِاللَّهِ وَالْيَوْمِ الآخِرِ فَلْيَقُلْ خَيْرًا أَوْ لِيَصْمُتْ»" to "صحيح البخاري • عن أبي هريرة"
+                ) else listOf(
+                    "Actions are but by intentions, and every person shall have only that which they intended." to "Sahih al-Bukhari & Muslim • Umar ibn Al-Khattab",
+                    "Make things easy and do not make them difficult, and cheer people up." to "Sahih al-Bukhari • Anas ibn Malik",
+                    "He who believes in Allah and the Last Day must either speak good or remain silent." to "Sahih al-Bukhari • Abu Hurayrah"
+                )
+            }
+            val hadith = remember { hadiths.random() }
+            Card(Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 4.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .15f)), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = .3f))) {
+                Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(if (isAr) "حديث شريف" else UiStrings.of("Hadith of the Day"), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(8.dp))
+                    Text(hadith.first, style = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Serif, lineHeight = 28.sp), textAlign = TextAlign.Center)
+                    Spacer(Modifier.height(8.dp))
+                    Text(hadith.second, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                }
+            }
+        }
+
         // Prayer Schedule Title
         item {
             Row(
