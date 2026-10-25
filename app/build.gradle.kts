@@ -21,19 +21,30 @@ val majorVersion = versionProps.getProperty("MAJOR", "1").toInt()
 val minorVersion = versionProps.getProperty("MINOR", "0").toInt()
 val patchVersion = versionProps.getProperty("PATCH", "0").toInt()
 val buildNumber = versionProps.getProperty("BUILD_NUMBER", "1006").toInt()
-// CI appends the workflow run number so every push to main publishes a distinct version. F-Droid
-// only regexes version information and never runs this file, so it passes those two numbers in as
-// Gradle properties instead and the APK it builds carries the same version as the tagged release.
-val ciRunOffset = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 0
+// A given commit has to produce the same version every time it is built: F-Droid rebuilds from the
+// tag and refuses a version code it has already published, and the tag has to name what it points
+// at. So version.properties is the only input a release build reads.
+//
+// Releasing means bumping those numbers, committing, and tagging that commit with
+// v<MAJOR>.<MINOR>.<PATCH>.<BUILD_NUMBER>. The workflows refuse a tag that does not match. The
+// -PbarakahVersionName override exists only for the test-release workflow's staging APK.
 val signingStorePassword = System.getenv("BARAKAH_KEYSTORE_PASSWORD") ?: "android"
 val signingKeyAlias = System.getenv("BARAKAH_KEY_ALIAS") ?: "androiddebugkey"
 val signingKeyPassword = System.getenv("BARAKAH_KEY_PASSWORD") ?: "android"
 
 val currentVersionCode = (findProperty("barakahVersionCode") as String?)?.toIntOrNull()
-  ?: (majorVersion * 100000 + minorVersion * 10000 + patchVersion * 100 + buildNumber + ciRunOffset)
+  ?: (majorVersion * 100000 + minorVersion * 10000 + patchVersion * 100 + buildNumber)
 val currentVersionName = (findProperty("barakahVersionName") as String?)?.takeIf { it.isNotEmpty() }
-  ?: System.getenv("DYNAMIC_VERSION")?.takeIf { it.isNotEmpty() }
-  ?: "$majorVersion.$minorVersion.$patchVersion"
+  ?: "$majorVersion.$minorVersion.$patchVersion.$buildNumber"
+
+// F-Droid signs the finished APK itself, so a build can opt out with -PsigningDisabled and never
+// looks for a key at all. Otherwise the keystore is materialised in the build directory instead of
+// the source tree; a checked-in app/keystore.jks still wins, because CI decodes the release key
+// there before Gradle runs.
+val signingDisabled = providers.gradleProperty("signingDisabled").isPresent
+val ciKeystore = file("keystore.jks")
+val localKeystore = layout.buildDirectory.file("signing/barakah.keystore").get().asFile
+val activeKeystore = if (ciKeystore.exists()) ciKeystore else localKeystore
 
 // Room writes the schema of every database version to app/schemas. Checking those in is what makes
 // the next version migratable, and it turns an entity change without a version bump into a build
@@ -57,13 +68,16 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
-  signingConfigs {
-    create("sharedConfig") {
+  // Null when something else will sign the APK, which is the case on F-Droid's buildserver.
+  val sharedSigning = if (signingDisabled) {
+    null
+  } else {
+    signingConfigs.create("sharedConfig") {
       // The keystore file is prepared before packaging rather than here: CI decodes the
       // secret in a workflow step and the prepareSigningKeystore task below covers local
       // builds. Doing it during configuration meant writing files and shelling out to
       // keytool on every sync.
-      storeFile = file("keystore.jks")
+      storeFile = activeKeystore
       storePassword = signingStorePassword
       keyAlias = signingKeyAlias
       keyPassword = signingKeyPassword
@@ -79,10 +93,10 @@ android {
       isCrunchPngs = false
       isMinifyEnabled = false
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-      signingConfig = signingConfigs.getByName("sharedConfig")
+      sharedSigning?.let { signingConfig = it }
     }
     debug {
-      signingConfig = signingConfigs.getByName("sharedConfig")
+      sharedSigning?.let { signingConfig = it }
     }
     // Test-only variant: installs beside production, keeps the same signing key so it can
     // update itself, and never ships from main.
@@ -90,7 +104,7 @@ android {
       initWith(getByName("release"))
       applicationIdSuffix = ".test"
       versionNameSuffix = "-test"
-      signingConfig = signingConfigs.getByName("sharedConfig")
+      sharedSigning?.let { signingConfig = it }
     }
   }
   lint {
@@ -116,24 +130,29 @@ android {
 }
 
 /**
- * Materialises app/keystore.jks so both build variants can be signed.
+ * Materialises the keystore both build variants are signed with.
  *
- * In CI the keystore is decoded from the BARAKAH_KEYSTORE_BASE64 secret by the workflow
- * before Gradle runs, so this task finds the file already there and does nothing. A local
- * build falls back to debug.keystore.base64, then debug.keystore, and only generates a
- * throwaway debug key when neither exists - such an APK will not install over a build from
- * another machine, which is why it says so loudly.
+ * In CI the release key is decoded to app/keystore.jks by the workflow before Gradle runs, so this
+ * task finds the file already there and does nothing. A local build falls back to
+ * debug.keystore.base64, then debug.keystore, and only generates a throwaway key when neither
+ * exists - such an APK will not install over a build from another machine, which is why it says so
+ * loudly. Anything generated goes to build/signing/ so a checkout stays clean.
+ *
+ * Skipped entirely under -PsigningDisabled, which is how F-Droid builds it: fdroidserver signs the
+ * finished APK with its own key and does not use this project's keystore.
  */
 val prepareSigningKeystore = tasks.register("prepareSigningKeystore") {
   group = "signing"
-  description = "Writes app/keystore.jks from debug.keystore.base64 or debug.keystore."
+  description = "Writes the signing keystore unless the build is signed elsewhere."
 
-  val keystoreFile = file("keystore.jks")
+  val keystoreFile = activeKeystore
   val base64File = rootProject.file("debug.keystore.base64")
   val rootKeystore = rootProject.file("debug.keystore")
   outputs.file(keystoreFile)
+  onlyIf { !signingDisabled }
 
   doLast {
+    keystoreFile.parentFile?.mkdirs()
     if (keystoreFile.exists() && keystoreFile.length() > 0L) {
       println("Signing keystore already present at ${keystoreFile.absolutePath}")
       return@doLast
@@ -151,9 +170,6 @@ val prepareSigningKeystore = tasks.register("prepareSigningKeystore") {
 
     if (rootKeystore.exists() && rootKeystore.length() > 0L) {
       rootKeystore.copyTo(keystoreFile, overwrite = true)
-      if (!base64File.exists()) {
-        base64File.writeText(Base64.getEncoder().encodeToString(rootKeystore.readBytes()))
-      }
       println("Signing keystore copied from debug.keystore (${keystoreFile.length()} bytes)")
       return@doLast
     }
@@ -161,8 +177,8 @@ val prepareSigningKeystore = tasks.register("prepareSigningKeystore") {
     println(
       """
       WARNING: neither debug.keystore.base64 nor debug.keystore is present, so a throwaway
-      key is being generated at app/keystore.jks. This APK will NOT install over a build
-      made anywhere else, because Android rejects an update whose signing key changed.
+      key is being generated at ${keystoreFile.absolutePath}. This APK will NOT install over a
+      build made anywhere else, because Android rejects an update whose signing key changed.
       """.trimIndent()
     )
     val exitCode = ProcessBuilder(
@@ -252,7 +268,7 @@ tasks.register("incrementBuildNumber") {
     val bld = props.getProperty("BUILD_NUMBER", "1004").toInt() + 1
 
     val newCode = maj * 100000 + min * 10000 + pat * 100 + bld
-    val newName = "$maj.$min.$pat"
+    val newName = "$maj.$min.$pat.$bld"
 
     props.setProperty("MAJOR", maj.toString())
     props.setProperty("MINOR", min.toString())
@@ -282,7 +298,7 @@ tasks.register("incrementMinorVersion") {
     val bld = props.getProperty("BUILD_NUMBER", "1004").toInt() + 1
 
     val newCode = maj * 100000 + min * 10000 + pat * 100 + bld
-    val newName = "$maj.$min.$pat"
+    val newName = "$maj.$min.$pat.$bld"
 
     props.setProperty("MAJOR", maj.toString())
     props.setProperty("MINOR", min.toString())
@@ -312,7 +328,7 @@ tasks.register("incrementMajorVersion") {
     val bld = props.getProperty("BUILD_NUMBER", "1004").toInt() + 1
 
     val newCode = maj * 100000 + min * 10000 + pat * 100 + bld
-    val newName = "$maj.$min.$pat"
+    val newName = "$maj.$min.$pat.$bld"
 
     props.setProperty("MAJOR", maj.toString())
     props.setProperty("MINOR", min.toString())
@@ -337,7 +353,7 @@ tasks.register("printVersion") {
     println("Version Name:   $currentVersionName")
     println("Version Code:   $currentVersionCode")
     println("Major: $majorVersion, Minor: $minorVersion, Patch: $patchVersion, Build: $buildNumber")
-    println("Signing Config: sharedConfig (Keystore: app/keystore.jks)")
+    println("Signing: ${if (signingDisabled) "disabled (signed elsewhere)" else activeKeystore.absolutePath}")
     println("================================================")
   }
 }

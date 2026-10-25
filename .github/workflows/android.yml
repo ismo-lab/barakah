@@ -3,6 +3,9 @@ name: Android CI
 on:
   push:
     branches: [ "main" ]
+    # A release is a tag, not a push. Pushing to main builds and tests, but only a tag on a
+    # commit whose version.properties already carries that version publishes anything.
+    tags: [ "v*" ]
   pull_request:
     branches: [ "main" ]
   # Lets you trigger a build from the Actions tab or the GitHub mobile app,
@@ -25,6 +28,14 @@ concurrency:
 
 jobs:
   build:
+    # Tests and lint gate the build so a tag cannot publish an APK whose tests failed. They are
+    # skipped on a push to main (the merged pull request already ran them on this tree), so a
+    # skipped dependency has to be allowed through without letting a failure through.
+    needs: [tests, lint]
+    if: |
+      !cancelled() &&
+      (needs.tests.result == 'success' || needs.tests.result == 'skipped') &&
+      (needs.lint.result == 'success' || needs.lint.result == 'skipped')
     runs-on: ubuntu-24.04
     env:
       JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -45,26 +56,41 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
-    - name: Determine Dynamic Version
-      id: get_version
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Read version
       run: |
-        MAJOR=$(grep MAJOR app/version.properties | cut -d'=' -f2 | tr -d '\r')
-        MINOR=$(grep MINOR app/version.properties | cut -d'=' -f2 | tr -d '\r')
-        PATCH=$(grep PATCH app/version.properties | cut -d'=' -f2 | tr -d '\r')
-        BASE_VERSION="${MAJOR}.${MINOR}.${PATCH}"
-        
-        # Check if a release for the base version already exists on GitHub
-        if gh release view "v${BASE_VERSION}" >/dev/null 2>&1; then
-          DYNAMIC_VERSION="${BASE_VERSION}.${{ github.run_number }}"
-        else
-          DYNAMIC_VERSION="${BASE_VERSION}"
+        prop() { grep "^$1=" app/version.properties | cut -d'=' -f2 | tr -d '\r'; }
+        MAJOR=$(prop MAJOR); MINOR=$(prop MINOR); PATCH=$(prop PATCH)
+        BUILD=$(prop BUILD_NUMBER)
+        VERSION_NAME=$(prop VERSION_NAME)
+        VERSION_CODE=$(prop VERSION_CODE)
+        # The build computes both numbers from MAJOR/MINOR/PATCH/BUILD_NUMBER; the VERSION_* lines
+        # exist so the metadata file and the release notes can be written without running Gradle.
+        # If they disagree the tag is described by one number and shipped as another, so fail here
+        # rather than publish something that cannot be matched to its source.
+        EXPECTED_CODE=$((MAJOR * 100000 + MINOR * 10000 + PATCH * 100 + BUILD))
+        EXPECTED_NAME="${MAJOR}.${MINOR}.${PATCH}.${BUILD}"
+        if [ "$VERSION_CODE" != "$EXPECTED_CODE" ] || [ "$VERSION_NAME" != "$EXPECTED_NAME" ]; then
+          echo "ERROR: version.properties is inconsistent."
+          echo "MAJOR/MINOR/PATCH/BUILD_NUMBER imply ${EXPECTED_NAME} (${EXPECTED_CODE}),"
+          echo "but VERSION_NAME/VERSION_CODE say ${VERSION_NAME} (${VERSION_CODE})."
+          exit 1
         fi
-        
-        echo "VERSION_NAME=${DYNAMIC_VERSION}" >> $GITHUB_ENV
-        echo "DYNAMIC_VERSION=${DYNAMIC_VERSION}" >> $GITHUB_ENV
-        echo "Extracted App Version: ${DYNAMIC_VERSION}"
+        echo "VERSION_NAME=${VERSION_NAME}" >> "$GITHUB_ENV"
+        echo "VERSION_CODE=${VERSION_CODE}" >> "$GITHUB_ENV"
+        echo "Version: ${VERSION_NAME} (${VERSION_CODE})"
+
+    # The tag has to describe the commit it points at, or the release, the F-Droid entry and the
+    # APK all disagree about what was shipped.
+    - name: Check the tag matches version.properties
+      if: startsWith(github.ref, 'refs/tags/')
+      run: |
+        EXPECTED="v${VERSION_NAME}"
+        if [ "${GITHUB_REF_NAME}" != "${EXPECTED}" ]; then
+          echo "ERROR: tag ${GITHUB_REF_NAME} does not match version.properties (${EXPECTED})."
+          echo "Bump BUILD_NUMBER/VERSION_CODE/VERSION_NAME, commit, then tag that commit."
+          exit 1
+        fi
+        echo "Tag and version.properties agree on ${EXPECTED}."
 
     - name: Restore Signing Keystore
       env:
@@ -86,14 +112,16 @@ jobs:
 
     - name: Build with Gradle
       env:
-        DYNAMIC_VERSION: ${{ env.DYNAMIC_VERSION }}
-        GITHUB_RUN_NUMBER: ${{ github.run_number }}
         BARAKAH_KEYSTORE_PASSWORD: ${{ secrets.BARAKAH_KEYSTORE_PASSWORD }}
         BARAKAH_KEY_ALIAS: ${{ secrets.BARAKAH_KEY_ALIAS }}
         BARAKAH_KEY_PASSWORD: ${{ secrets.BARAKAH_KEY_PASSWORD }}
       # The release variant, not debug. Debug APKs are flagged debuggable, skip every
       # optimisation, and drag in Compose tooling. Both variants are signed with the
       # same key, so this still installs straight over an older build.
+      #
+      # No version input here on purpose: the number comes from version.properties, so the
+      # APK built from a tag carries the same versionCode that tag claims, and F-Droid gets
+      # an identical one when it rebuilds the same commit.
       run: ./gradlew assembleRelease --stacktrace
 
     - name: Rename compiled APK
@@ -126,17 +154,20 @@ jobs:
           app/schemas/**
         retention-days: 30
 
-    - name: Create Release
+    - name: Publish release
       uses: softprops/action-gh-release@v2
-      # Only a push to main publishes a release. A manual run exists to re-record the screenshot
-      # references, and it must not turn into a release just because it built an APK. (It still
-      # uploads the APK as a workflow artifact.)
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      # Only a tag publishes. Pushing to main, opening a pull request or dispatching the workflow
+      # by hand still builds and uploads the APK as an artifact, but must not create a release.
+      if: startsWith(github.ref, 'refs/tags/')
       with:
-        tag_name: "v${{ env.VERSION_NAME }}"
-        name: "${{ env.VERSION_NAME }}"
+        tag_name: ${{ github.ref_name }}
+        name: ${{ env.VERSION_NAME }}
         body: |
-          ${{ github.event.head_commit.message }}
+          Barakah ${{ env.VERSION_NAME }} (versionCode ${{ env.VERSION_CODE }}), built from
+          ${{ github.sha }}.
+
+          Signed with the project release key. F-Droid signs its own build of the same tag with a
+          different key, so moving between the two needs an uninstall either way.
         files: app/build/outputs/apk/release/Barakah-v${{ env.VERSION_NAME }}.apk
 
   # Runs the unit and screenshot tests, and blocks the merge: the APK still compiling is not
@@ -172,8 +203,6 @@ jobs:
       run: chmod +x gradlew
 
     - name: Run unit and screenshot tests
-      env:
-        DYNAMIC_VERSION: "ci"
       run: ./gradlew test --stacktrace -Proborazzi.test.record=${{ github.event.inputs.record_screenshots == 'true' }}
 
     - name: Upload test report
@@ -230,8 +259,6 @@ jobs:
       run: chmod +x gradlew
 
     - name: Run lint
-      env:
-        DYNAMIC_VERSION: "ci"
       run: ./gradlew lintDebug --stacktrace
 
     - name: Upload lint report
