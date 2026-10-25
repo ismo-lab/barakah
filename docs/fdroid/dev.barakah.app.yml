@@ -52,11 +52,12 @@ Builds:
     # recordings are all committed, so the build needs no network beyond Maven and the
     # Android SDK.
     #
-    # compileSdk is 37 (see app/build.gradle.kts), so the buildserver needs that platform. The
-    # Gradle version is not pinned here: fdroidserver's gradlew-fdroid reads
-    # gradle/wrapper/gradle-wrapper.properties and fetches what the project asks for.
-    sdks:
-      - platforms;android-37
+    # compileSdk is 37 (see app/build.gradle.kts). There is no metadata key that installs an SDK
+    # platform ("sdks:" is not a build flag — fdroidserver warns and drops it), so the buildserver
+    # image has to carry platforms;android-37, or AGP has to be allowed to download it. That is the
+    # one question to ask the maintainers before this lands. The Gradle version is not pinned
+    # here either: gradlew-fdroid reads gradle/wrapper/gradle-wrapper.properties and fetches what
+    # the project asks for.
 
 # Tags are cut by hand (see the header), so nothing here should generate a build entry on its
 # own. UpdateCheckMode: Tags / AutoUpdateMode: Version can be enabled once the first release is
