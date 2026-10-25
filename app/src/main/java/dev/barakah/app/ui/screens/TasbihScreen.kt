@@ -79,7 +79,7 @@ fun TasbihScreen(
                 else -> englishTitle
             }
         } else {
-            englishTitle
+            UiStrings.of(englishTitle)
         }
     }
 

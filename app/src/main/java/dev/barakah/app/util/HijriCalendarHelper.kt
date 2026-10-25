@@ -6,6 +6,7 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import java.util.Calendar
+import java.util.Locale
 
 object HijriCalendarHelper {
 
@@ -87,14 +88,42 @@ object HijriCalendarHelper {
 
     fun getTodayHijriDateString(isAr: Boolean = false, adjustmentDays: Int = 0): String {
         val hijri = getTodayHijriDate(adjustmentDays)
+        val language = if (isAr) "ar" else UiStrings.language
+        val monthName = hijriMonthName(hijri.month, language)
+
+        return when {
+            isAr -> "${hijri.day} $monthName ${hijri.year} هـ"
+            language == "id" -> "${hijri.day} $monthName ${hijri.year} H"
+            else -> "${hijri.day} $monthName ${hijri.year} AH"
+        }
+    }
+
+    /**
+     * A Hijri month name in [language]. The platform's locale data carries Islamic calendar month
+     * names for the bundled interface languages, so switching the app language does not leave the
+     * date on the home screen and in settings in English. Older releases fall back to the built-in
+     * Arabic, English and Indonesian names.
+     */
+    fun hijriMonthName(month: Int, language: String = UiStrings.language): String {
+        if (month !in 1..12) return ""
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            try {
+                val locale = Locale.forLanguageTag(language.ifBlank { "en" })
+                val formatter = java.time.format.DateTimeFormatter.ofPattern("MMMM", locale)
+                return formatter.format(java.time.chrono.HijrahDate.of(1445, month, 1))
+            } catch (e: Exception) {
+                Log.e(TAG, "Falling back to the built-in Hijri month names", e)
+            }
+        }
+
         val monthNamesAr = listOf(
-            "", "محرم", "صفر", "ربيع الأول", "ربيع الآخر", 
-            "جمادى الأولى", "جمادى الآخرة", "رجب", "شعبان", 
+            "", "محرم", "صفر", "ربيع الأول", "ربيع الآخر",
+            "جمادى الأولى", "جمادى الآخرة", "رجب", "شعبان",
             "رمضان", "شوال", "ذو القعدة", "ذو الحجة"
         )
         val monthNamesEn = listOf(
-            "", "Muharram", "Safar", "Rabi' al-Awwal", "Rabi' al-Thani", 
-            "Jumada al-Awwal", "Jumada al-Thani", "Rajab", "Sha'ban", 
+            "", "Muharram", "Safar", "Rabi' al-Awwal", "Rabi' al-Thani",
+            "Jumada al-Awwal", "Jumada al-Thani", "Rajab", "Sha'ban",
             "Ramadan", "Shawwal", "Dhul-Qi'dah", "Dhul-Hijjah"
         )
         val monthNamesId = listOf(
@@ -102,17 +131,25 @@ object HijriCalendarHelper {
             "Jumadil Awal", "Jumadil Akhir", "Rajab", "Syaban",
             "Ramadan", "Syawal", "Zulkaidah", "Zulhijah"
         )
-        val isId = UiStrings.language == "id"
-        val monthName = when {
-            isAr -> if (hijri.month in 1..12) monthNamesAr[hijri.month] else "محرم"
-            isId -> if (hijri.month in 1..12) monthNamesId[hijri.month] else "Muharam"
-            else -> if (hijri.month in 1..12) monthNamesEn[hijri.month] else "Muharram"
+        return when (language) {
+            "ar" -> monthNamesAr[month]
+            "id" -> monthNamesId[month]
+            else -> monthNamesEn[month]
         }
+    }
 
-        return when {
-            isAr -> "${hijri.day} $monthName ${hijri.year} هـ"
-            isId -> "${hijri.day} $monthName ${hijri.year} H"
-            else -> "${hijri.day} $monthName ${hijri.year} AH"
+    /** The short Gregorian month name in [language], falling back to English. */
+    private fun gregorianMonthShort(month: Int, language: String): String {
+        val english = java.text.DateFormatSymbols(Locale.ENGLISH)
+        if (month !in 1..12) return ""
+        if (language.isBlank() || language == "en") return english.shortMonths[month - 1]
+        return try {
+            val symbols = java.text.DateFormatSymbols(Locale.forLanguageTag(language))
+            symbols.shortMonths.getOrNull(month - 1)?.takeIf { it.isNotBlank() }
+                ?: english.shortMonths[month - 1]
+        } catch (e: Exception) {
+            Log.e(TAG, "Falling back to English Gregorian month names", e)
+            english.shortMonths[month - 1]
         }
     }
 
@@ -185,10 +222,7 @@ object HijriCalendarHelper {
         val currentDay = today.get(Calendar.DAY_OF_MONTH)
         
         val searchYears = listOf(currentYear, currentYear + 1)
-        val monthNamesEn = listOf("", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
-        val monthNamesId = listOf("", "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des")
-        val monthNamesAr = listOf("", "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر")
-        val isId = UiStrings.language == "id"
+        val language = if (isAr) "ar" else UiStrings.language
         
         // Phase 1: Search from today onwards (current or upcoming occurrence)
         for (year in searchYears) {
@@ -203,11 +237,7 @@ object HijriCalendarHelper {
                 for (day in startDayVal..daysInMonth) {
                     val hijri = hijriFor(year, month, day, adjustmentDays)
                     if (hijri.month == hijriMonth && hijri.day == hijriDay) {
-                        return when {
-                            isAr -> "$day ${monthNamesAr[month]} $year"
-                            isId -> "$day ${monthNamesId[month]} $year"
-                            else -> "$day ${monthNamesEn[month]} $year"
-                        }
+                        return "$day ${gregorianMonthShort(month, language)} $year"
                     }
                 }
             }
@@ -224,11 +254,7 @@ object HijriCalendarHelper {
                 for (day in 1..daysInMonth) {
                     val hijri = hijriFor(year, month, day, adjustmentDays)
                     if (hijri.month == hijriMonth && hijri.day == hijriDay) {
-                        return when {
-                            isAr -> "$day ${monthNamesAr[month]} $year"
-                            isId -> "$day ${monthNamesId[month]} $year"
-                            else -> "$day ${monthNamesEn[month]} $year"
-                        }
+                        return "$day ${gregorianMonthShort(month, language)} $year"
                     }
                 }
             }
@@ -249,11 +275,7 @@ object HijriCalendarHelper {
         }
 
         return if (startStr.isNotEmpty() && endStr.isNotEmpty()) {
-            when {
-                isAr -> "من $startStr إلى $endStr"
-                UiStrings.language == "id" -> "$startStr hingga $endStr"
-                else -> "$startStr to $endStr"
-            }
+            UiStrings.format("%s to %s", startStr, endStr)
         } else {
             ""
         }

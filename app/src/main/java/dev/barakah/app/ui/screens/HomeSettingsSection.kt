@@ -1078,8 +1078,8 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                             if (adjGlobal > 0) "أُزيحت كل الصلوات ${kotlin.math.abs(adjGlobal)} دقيقة متأخرًا."
                                             else "أُزيحت كل الصلوات ${kotlin.math.abs(adjGlobal)} دقيقة مبكرًا."
                                         } else {
-                                            if (adjGlobal > 0) "All prayers moved ${kotlin.math.abs(adjGlobal)} min later."
-                                            else "All prayers moved ${kotlin.math.abs(adjGlobal)} min earlier."
+                                            if (adjGlobal > 0) UiStrings.format("All prayers moved %s min later.", kotlin.math.abs(adjGlobal))
+                                            else UiStrings.format("All prayers moved %s min earlier.", kotlin.math.abs(adjGlobal))
                                         },
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.primary
@@ -1389,7 +1389,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Text(
-                                        text = if (isAr) "شروط ترجمات Tanzil" else "Tanzil translation terms",
+                                        text = if (isAr) "شروط ترجمات Tanzil" else UiStrings.of("Tanzil translation terms"),
                                         style = MaterialTheme.typography.labelMedium
                                     )
                                 }

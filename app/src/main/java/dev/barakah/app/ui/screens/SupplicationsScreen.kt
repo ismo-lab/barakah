@@ -503,7 +503,7 @@ fun SupplicationsScreen(
                                             contentDescription = if (isAr) {
                                                 if (isFavorite) "إزالة الإشارة المرجعية للدعاء" else "إضافة إشارة مرجعية"
                                             } else {
-                                                if (isFavorite) "Remove bookmark" else "Bookmark"
+                                                if (isFavorite) UiStrings.of("Remove bookmark") else UiStrings.of("Add bookmark")
                                             },
                                             tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                                         )
@@ -601,15 +601,16 @@ fun SupplicationsScreen(
                                                         isAr ->
                                                             "الترجمة غير متوفرة بهذه اللغة. يتم عرض الإنجليزية."
                                                         englishText.isBlank() ->
-                                                            "Translation not available for this supplication."
+                                                            UiStrings.of("Translation not available for this supplication.")
                                                         duaTranslationLanguage == "en" -> ""
                                                         else ->
-                                                            "Translation not available in ${
+                                                            UiStrings.format(
+                                                                "Translation not available in %s. Showing English.",
                                                                 dev.barakah.app.data.ReligiousTextLanguages.name(
                                                                     duaTranslationLanguage,
                                                                     false
                                                                 )
-                                                            }. Showing English."
+                                                            )
                                                     },
                                                     style = MaterialTheme.typography.labelSmall,
                                                     color = MaterialTheme.colorScheme.error,

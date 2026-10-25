@@ -526,7 +526,7 @@ fun QuranScreen(
                                         contentDescription = if (isAr) {
                                             if (isBookmarked) "إزالة الإشارة المرجعية" else "إضافة إشارة مرجعية"
                                         } else {
-                                            if (isBookmarked) "Remove bookmark" else "Add bookmark"
+                                            if (isBookmarked) UiStrings.of("Remove bookmark") else UiStrings.of("Add bookmark")
                                         },
                                         tint = if (isBookmarked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                                     )
@@ -625,7 +625,7 @@ fun QuranScreen(
                                 contentDescription = if (isAr) {
                                     if (isBookmarked) "إزالة الإشارة المرجعية للسورة" else "حفظ إشارة مرجعية للسورة"
                                 } else {
-                                    if (isBookmarked) "Remove surah bookmark" else "Bookmark surah"
+                                    if (isBookmarked) UiStrings.of("Remove surah bookmark") else UiStrings.of("Bookmark surah")
                                 },
                                 tint = if (isBookmarked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -1044,7 +1044,7 @@ fun QuranScreen(
                     ) {
                         Text(UiStrings.of("Text preview"), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                         Text("بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ", fontSize = arabicFontSize.sp, fontFamily = quranFontFamily, lineHeight = (arabicFontSize * quranLineHeight).sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
-                        Text(if (isAr) "بسم الله الرحمن الرحيم" else "In the name of Allah, the Most Compassionate, the Most Merciful", fontSize = englishFontSize.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                        Text(if (isAr) "بسم الله الرحمن الرحيم" else UiStrings.of("In the name of Allah, the Most Compassionate, the Most Merciful"), fontSize = englishFontSize.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                     }
                 }
             },

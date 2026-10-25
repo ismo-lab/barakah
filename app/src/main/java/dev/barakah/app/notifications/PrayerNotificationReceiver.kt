@@ -96,7 +96,9 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
             val surah = dev.barakah.app.data.QuranData.getSurahById(surahId)
             val verses = dev.barakah.app.data.QuranData.loadVersesForSurah(context, surahId, translationLanguage).verses
             val verse = verses.getOrNull((java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_YEAR) - 1) % verses.size.coerceAtLeast(1)) ?: return
-            val title = if (isAr) "آية اليوم · ${surah.arabic} ${verse.index}" else "Today's Verse · ${surah.name} ${verse.index}"
+            val verseLabel = if (isAr) "آية اليوم" else UiStrings.of("Today's Verse")
+            val surahName = if (isAr) surah.arabic else surah.name
+            val title = "$verseLabel · $surahName ${verse.index}"
             val body = "${verse.arabic}\n${verse.english}"
             postDailyContent(context, notificationManager, isAr, title, body, 1016)
             markNotified(prefs, prayerId, scheduledTime, now)
@@ -412,9 +414,10 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
     }
 
     private fun postDailyContent(context: Context, manager: NotificationManager, isAr: Boolean, title: String, text: String, id: Int) {
-        val channel = "prayer_channel"
+        val channel = PRAYER_CHANNEL_ID
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            manager.createNotificationChannel(NotificationChannel(channel, if (isAr) "مواقيت الصلاة والذكر" else "Prayer Times & Remembrance", NotificationManager.IMPORTANCE_HIGH))
+            val channelName = if (isAr) "مواقيت الصلاة والذكر" else UiStrings.of("Prayer Times & Remembrance")
+            manager.createNotificationChannel(NotificationChannel(channel, channelName, NotificationManager.IMPORTANCE_HIGH))
         }
         val openApp = PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK }, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         manager.notify(id, NotificationCompat.Builder(context, channel).setSmallIcon(R.drawable.ic_notification).setContentTitle(title).setContentText(text).setStyle(NotificationCompat.BigTextStyle().bigText(text)).setAutoCancel(true).setContentIntent(openApp).build())
