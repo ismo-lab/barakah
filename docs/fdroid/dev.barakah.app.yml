@@ -21,6 +21,10 @@
 Categories:
   - Religion
 License: GPL-3.0-only
+# The English Tafsir al-Jalalayn translation is redistributed under the publisher's terms, which
+# are not a free licence. The code is GPL-3.0 and the assets are committed and built from source.
+AntiFeatures:
+  - NonFreeAssets
 AuthorName: ismo-lab
 WebSite: https://github.com/ismo-lab/barakah
 SourceCode: https://github.com/ismo-lab/barakah
@@ -32,10 +36,14 @@ Repo: https://github.com/ismo-lab/barakah.git
 Builds:
   - versionName: REPLACE_WITH_VERSION_NAME
     versionCode: REPLACE_WITH_VERSION_CODE
-    commit: REPLACE_WITH_TAGGED_COMMIT_SHA
+    # A tag is accepted here and is preferable to a commit id: it states which release was built
+    # and makes the version.properties numbers checkable against it.
+    commit: REPLACE_WITH_TAG
     subdir: app
+    # This list is Gradle flavors, not tasks. fdroidserver appends "Release" and runs
+    # assembleRelease itself; naming the task here would ask for assembleAssembleReleaseRelease.
     gradle:
-      - assembleRelease
+      - yes
     gradleprops:
       # fdroidserver signs the APK with its own key, so the build must not try to sign it with
       # this project's keystore (or generate a throwaway one first).
@@ -44,10 +52,15 @@ Builds:
     # recordings are all committed, so the build needs no network beyond Maven and the
     # Android SDK.
     #
-    # compileSdk is 37 (see app/build.gradle.kts), so the buildserver needs that platform.
+    # compileSdk is 37 (see app/build.gradle.kts), so the buildserver needs that platform. The
+    # Gradle version is not pinned here: fdroidserver's gradlew-fdroid reads
+    # gradle/wrapper/gradle-wrapper.properties and fetches what the project asks for.
     sdks:
       - platforms;android-37
 
+# Tags are cut by hand (see the header), so nothing here should generate a build entry on its
+# own. UpdateCheckMode: Tags / AutoUpdateMode: Version can be enabled once the first release is
+# accepted, since the tag name then carries the version.
 AutoUpdateMode: None
 UpdateCheckMode: None
 CurrentVersion: REPLACE_WITH_VERSION_NAME
