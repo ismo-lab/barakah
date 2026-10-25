@@ -564,9 +564,13 @@ fun SupplicationsScreen(
                                                 dua.arabic
                                             )
                                         }
-                                        val translatedText = selectedTranslation ?: englishText
-                                        val translationFallback = duaTranslationLanguage.isNotEmpty() &&
-                                                translatedText.isBlank()
+                                        // Don't repeat English under every interface language when
+                                        // this dua has no edition in the selected language.
+                                        val translatedText = selectedTranslation ?: if (
+                                            duaTranslationLanguage == "en" ||
+                                            duaTranslationLanguage.isNotEmpty() && selectedTranslation == null
+                                        ) englishText else ""
+                                        val translationFallback = duaTranslationLanguage.isNotEmpty() && translatedText.isBlank()
                                         val translationRtl = duaTranslationLanguage == "fa" ||
                                                 duaTranslationLanguage == "ckb" ||
                                                 duaTranslationLanguage == "ur"
@@ -582,7 +586,7 @@ fun SupplicationsScreen(
                                                     modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
                                                 )
                                             }
-                                            Text(
+                                            if (translatedText.isNotBlank()) Text(
                                                 text = translatedText,
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -598,6 +602,7 @@ fun SupplicationsScreen(
                                                             "الترجمة غير متوفرة بهذه اللغة. يتم عرض الإنجليزية."
                                                         englishText.isBlank() ->
                                                             "Translation not available for this supplication."
+                                                        duaTranslationLanguage == "en" -> ""
                                                         else ->
                                                             "Translation not available in ${
                                                                 dev.barakah.app.data.ReligiousTextLanguages.name(

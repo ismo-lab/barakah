@@ -456,21 +456,30 @@ fun HomeScreen(
 
         // Restore random Hadith card removed during home layout edits.
         item {
-            val hadiths = remember(isAr) {
-                if (isAr) listOf(
+            val hadiths = remember(currentLang) {
+                if (currentLang == "ar") listOf(
                     "«إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ، وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى»" to "صحيح البخاري ومسلم • عن عمر بن الخطاب",
                     "«يَسِّرُوا وَلاَ تُعَسِّرُوا، وَبَشِّرُوا وَلاَ تُنَفِّرُوا»" to "صحيح البخاري • عن أنس بن مالك",
                     "«مَنْ كَانَ يُؤْمِنُ بِاللَّهِ وَالْيَوْمِ الآخِرِ فَلْيَقُلْ خَيْرًا أَوْ لِيَصْمُتْ»" to "صحيح البخاري • عن أبي هريرة"
-                ) else listOf(
-                    "Actions are but by intentions, and every person shall have only that which they intended." to "Sahih al-Bukhari & Muslim • Umar ibn Al-Khattab",
-                    "Make things easy and do not make them difficult, and cheer people up." to "Sahih al-Bukhari • Anas ibn Malik",
-                    "He who believes in Allah and the Last Day must either speak good or remain silent." to "Sahih al-Bukhari • Abu Hurayrah"
-                )
+                ) else when (currentLang) {
+                    "id" -> listOf("Amal itu bergantung pada niat, dan setiap orang mendapat sesuai niatnya." to "Sahih al-Bukhari & Muslim • Umar bin Al-Khattab")
+                    "ha" -> listOf("Ayyuka suna dogara ne da niyya, kuma kowane mutum yana da abin da ya yi niyya." to "Sahih al-Bukhari • Umar bn al-Khattab")
+                    "de" -> listOf("Taten richten sich nach den Absichten, und jedem Menschen steht nur zu, was er beabsichtigt hat." to "Sahih al-Bukhari & Muslim • Umar ibn Al-Khattab")
+                    "ckb" -> listOf("کردارەکان بە نیەتەکانن و هەر کەسێک بەوە دەگات کە نیەتی کردووە." to "سەحیحی بوخاری و موسلیم • عومەر")
+                    "ur" -> listOf("اعمال کا دارومدار نیتوں پر ہے، اور ہر شخص کو وہی ملے گا جس کی اس نے نیت کی۔" to "صحیح بخاری و مسلم • عمر بن خطاب")
+                    "bn" -> listOf("সব কাজ নিয়তের ওপর নির্ভরশীল, আর প্রত্যেকে তাই পাবে যা সে নিয়ত করেছে।" to "সহিহ বুখারি ও মুসলিম • উমর ইবনুল খাত্তাব")
+                    "tr" -> listOf("Ameller niyetlere göredir ve herkese niyet ettiği vardır." to "Sahih al-Bukhari & Muslim • Ömer bin Hattab")
+                    "fa" -> listOf("اعمال به نیت‌ها بستگی دارند و هر کس همان چیزی را می‌یابد که نیت کرده است." to "صحیح بخاری و مسلم • عمر بن خطاب")
+                    "ru" -> listOf("Поистине, дела оцениваются только по намерениям, и каждому воздастся лишь за то, что он намеревался совершить." to "Сахих аль-Бухари и Муслим • Умар ибн аль-Хаттаб")
+                    "ms" -> listOf("Sesungguhnya amalan itu bergantung pada niat, dan setiap orang mendapat menurut niatnya." to "Sahih al-Bukhari & Muslim • Umar bin al-Khattab")
+                    "sw" -> listOf("Hakika matendo hulipwa kwa nia, na kila mtu atapata alichokinuia." to "Sahih al-Bukhari na Muslim • Umar ibn al-Khattab")
+                    else -> listOf("Actions are but by intentions, and every person shall have only that which they intended." to "Sahih al-Bukhari & Muslim • Umar ibn Al-Khattab")
+                }
             }
-            val hadith = remember { hadiths.random() }
+            val hadith = remember(currentLang) { hadiths.random() }
             Card(Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 4.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .15f)), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = .3f))) {
                 Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(if (isAr) "حديث شريف" else UiStrings.of("Hadith of the Day"), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold)
+                    Text(UiStrings.of("Today's Hadith"), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(8.dp))
                     Text(hadith.first, style = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Serif, lineHeight = 28.sp), textAlign = TextAlign.Center)
                     Spacer(Modifier.height(8.dp))

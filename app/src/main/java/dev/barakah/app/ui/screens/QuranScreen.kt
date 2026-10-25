@@ -1042,7 +1042,7 @@ fun QuranScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(if (isAr) "معاينة الخط والترجمة" else UiStrings.of("Text preview"), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                        Text(UiStrings.of("Text preview"), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                         Text("بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ", fontSize = arabicFontSize.sp, fontFamily = quranFontFamily, lineHeight = (arabicFontSize * quranLineHeight).sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                         Text(if (isAr) "بسم الله الرحمن الرحيم" else "In the name of Allah, the Most Compassionate, the Most Merciful", fontSize = englishFontSize.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                     }

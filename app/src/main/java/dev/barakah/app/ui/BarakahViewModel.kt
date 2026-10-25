@@ -522,7 +522,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             QuranData.load(application)
             DuaData.load(application)
-            _filteredDuas.value = if (_duaTranslationLanguage.value.isEmpty()) DuaData.duasAr else DuaData.duasEn
+            _filteredDuas.value = if (_duaTranslationLanguage.value.isEmpty()) DuaData.duasAr else DuaData.duasEn.filter { _duaTranslationLanguage.value == "en" || DuaData.hasTranslation(_duaTranslationLanguage.value, it.arabic) }
         }
         viewModelScope.launch {
             repository.initDefaultAlertSettings()
@@ -560,7 +560,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             combine(_duaSearchQuery, _selectedDuaCategory, _appLanguage, _duaTranslationLanguage, duaBookmarks) { query, category, appLang, duaLang, bookmarks ->
                 val favIds = bookmarks.map { it.duaId }.toSet()
-                val currentDuas = if (duaLang.isEmpty()) DuaData.duasAr else DuaData.duasEn
+                val currentDuas = if (duaLang.isEmpty()) DuaData.duasAr else DuaData.duasEn.filter { duaLang == "en" || DuaData.hasTranslation(duaLang, it.arabic) }
                 val searchResult = currentDuas.filter { dua ->
                     val contentLang = duaLang.ifEmpty { "ar" }
                     val title = if (duaLang.isEmpty()) dua.titleAr else DuaData.titleFor(contentLang, dua.titleEn)
@@ -763,7 +763,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         // match after the switch.
         _duaSearchQuery.value = ""
         _selectedDuaCategory.value = "Menu"
-        _filteredDuas.value = if (duaTag.isEmpty()) DuaData.duasAr else DuaData.duasEn
+        _filteredDuas.value = if (duaTag.isEmpty()) DuaData.duasAr else DuaData.duasEn.filter { duaTag == "en" || DuaData.hasTranslation(duaTag, it.arabic) }
         updateWidgetsGlobally()
     }
 
