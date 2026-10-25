@@ -164,7 +164,7 @@ fun LanguageStep(viewModel: BarakahViewModel, onNext: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(if (isShortScreen) 12.dp else 24.dp))
         Text(
-            text = if (isAr) "اختر لغة التطبيق" else UiStrings.of("Select Language"),
+            text = if (currentLang == "ar") "اختر لغة التطبيق" else UiStrings.of("Select Language"),
             style = if (isShortScreen) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
