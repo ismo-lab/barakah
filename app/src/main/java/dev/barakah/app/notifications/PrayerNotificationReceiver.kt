@@ -86,8 +86,28 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
         
         val appPrefs = context.getSharedPreferences(AppPrefs.FILE, Context.MODE_PRIVATE)
         val appLanguage = appPrefs.getString(AppPrefs.APP_LANG, "ar") ?: "ar"
+        val translationLanguage = appPrefs.getString(AppPrefs.QURAN_TRANSLATION_LANG, "en") ?: "en"
         UiStrings.setCurrentLanguage(appLanguage)
         val isAr = appLanguage == "ar"
+
+        if (prayerName == "Daily Verse") {
+            if (!appPrefs.getBoolean(AppPrefs.NOTIFY_DAILY_VERSE, false)) return
+            val verses = dev.barakah.app.data.QuranData.loadVersesForSurah(context, 1, translationLanguage).verses
+            val verse = verses.getOrNull((java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_YEAR) - 1) % verses.size.coerceAtLeast(1)) ?: return
+            val title = if (isAr) "آية اليوم · الفاتحة ${verse.index}" else "Today's Verse · Al-Fatihah ${verse.index}"
+            val body = "${verse.arabic}\n${verse.english}"
+            postDailyContent(context, notificationManager, isAr, title, body, 1016)
+            markNotified(prefs, prayerId, scheduledTime, now)
+            return
+        }
+        if (prayerName == "Daily Hadith") {
+            if (!appPrefs.getBoolean(AppPrefs.NOTIFY_DAILY_HADITH, false)) return
+            val hadith = "Actions are but by intentions, and every person shall have only that which they intended. — Sahih al-Bukhari 1"
+            val text = if (isAr) "إنما الأعمال بالنيات، وإنما لكل امرئ ما نوى. — صحيح البخاري ١" else hadith
+            postDailyContent(context, notificationManager, isAr, if (isAr) "حديث اليوم" else "Today's Hadith", text, 1017)
+            markNotified(prefs, prayerId, scheduledTime, now)
+            return
+        }
 
         // Only the five prayers play the Adhan, and only when adhan audio is enabled.
         val playsAdhan = prayerName in PRIMARY_PRAYERS &&
@@ -364,6 +384,15 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
         } catch (e: Exception) {
             android.util.Log.e("PrayerNotifReceiver", "Failed to post prayer notification: ${e.message}")
         }
+    }
+
+    private fun postDailyContent(context: Context, manager: NotificationManager, isAr: Boolean, title: String, text: String, id: Int) {
+        val channel = "prayer_channel"
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            manager.createNotificationChannel(NotificationChannel(channel, if (isAr) "مواقيت الصلاة والذكر" else "Prayer Times & Remembrance", NotificationManager.IMPORTANCE_HIGH))
+        }
+        val openApp = PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK }, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        manager.notify(id, NotificationCompat.Builder(context, channel).setSmallIcon(R.drawable.ic_notification).setContentTitle(title).setContentText(text).setStyle(NotificationCompat.BigTextStyle().bigText(text)).setAutoCancel(true).setContentIntent(openApp).build())
     }
 
     /**

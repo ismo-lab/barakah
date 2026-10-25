@@ -10,6 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -669,11 +670,12 @@ fun QuranScreen(
                 ) {
                     if (surah.id != 1 && surah.id != 9) {
                         item {
-                            Box(
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 16.dp),
-                                contentAlignment = Alignment.Center
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 Text(
                                     text = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
@@ -695,7 +697,7 @@ fun QuranScreen(
                                         fontSize = englishFontSize.sp,
                                         textAlign = TextAlign.Center,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.fillMaxWidth().padding(top = 6.dp)
+                                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
                                     )
                                 }
                             }
@@ -1003,7 +1005,10 @@ fun QuranScreen(
             onDismissRequest = { showReaderSettings = false },
             title = { Text(if (isAr) "إعدادات القرآن" else UiStrings.of("Quran settings")) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(
+                    Modifier.fillMaxWidth().heightIn(max = 480.dp).verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
                     ReligiousTextLanguagePicker(
                         labelEn = "Quran translation", labelAr = "ترجمة القرآن",
                         selectedTag = quranTranslationLanguage,
@@ -1028,9 +1033,18 @@ fun QuranScreen(
                         Text(if (isAr) "إظهار النص العربي" else UiStrings.of("Show Arabic text"), modifier = Modifier.weight(1f))
                         Switch(checked = quranShowArabic, onCheckedChange = viewModel::setQuranShowArabic)
                     }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         FilterChip(selected = quranFont == dev.barakah.app.ui.theme.QURAN_FONT_SYSTEM, onClick = { viewModel.setQuranFont(dev.barakah.app.ui.theme.QURAN_FONT_SYSTEM) }, label = { Text(UiStrings.of("System")) })
                         FilterChip(selected = quranFont == dev.barakah.app.ui.theme.QURAN_FONT_AMIRI, onClick = { viewModel.setQuranFont(dev.barakah.app.ui.theme.QURAN_FONT_AMIRI) }, label = { Text(UiStrings.of("Amiri Quran")) })
+                    }
+                    Column(
+                        Modifier.fillMaxWidth().padding(top = 4.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(if (isAr) "معاينة الخط والترجمة" else UiStrings.of("Text preview"), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                        Text("بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ", fontSize = arabicFontSize.sp, fontFamily = quranFontFamily, lineHeight = (arabicFontSize * quranLineHeight).sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                        Text(if (isAr) "بسم الله الرحمن الرحيم" else "In the name of Allah, the Most Compassionate, the Most Merciful", fontSize = englishFontSize.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                     }
                 }
             },

@@ -86,6 +86,8 @@ object AppPrefs {
     const val NOTIFY_BEFORE_ADHAN = "notify_before_adhan"
     const val NOTIFY_MORNING_ADHKAR = "notify_morning_adhkar"
     const val NOTIFY_EVENING_ADHKAR = "notify_evening_adhkar"
+    const val NOTIFY_DAILY_VERSE = "notify_daily_verse"
+    const val NOTIFY_DAILY_HADITH = "notify_daily_hadith"
     const val MORNING_ADHKAR_OFFSET = "morning_adhkar_offset"
     const val EVENING_ADHKAR_OFFSET = "evening_adhkar_offset"
     const val NOTIFY_OCCASIONS = "notify_occasions"

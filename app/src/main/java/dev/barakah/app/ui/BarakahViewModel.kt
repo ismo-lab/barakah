@@ -224,6 +224,11 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     private val _notifyEveningAdhkar = MutableStateFlow(prefs.getBoolean(AppPrefs.NOTIFY_EVENING_ADHKAR, true))
     val notifyEveningAdhkar: StateFlow<Boolean> = _notifyEveningAdhkar
 
+    private val _notifyDailyVerse = MutableStateFlow(prefs.getBoolean(AppPrefs.NOTIFY_DAILY_VERSE, false))
+    val notifyDailyVerse: StateFlow<Boolean> = _notifyDailyVerse
+    private val _notifyDailyHadith = MutableStateFlow(prefs.getBoolean(AppPrefs.NOTIFY_DAILY_HADITH, false))
+    val notifyDailyHadith: StateFlow<Boolean> = _notifyDailyHadith
+
     // Custom offsets (in minutes) for Morning and Evening Adhkar reminders
     private val _morningAdhkarOffset = MutableStateFlow(prefs.getInt(AppPrefs.MORNING_ADHKAR_OFFSET, 30))
     val morningAdhkarOffset: StateFlow<Int> = _morningAdhkarOffset
@@ -1026,6 +1031,18 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         _notifyEveningAdhkar.value = value
         prefs.edit { putBoolean(AppPrefs.NOTIFY_EVENING_ADHKAR, value) }
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
+    }
+
+    fun setNotifyDailyVerse(value: Boolean) {
+        _notifyDailyVerse.value = value
+        prefs.edit { putBoolean(AppPrefs.NOTIFY_DAILY_VERSE, value) }
+        dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication())
+    }
+
+    fun setNotifyDailyHadith(value: Boolean) {
+        _notifyDailyHadith.value = value
+        prefs.edit { putBoolean(AppPrefs.NOTIFY_DAILY_HADITH, value) }
+        dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication())
     }
 
     fun setEveningAdhkarOffset(value: Int) {
