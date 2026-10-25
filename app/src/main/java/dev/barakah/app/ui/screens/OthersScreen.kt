@@ -69,6 +69,13 @@ fun getMiladiDateString(item: IslamicOccasion, isAr: Boolean, adjustmentDays: In
     }
 }
 
+/** The occasion's Hijri date with the month name in the interface language. */
+fun getHijriDateLabel(item: IslamicOccasion): String {
+    if (item.hDay <= 0) return UiStrings.of(item.hijriDateEn)
+    val month = dev.barakah.app.util.HijriCalendarHelper.hijriMonthName(item.hMonth)
+    return if (month.isBlank()) item.hijriDateEn else "${item.hDay} $month"
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OthersScreen(
@@ -477,10 +484,10 @@ fun OthersScreen(
                         if (isAr) {
                             "التاريخ الهجري: ${holiday.hijriDateAr} • الموافق $miladi م"
                         } else {
-                            UiStrings.format("Hijri: %s • Equal: %s AD", holiday.hijriDateEn, miladi)
+                            UiStrings.format("Hijri: %s • Equal: %s AD", getHijriDateLabel(holiday), miladi)
                         }
                     } else {
-                        if (isAr) "التاريخ الهجري: ${holiday.hijriDateAr}" else UiStrings.format("Date: %s", holiday.hijriDateEn)
+                        if (isAr) "التاريخ الهجري: ${holiday.hijriDateAr}" else UiStrings.format("Date: %s", getHijriDateLabel(holiday))
                     }
                     Text(
                         text = formattedDate.localize(isAr, useWesternNumbersInArabic),
@@ -774,9 +781,9 @@ fun CalendarAndOccasionsPane(
                         Spacer(modifier = Modifier.height(2.dp))
                         val miladi = getMiladiDateString(item, isAr, hijriAdjustment)
                         val displayDate = if (miladi.isNotEmpty()) {
-                            if (isAr) "${item.hijriDateAr} • الموافق $miladi م" else UiStrings.format("%s • Eq: %s", item.hijriDateEn, miladi)
+                            if (isAr) "${item.hijriDateAr} • الموافق $miladi م" else UiStrings.format("%s • Eq: %s", getHijriDateLabel(item), miladi)
                         } else {
-                            if (isAr) item.hijriDateAr else item.hijriDateEn
+                            if (isAr) item.hijriDateAr else getHijriDateLabel(item)
                         }
                         Text(
                             text = displayDate.localize(isAr, useWesternNumbersInArabic),

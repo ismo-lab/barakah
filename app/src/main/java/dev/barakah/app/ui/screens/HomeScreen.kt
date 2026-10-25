@@ -188,8 +188,8 @@ fun HomeScreen(
     )
 
     fun translateSubtitle(sub: String): String {
-        if (!isAr) return sub
-        return subtitleTranslations[sub] ?: sub
+        if (isAr) return subtitleTranslations[sub] ?: sub
+        return UiStrings.of(sub)
     }
 
     fun translateHijri(hijriStr: String): String {
@@ -305,9 +305,9 @@ fun HomeScreen(
                         letterSpacing = (-0.5).sp
                     )
 
-                    val gregorianDateStr = remember(isAr, useWesternNumbersInArabic, gregorianDayKey) {
+                    val gregorianDateStr = remember(isAr, currentLang, useWesternNumbersInArabic, gregorianDayKey) {
                         @Suppress("DEPRECATION")
-                        val locale = if (isAr) java.util.Locale("ar") else java.util.Locale.US
+                        val locale = java.util.Locale.forLanguageTag(if (isAr) "ar" else currentLang)
                         val sdf = SimpleDateFormat("EEE, d MMM", locale)
                         // Force Western digits in base string for .localize() to work consistently
                         sdf.numberFormat = java.text.NumberFormat.getInstance(java.util.Locale.US)
@@ -393,22 +393,53 @@ fun HomeScreen(
 
         // 2.7 INSPIRATIONAL QUOTE CARD
         item {
-            val inspirations = remember(isAr) {
-                if (isAr) listOf(
-                    "«لَئِن شَكَرْتُمْ لَأَزِيدَنَّكُمْ»" to "سورة إبراهيم، ٧",
-                    "«فَإِنِّي قَرِيبٌ أُجِيبُ دَعْوَةَ الدَّاعِ إِذَا دَعَانِ»" to "سورة البقرة، ١٨٦",
-                    "«وَبَشِّرِ الصَّابِرينَ»" to "سورة البقرة، ١٥٥",
-                    "«لَا تَدْرِي لَعَلَّ اللَّهَ يُحْدِثُ بَعْدَ ذَلِكَ أَمْرًا»" to "سورة الطلاق، ١",
-                    "«سَيَجْعَلُ اللَّهُ بَعْدَ عُسْرٍ يُسْرًا»" to "سورة الطلاق، ٧"
-                ) else listOf(
-                    "\"If you are grateful, I will surely increase you.\"" to "Surah Ibrahim, 7",
-                    "\"Indeed, I am near. I respond to the invocation of the supplicant.\"" to "Surah Al-Baqarah, 186",
-                    "\"And give good tidings to the patient.\"" to "Surah Al-Baqarah, 155",
-                    "\"You know not, perhaps Allah will bring about thereafter a [new] matter.\"" to "Surah At-Talaq, 1",
-                    "\"Allah will bring about, after hardship, ease.\"" to "Surah At-Talaq, 7"
+            val arabicQuotes = listOf(
+                "«لَئِن شَكَرْتُمْ لَأَزِيدَنَّكُمْ»" to "سورة إبراهيم، ٧",
+                "«فَإِنِّي قَرِيبٌ أُجِيبُ دَعْوَةَ الدَّاعِ إِذَا دَعَانِ»" to "سورة البقرة، ١٨٦",
+                "«وَبَشِّرِ الصَّابِرينَ»" to "سورة البقرة، ١٥٥",
+                "«لَا تَدْرِي لَعَلَّ اللَّهَ يُحْدِثُ بَعْدَ ذَلِكَ أَمْرًا»" to "سورة الطلاق، ١",
+                "«سَيَجْعَلُ اللَّهُ بَعْدَ عُسْرٍ يُسْرًا»" to "سورة الطلاق، ٧"
+            )
+            val englishQuotes = listOf(
+                "\"If you are grateful, I will surely increase you.\"" to "Surah Ibrahim, 7",
+                "\"Indeed, I am near. I respond to the invocation of the supplicant.\"" to "Surah Al-Baqarah, 186",
+                "\"And give good tidings to the patient.\"" to "Surah Al-Baqarah, 155",
+                "\"You know not, perhaps Allah will bring about thereafter a [new] matter.\"" to "Surah At-Talaq, 1",
+                "\"Allah will bring about, after hardship, ease.\"" to "Surah At-Talaq, 7"
+            )
+            val fallbackQuotes = if (isAr) arabicQuotes else englishQuotes
+            // The verse text follows the interface language through the bundled Quran edition, and
+            // an edition that is not bundled leaves the English text in place. Arabic is shown in
+            // Arabic, which is the source text the other editions translate.
+            var translatedQuotes by remember(currentLang) {
+                mutableStateOf<List<Pair<String, String>>?>(
+                    if (currentLang == "ar" || currentLang == "en") fallbackQuotes else null
                 )
             }
-            val quote = remember { inspirations.random() }
+            LaunchedEffect(currentLang) {
+                if (currentLang != "ar" && currentLang != "en") {
+                    translatedQuotes = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        val tag = dev.barakah.app.data.ReligiousTextLanguages.quranTagFor(currentLang)
+                        val picks = listOf(
+                            Triple(14, 7, "Ibrahim"),
+                            Triple(2, 186, "Al-Baqarah"),
+                            Triple(2, 155, "Al-Baqarah"),
+                            Triple(65, 1, "At-Talaq"),
+                            Triple(65, 7, "At-Talaq")
+                        )
+                        picks.mapIndexed { index, (surahId, ayah, name) ->
+                            val text = dev.barakah.app.data.QuranData
+                                .loadVersesForSurah(context, surahId, tag)
+                                .verses.firstOrNull { it.index == ayah }?.english
+                                ?.takeIf { it.isNotBlank() }
+                                ?: englishQuotes[index].first
+                            text to UiStrings.format("Surah %s, %s", name, ayah)
+                        }
+                    }
+                }
+            }
+            val inspirations = translatedQuotes ?: fallbackQuotes
+            val quote = remember(inspirations) { inspirations.random() }
 
             Card(
                 modifier = Modifier

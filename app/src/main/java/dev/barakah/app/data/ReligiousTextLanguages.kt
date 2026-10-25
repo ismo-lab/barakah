@@ -71,7 +71,8 @@ object ReligiousTextLanguages {
         nameEn = "Persian",
         nameAr = "الفارسية",
         quranEdition = "Islamhouse.com Persian Team (QuranEnc)",
-        tafsirSource = "Persian Al-Mukhtasar (Tarteel QUL)"
+        tafsirSource = "Persian Al-Mukhtasar (Tarteel QUL)",
+        duaTranslations = true
     )
 
     val hausa = ReligiousLanguage(
@@ -143,7 +144,9 @@ object ReligiousTextLanguages {
 
     fun name(tag: String, isAr: Boolean): String {
         val language = byTag(tag) ?: return if (isAr) "الإنجليزية" else UiStrings.of("English")
-        return if (isAr) language.nameAr else language.nameEn
+        if (isAr) return language.nameAr
+        // Each language names itself, so a fallback notice reads naturally in any interface.
+        return UiLanguages.byTag(tag)?.nativeName ?: language.nameEn
     }
 
     /** Arabic is excluded: the Arabic text is already shown above every translation. */
