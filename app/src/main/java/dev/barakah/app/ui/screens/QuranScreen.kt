@@ -1005,9 +1005,8 @@ fun QuranScreen(
             onDismissRequest = { showReaderSettings = false },
             title = { Text(if (isAr) "إعدادات القرآن" else UiStrings.of("Quran settings")) },
             text = {
-                BoxWithConstraints(Modifier.fillMaxWidth().heightIn(max = 480.dp)) {
                 Column(
-                    Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+                    Modifier.fillMaxWidth().heightIn(max = 480.dp).verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     ReligiousTextLanguagePicker(
@@ -1047,7 +1046,6 @@ fun QuranScreen(
                         Text("بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ", fontSize = arabicFontSize.sp, fontFamily = quranFontFamily, lineHeight = (arabicFontSize * quranLineHeight).sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                         Text(if (isAr) "بسم الله الرحمن الرحيم" else "In the name of Allah, the Most Compassionate, the Most Merciful", fontSize = englishFontSize.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                     }
-                }
                 }
             },
             confirmButton = { TextButton(onClick = { showReaderSettings = false }) { Text(UiStrings.of("Done")) } }
