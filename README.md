@@ -32,7 +32,7 @@
 
 ## 🛠 Building & Running the Tests
 
-You need JDK 17 and an Android SDK with API 36 installed. The tests additionally need JDK 21,
+You need JDK 17 and an Android SDK with API 37 installed. The tests additionally need JDK 21,
 because Robolectric sandboxes Android 36 only on 21 and above. There are no API keys to obtain
 and no Google Play Services dependency.
 
@@ -49,10 +49,22 @@ exports; pass `--source` and `--alternate-names-source` to reuse saved exports i
 them. Checksums of the two exports are stored beside it in `cities500.version` and version the
 on-device cache, so a newer APK replaces an older cached catalog on its next search.
 
-Signing: the build expects `app/keystore.jks`. Locally it is materialised from
-`debug.keystore.base64` or `debug.keystore`, and a throwaway key is generated when neither
-exists, so an APK built on one machine will not install over one built on another. Release builds
-are signed from repository secrets.
+Signing: the build needs a keystore. CI decodes the release key to `app/keystore.jks` before
+Gradle runs and that file wins if present. Otherwise one is materialised from
+`debug.keystore.base64` or `debug.keystore`, and a throwaway key is generated under
+`build/signing/` when neither exists, so an APK built on one machine will not install over one
+built on another. Pass `-PsigningDisabled` to skip signing entirely, which is what a build that
+will be signed elsewhere (F-Droid) does.
+
+Version numbers live in `app/version.properties` and are the only input to the build, so a rebuild
+of a tag always produces the same `versionCode` — which F-Droid requires, since it refuses a code it
+has already published. A release is a tag, not a push: bump `BUILD_NUMBER`, `VERSION_CODE` and
+`VERSION_NAME` (`./gradlew incrementBuildNumber` rewrites all three, and the `incrementMinorVersion`
+/ `incrementMajorVersion` tasks do what their names say), commit, then tag that commit
+`v<versionName>`. CI builds and tests on every push to `main`, but only publishes from a tag, and it
+fails if the tag and the file disagree. Moving between the GitHub APK and the F-Droid build needs an
+uninstall either way, since they are signed with different keys. The build recipe is in
+[docs/fdroid/dev.barakah.app.yml](docs/fdroid/dev.barakah.app.yml).
 
 The screenshot tests compare against the reference images in `app/src/test/screenshots`, which
 were recorded on CI. They can fail on another machine, because the rendered image depends on the
