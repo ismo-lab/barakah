@@ -542,8 +542,8 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
 
                                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
                                 listOf(
-                                    Triple(if (isAr) "آية اليوم" else UiStrings.of("Today's Verse"), notifyDailyVerse, viewModel::setNotifyDailyVerse),
-                                    Triple(if (isAr) "حديث اليوم" else UiStrings.of("Today's Hadith"), notifyDailyHadith, viewModel::setNotifyDailyHadith)
+                                    Triple(UiStrings.of("Today's Verse"), notifyDailyVerse, viewModel::setNotifyDailyVerse),
+                                    Triple(UiStrings.of("Today's Hadith"), notifyDailyHadith, viewModel::setNotifyDailyHadith)
                                 ).forEach { (label, checked, onChecked) ->
                                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                                         Text(label, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)

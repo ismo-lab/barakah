@@ -86,15 +86,17 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
         
         val appPrefs = context.getSharedPreferences(AppPrefs.FILE, Context.MODE_PRIVATE)
         val appLanguage = appPrefs.getString(AppPrefs.APP_LANG, "ar") ?: "ar"
-        val translationLanguage = appPrefs.getString(AppPrefs.QURAN_TRANSLATION_LANG, "en") ?: "en"
+        val translationLanguage = dev.barakah.app.data.ReligiousTextLanguages.quranTagFor(appLanguage).ifEmpty { "en" }
         UiStrings.setCurrentLanguage(appLanguage)
         val isAr = appLanguage == "ar"
 
         if (prayerName == "Daily Verse") {
             if (!appPrefs.getBoolean(AppPrefs.NOTIFY_DAILY_VERSE, false)) return
-            val verses = dev.barakah.app.data.QuranData.loadVersesForSurah(context, 1, translationLanguage).verses
+            val surahId = (java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_YEAR) - 1) % 114 + 1
+            val surah = dev.barakah.app.data.QuranData.getSurahById(surahId)
+            val verses = dev.barakah.app.data.QuranData.loadVersesForSurah(context, surahId, translationLanguage).verses
             val verse = verses.getOrNull((java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_YEAR) - 1) % verses.size.coerceAtLeast(1)) ?: return
-            val title = if (isAr) "آية اليوم · الفاتحة ${verse.index}" else "Today's Verse · Al-Fatihah ${verse.index}"
+            val title = if (isAr) "آية اليوم · ${surah.arabic} ${verse.index}" else "Today's Verse · ${surah.name} ${verse.index}"
             val body = "${verse.arabic}\n${verse.english}"
             postDailyContent(context, notificationManager, isAr, title, body, 1016)
             markNotified(prefs, prayerId, scheduledTime, now)
@@ -102,9 +104,32 @@ class PrayerNotificationReceiver : BroadcastReceiver() {
         }
         if (prayerName == "Daily Hadith") {
             if (!appPrefs.getBoolean(AppPrefs.NOTIFY_DAILY_HADITH, false)) return
-            val hadith = "Actions are but by intentions, and every person shall have only that which they intended. — Sahih al-Bukhari 1"
-            val text = if (isAr) "إنما الأعمال بالنيات، وإنما لكل امرئ ما نوى. — صحيح البخاري ١" else hadith
-            postDailyContent(context, notificationManager, isAr, if (isAr) "حديث اليوم" else "Today's Hadith", text, 1017)
+            val hadithIndex = (java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_YEAR) - 1) % 3
+            val hadiths = when (appLanguage) {
+                "ar" -> listOf(
+                "إنما الأعمال بالنيات، وإنما لكل امرئ ما نوى. — صحيح البخاري ١",
+                "يسروا ولا تعسروا، وبشروا ولا تنفروا. — صحيح البخاري",
+                "من كان يؤمن بالله واليوم الآخر فليقل خيرًا أو ليصمت. — صحيح البخاري"
+                )
+                "id" -> listOf("Amal itu bergantung pada niat, dan setiap orang mendapat sesuai niatnya. — Sahih al-Bukhari", "Permudahlah dan jangan mempersulit. — Sahih al-Bukhari", "Siapa yang beriman kepada Allah dan hari akhir hendaklah berkata baik atau diam. — Sahih al-Bukhari")
+                "tr" -> listOf("Ameller niyetlere göredir ve herkese niyet ettiği vardır. — Sahih al-Buhari", "Kolaylaştırın, zorlaştırmayın; müjdeleyin, nefret ettirmeyin. — Sahih al-Buhari", "Allah'a ve ahiret gününe inanan ya hayır söylesin ya sussun. — Sahih al-Buhari")
+                "ur" -> listOf("اعمال کا دارومدار نیتوں پر ہے، اور ہر شخص کو وہی ملے گا جس کی اس نے نیت کی۔ — صحیح بخاری", "آسانی کرو، تنگی نہ کرو اور خوشخبری دو۔ — صحیح بخاری", "جو اللہ اور آخرت کے دن پر ایمان رکھتا ہے وہ اچھی بات کہے یا خاموش رہے۔ — صحیح بخاری")
+                "fa" -> listOf("اعمال به نیت‌ها بستگی دارند و هر کس همان چیزی را می‌یابد که نیت کرده است. — صحیح بخاری", "آسان بگیرید و سخت نگیرید و بشارت دهید. — صحیح بخاری", "هر کس به خدا و روز قیامت ایمان دارد، سخن نیک بگوید یا سکوت کند. — صحیح بخاری")
+                "bn" -> listOf("কাজ নিয়তের ওপর নির্ভরশীল, প্রত্যেকে তাই পাবে যা সে নিয়ত করেছে। — সহিহ বুখারি", "সহজ করো, কঠিন করো না; সুসংবাদ দাও। — সহিহ বুখারি", "যে আল্লাহ ও শেষ দিনে বিশ্বাস করে, সে ভালো কথা বলুক অথবা নীরব থাকুক। — সহিহ বুখারি")
+                "ru" -> listOf("Поистине, дела оцениваются только по намерениям. — Сахих аль-Бухари", "Облегчайте, а не затрудняйте; радуйте, а не отталкивайте. — Сахих аль-Бухари", "Пусть верующий в Аллаха и Судный день говорит благое или молчит. — Сахих аль-Бухари")
+                "ms" -> listOf("Sesungguhnya amalan itu bergantung pada niat. — Sahih al-Bukhari", "Permudahkanlah dan jangan menyusahkan. — Sahih al-Bukhari", "Sesiapa beriman kepada Allah dan hari akhirat hendaklah berkata baik atau diam. — Sahih al-Bukhari")
+                "sw" -> listOf("Hakika matendo hulipwa kwa nia. — Sahih al-Bukhari", "Rahisisheni wala msifanye mambo kuwa magumu. — Sahih al-Bukhari", "Mwenye kumwamini Allah na Siku ya Mwisho aseme mema au anyamaze. — Sahih al-Bukhari")
+                "ha" -> listOf("Ayyuka suna dogara ne da niyya, kuma kowane mutum yana da abin da ya yi niyya. — Sahih al-Bukhari", "Ku sauƙaƙa, kada ku tsananta; ku yi bushara, kada ku kore mutane. — Sahih al-Bukhari", "Wanda ya yi imani da Allah da Ranar Lahira, ya faɗi alheri ko ya yi shiru. — Sahih al-Bukhari")
+                "ckb" -> listOf("کردارەکان بە نیەتەکانن، و هەر کەسێک ئەوەی دەبێت کە نیەتی کردووە. — سەحیحی بوخاری", "ئاسانکاری بکەن و سەختی مەکەن؛ مژدە بدەن و بێزار مەکەن. — سەحیحی بوخاری", "هەرکەس باوەڕی بە خوا و ڕۆژی دوایی هەبێت، با قسەی چاک بکات یان بێدەنگ بێت. — سەحیحی بوخاری")
+                "de" -> listOf("Die Taten richten sich nach den Absichten, und jedem steht nur zu, was er beabsichtigt hat. — Sahih al-Bukhari", "Erleichtert und erschwert nicht; verkündet frohe Botschaft und schreckt nicht ab. — Sahih al-Bukhari", "Wer an Allah und den Jüngsten Tag glaubt, soll Gutes sprechen oder schweigen. — Sahih al-Bukhari")
+                else -> listOf(
+                "Actions are but by intentions, and every person shall have only that which they intended. — Sahih al-Bukhari 1",
+                "Make things easy and do not make them difficult, and cheer people up. — Sahih al-Bukhari",
+                "Whoever believes in Allah and the Last Day should speak good or remain silent. — Sahih al-Bukhari"
+                )
+            }
+            val text = hadiths[hadithIndex]
+            postDailyContent(context, notificationManager, isAr, UiStrings.of("Today's Hadith"), text, 1017)
             markNotified(prefs, prayerId, scheduledTime, now)
             return
         }

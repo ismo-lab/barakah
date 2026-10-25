@@ -64,6 +64,9 @@ object DuaData {
         return englishByArabic[normalizeArabic(arabic)]?.takeIf { it.isNotBlank() }
     }
 
+    fun hasTranslation(language: String, arabic: String): Boolean =
+        language == "en" || translationFor(language, arabic)?.isNotBlank() == true
+
     private fun loadDuaTranslations(context: Context) {
         if (translationsLoaded) return
         val resources = mapOf(

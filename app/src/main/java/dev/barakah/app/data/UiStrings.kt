@@ -17,6 +17,9 @@ object UiStrings {
 
     private val translations: Map<String, Map<String, String>> = mapOf(
         "id" to mapOf(
+            "Today's Verse" to "Ayat Hari Ini",
+            "Today's Hadith" to "Hadis Hari Ini",
+            "Text preview" to "Pratinjau teks",
             "Machine-assisted translation. Verify with a qualified scholar." to "Terjemahan berbantuan mesin. Verifikasi dengan ulama yang kompeten.",
             "%s Adhan" to "Azan %s",
             "%s Approaching" to "Menjelang %s",
@@ -583,6 +586,9 @@ object UiStrings {
             "🕌 PERFECTLY ALIGNED!" to "🕌 PERFEKT AUSGERICHTET!",
         ),
         "ur" to mapOf(
+            "Today's Verse" to "آج کی آیت",
+            "Today's Hadith" to "آج کی حدیث",
+            "Text preview" to "متن کا پیش نظارہ",
             "Machine-assisted translation. Verify with a qualified scholar." to "مشینی ترجمہ۔ کسی مستند عالم سے تصدیق کریں۔",
             "%s Adhan" to "%s اذان",
             "%s Approaching" to "%s قریب آ رہا ہے۔",
@@ -868,6 +874,9 @@ object UiStrings {
             "🕌 PERFECTLY ALIGNED!" to "🕌 مکمل طور پر منسلک!",
         ),
         "bn" to mapOf(
+            "Today's Verse" to "আজকের আয়াত",
+            "Today's Hadith" to "আজকের হাদিস",
+            "Text preview" to "লেখার পূর্বরূপ",
             "Machine-assisted translation. Verify with a qualified scholar." to "মেশিন-সহায়ক অনুবাদ। একজন যোগ্য আলিমের সাথে যাচাই করুন।",
             "%s Adhan" to "%s আযান",
             "%s Approaching" to "%s কাছাকাছি",
@@ -1153,6 +1162,9 @@ object UiStrings {
             "🕌 PERFECTLY ALIGNED!" to "🕌 নিখুঁতভাবে সারিবদ্ধ!",
         ),
         "tr" to mapOf(
+            "Today's Verse" to "Günün Ayeti",
+            "Today's Hadith" to "Günün Hadisi",
+            "Text preview" to "Metin önizlemesi",
             "Machine-assisted translation. Verify with a qualified scholar." to "Makine destekli çeviri. Yetkin bir alime danışın.",
             "%s Adhan" to "%s Ezan",
             "%s Approaching" to "%s Yaklaşıyor",
@@ -1438,6 +1450,9 @@ object UiStrings {
             "🕌 PERFECTLY ALIGNED!" to "🕌 MÜKEMMEL HİZALANMIŞ!",
         ),
         "fa" to mapOf(
+            "Today's Verse" to "آیه امروز",
+            "Today's Hadith" to "حدیث امروز",
+            "Text preview" to "پیش‌نمایش متن",
             "Machine-assisted translation. Verify with a qualified scholar." to "ترجمه ماشینی. با یک عالم واجد شرایط بررسی کنید.",
             "%s Adhan" to "اذان %s",
             "%s Approaching" to "%s در حال نزدیک شدن است",
@@ -1723,6 +1738,9 @@ object UiStrings {
             "🕌 PERFECTLY ALIGNED!" to "🕌 کاملاً هماهنگ است!",
         ),
         "ha" to mapOf(
+            "Today's Verse" to "Ayar Yau",
+            "Today's Hadith" to "Hadisin Yau",
+            "Text preview" to "Samfurin rubutu",
             "Machine-assisted translation. Verify with a qualified scholar." to "Fassarar da inji ta taimaka. Tabbatar da wani malami.",
             "%s Adhan" to "%s Adhan",
             "%s Approaching" to "%s Yana Gabatowa",
@@ -2008,6 +2026,9 @@ object UiStrings {
             "🕌 PERFECTLY ALIGNED!" to "🕌 INGANTATTU!",
         ),
         "ms" to mapOf(
+            "Today's Verse" to "Ayat Hari Ini",
+            "Today's Hadith" to "Hadis Hari Ini",
+            "Text preview" to "Pratonton teks",
             "Machine-assisted translation. Verify with a qualified scholar." to "Terjemahan bantuan mesin. Sahkan dengan ulama yang layak.",
             "%s Adhan" to "%s Adzan",
             "%s Approaching" to "%s Mendekati",
@@ -2293,6 +2314,9 @@ object UiStrings {
             "🕌 PERFECTLY ALIGNED!" to "🕌 SECARA SEMPURNA!",
         ),
         "sw" to mapOf(
+            "Today's Verse" to "Aya ya Leo",
+            "Today's Hadith" to "Hadithi ya Leo",
+            "Text preview" to "Onyesho la maandishi",
             "Machine-assisted translation. Verify with a qualified scholar." to "Tafsiri iliyosaidiwa na mashine. Thibitisha na mwanachuoni.",
             "%s Adhan" to "%s Adhana",
             "%s Approaching" to "%s Inakaribia",
@@ -2578,6 +2602,9 @@ object UiStrings {
             "🕌 PERFECTLY ALIGNED!" to "🕌 IMEANDALIWA KABISA!",
         ),
         "ru" to mapOf(
+            "Today's Verse" to "Аят дня",
+            "Today's Hadith" to "Хадис дня",
+            "Text preview" to "Предпросмотр текста",
             "Machine-assisted translation. Verify with a qualified scholar." to "Машинный перевод. Проверьте у квалифицированного учёного.",
             "%s Adhan" to "%s Азан",
             "%s Approaching" to "%s приближается",
@@ -2863,6 +2890,9 @@ object UiStrings {
             "🕌 PERFECTLY ALIGNED!" to "🕌ИДЕАЛЬНО ВЫРАВНИВАЕТСЯ!",
         ),
         "ckb" to mapOf(
+            "Today's Verse" to "ئایەتی ئەمڕۆ",
+            "Today's Hadith" to "فەرموودەی ئەمڕۆ",
+            "Text preview" to "پێشبینینی دەق",
             "%s Adhan" to "%s ئادهان",
             "%s Approaching" to "%s نزیکبوونەوە",
             "%s m" to "%s م",
@@ -3146,7 +3176,24 @@ object UiStrings {
             "∞ Loop" to "∞ لوپ",
             "🕌 PERFECTLY ALIGNED!" to "🕌 بە تەواوی ڕێکخراوە!",
         ),
+        "de" to mapOf(
+            "Today's Verse" to "Vers des Tages",
+            "Today's Hadith" to "Hadith des Tages",
+            "Text preview" to "Textvorschau",
+        ),
+        "ur" to mapOf("Today's Verse" to "آج کی آیت", "Today's Hadith" to "آج کی حدیث", "Text preview" to "متن کا پیش نظارہ"),
+        "bn" to mapOf("Today's Verse" to "আজকের আয়াত", "Today's Hadith" to "আজকের হাদিস", "Text preview" to "লেখার পূর্বরূপ"),
+        "tr" to mapOf("Today's Verse" to "Günün Ayeti", "Today's Hadith" to "Günün Hadisi", "Text preview" to "Metin önizlemesi"),
+        "fa" to mapOf("Today's Verse" to "آیه امروز", "Today's Hadith" to "حدیث امروز", "Text preview" to "پیش‌نمایش متن"),
+        "ha" to mapOf("Today's Verse" to "Ayar Yau", "Today's Hadith" to "Hadisin Yau", "Text preview" to "Samfurin rubutu"),
+        "ms" to mapOf("Today's Verse" to "Ayat Hari Ini", "Today's Hadith" to "Hadis Hari Ini", "Text preview" to "Pratonton teks"),
+        "sw" to mapOf("Today's Verse" to "Aya ya Leo", "Today's Hadith" to "Hadithi ya Leo", "Text preview" to "Onyesho la maandishi"),
+        "ru" to mapOf("Today's Verse" to "Аят дня", "Today's Hadith" to "Хадис дня", "Text preview" to "Предпросмотр текста"),
+        "ckb" to mapOf("Today's Verse" to "ئایەتی ئەمڕۆ", "Today's Hadith" to "فەرموودەی ئەمڕۆ", "Text preview" to "پێشبینینی دەق"),
         "ar" to mapOf(
+            "Today's Verse" to "آية اليوم",
+            "Today's Hadith" to "حديث اليوم",
+            "Text preview" to "معاينة النص",
             "Machine-assisted translation. Verify with a qualified scholar." to "ترجمة بمساعدة الآلة. تحقق منها مع عالم مؤهل.",
             "%s Adhan" to "%s أذان",
             "%s Approaching" to "يقترب %s",
