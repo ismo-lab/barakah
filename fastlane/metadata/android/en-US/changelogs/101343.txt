@@ -1,0 +1,1 @@
+Prayer times no longer drift east or west: the longitude correction used the wrong sign, which moved every calculation. Fajr and Isha are also held inside a seventh of the night on high-latitude summer days, where the sun does not set far enough for the normal angles.
