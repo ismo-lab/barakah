@@ -156,8 +156,10 @@ object PrayerScheduler {
 
             scheduleAlarm(context, "Morning Adhkar", morningAdhkarTime, 10, notifyMorning, timeZone)
             scheduleAlarm(context, "Evening Adhkar", eveningAdhkarTime, 11, notifyEvening, timeZone)
-            scheduleAlarm(context, "Daily Verse", "09:00", 16, prefs.getBoolean(AppPrefs.NOTIFY_DAILY_VERSE, false), timeZone)
-            scheduleAlarm(context, "Daily Hadith", "09:00", 17, prefs.getBoolean(AppPrefs.NOTIFY_DAILY_HADITH, false), timeZone)
+            // The two daily readings are spread across the day: the verse at midday and the hadith
+            // four hours later, so neither lands on top of a prayer reminder in the morning.
+            scheduleAlarm(context, "Daily Verse", "12:00", 16, prefs.getBoolean(AppPrefs.NOTIFY_DAILY_VERSE, false), timeZone)
+            scheduleAlarm(context, "Daily Hadith", "16:00", 17, prefs.getBoolean(AppPrefs.NOTIFY_DAILY_HADITH, false), timeZone)
 
             // Daily Check at 20:00 for tomorrow's fasting / occasions (a day before)
             val notifyOccasions = prefs.getBoolean(AppPrefs.NOTIFY_OCCASIONS, true)

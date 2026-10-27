@@ -391,130 +391,74 @@ fun HomeScreen(
             }
         }
 
-        // 2.7 INSPIRATIONAL QUOTE CARD
+        // 2.7 TODAY'S VERSE CARD
+        // The same verse the daily notification sends, from DailyContent, so the card and the
+        // notification can never disagree.
         item {
-            val arabicQuotes = listOf(
-                "«لَئِن شَكَرْتُمْ لَأَزِيدَنَّكُمْ»" to "سورة إبراهيم، ٧",
-                "«فَإِنِّي قَرِيبٌ أُجِيبُ دَعْوَةَ الدَّاعِ إِذَا دَعَانِ»" to "سورة البقرة، ١٨٦",
-                "«وَبَشِّرِ الصَّابِرينَ»" to "سورة البقرة، ١٥٥",
-                "«لَا تَدْرِي لَعَلَّ اللَّهَ يُحْدِثُ بَعْدَ ذَلِكَ أَمْرًا»" to "سورة الطلاق، ١",
-                "«سَيَجْعَلُ اللَّهُ بَعْدَ عُسْرٍ يُسْرًا»" to "سورة الطلاق، ٧"
-            )
-            val englishQuotes = listOf(
-                "\"If you are grateful, I will surely increase you.\"" to "Surah Ibrahim, 7",
-                "\"Indeed, I am near. I respond to the invocation of the supplicant.\"" to "Surah Al-Baqarah, 186",
-                "\"And give good tidings to the patient.\"" to "Surah Al-Baqarah, 155",
-                "\"You know not, perhaps Allah will bring about thereafter a [new] matter.\"" to "Surah At-Talaq, 1",
-                "\"Allah will bring about, after hardship, ease.\"" to "Surah At-Talaq, 7"
-            )
-            val fallbackQuotes = if (isAr) arabicQuotes else englishQuotes
-            // The verse text follows the interface language through the bundled Quran edition, and
-            // an edition that is not bundled leaves the English text in place. Arabic is shown in
-            // Arabic, which is the source text the other editions translate.
-            var translatedQuotes by remember(currentLang) {
-                mutableStateOf<List<Pair<String, String>>?>(
-                    if (currentLang == "ar" || currentLang == "en") fallbackQuotes else null
-                )
-            }
-            LaunchedEffect(currentLang) {
-                if (currentLang != "ar" && currentLang != "en") {
-                    translatedQuotes = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                        val tag = dev.barakah.app.data.ReligiousTextLanguages.quranTagFor(currentLang)
-                        val picks = listOf(
-                            Triple(14, 7, "Ibrahim"),
-                            Triple(2, 186, "Al-Baqarah"),
-                            Triple(2, 155, "Al-Baqarah"),
-                            Triple(65, 1, "At-Talaq"),
-                            Triple(65, 7, "At-Talaq")
-                        )
-                        picks.mapIndexed { index, (surahId, ayah, name) ->
-                            val text = dev.barakah.app.data.QuranData
-                                .loadVersesForSurah(context, surahId, tag)
-                                .verses.firstOrNull { it.index == ayah }?.english
-                                ?.takeIf { it.isNotBlank() }
-                                ?: englishQuotes[index].first
-                            text to UiStrings.format("Surah %s, %s", name, ayah)
-                        }
-                    }
+            val dailyVerse by produceState<dev.barakah.app.data.DailyVerse?>(null, currentLang) {
+                value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    dev.barakah.app.data.DailyContent.verse(context, currentLang)
                 }
             }
-            val inspirations = translatedQuotes ?: fallbackQuotes
-            val quote = remember(inspirations) { inspirations.random() }
-
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 12.dp, horizontal = 4.dp),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
-                ),
-                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-            ) {
-                Column(
+            dailyVerse?.let { verse ->
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .padding(vertical = 12.dp, horizontal = 4.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
                 ) {
-                    Icon(
-                        Icons.Default.FormatQuote,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
-                        modifier = Modifier.size(32.dp)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = quote.first,
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontFamily = androidx.compose.ui.text.font.FontFamily.Serif,
-                            lineHeight = 28.sp
-                        ),
-                        fontWeight = FontWeight.Medium,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = quote.second,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            Icons.Default.FormatQuote,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = verse.text,
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontFamily = androidx.compose.ui.text.font.FontFamily.Serif,
+                                lineHeight = 28.sp
+                            ),
+                            fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = verse.reference,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }
 
-        // Restore random Hadith card removed during home layout edits.
+        // TODAY'S HADITH CARD
+        // Also read from DailyContent, which is what the daily hadith notification posts.
         item {
-            val hadiths = remember(currentLang) {
-                if (currentLang == "ar") listOf(
-                    "«إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ، وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى»" to "صحيح البخاري ومسلم • عن عمر بن الخطاب",
-                    "«يَسِّرُوا وَلاَ تُعَسِّرُوا، وَبَشِّرُوا وَلاَ تُنَفِّرُوا»" to "صحيح البخاري • عن أنس بن مالك",
-                    "«مَنْ كَانَ يُؤْمِنُ بِاللَّهِ وَالْيَوْمِ الآخِرِ فَلْيَقُلْ خَيْرًا أَوْ لِيَصْمُتْ»" to "صحيح البخاري • عن أبي هريرة"
-                ) else when (currentLang) {
-                    "id" -> listOf("Amal itu bergantung pada niat, dan setiap orang mendapat sesuai niatnya." to "Sahih al-Bukhari & Muslim • Umar bin Al-Khattab")
-                    "ha" -> listOf("Ayyuka suna dogara ne da niyya, kuma kowane mutum yana da abin da ya yi niyya." to "Sahih al-Bukhari • Umar bn al-Khattab")
-                    "de" -> listOf("Taten richten sich nach den Absichten, und jedem Menschen steht nur zu, was er beabsichtigt hat." to "Sahih al-Bukhari & Muslim • Umar ibn Al-Khattab")
-                    "ckb" -> listOf("کردارەکان بە نیەتەکانن و هەر کەسێک بەوە دەگات کە نیەتی کردووە." to "سەحیحی بوخاری و موسلیم • عومەر")
-                    "ur" -> listOf("اعمال کا دارومدار نیتوں پر ہے، اور ہر شخص کو وہی ملے گا جس کی اس نے نیت کی۔" to "صحیح بخاری و مسلم • عمر بن خطاب")
-                    "bn" -> listOf("সব কাজ নিয়তের ওপর নির্ভরশীল, আর প্রত্যেকে তাই পাবে যা সে নিয়ত করেছে।" to "সহিহ বুখারি ও মুসলিম • উমর ইবনুল খাত্তাব")
-                    "tr" -> listOf("Ameller niyetlere göredir ve herkese niyet ettiği vardır." to "Sahih al-Bukhari & Muslim • Ömer bin Hattab")
-                    "fa" -> listOf("اعمال به نیت‌ها بستگی دارند و هر کس همان چیزی را می‌یابد که نیت کرده است." to "صحیح بخاری و مسلم • عمر بن خطاب")
-                    "ru" -> listOf("Поистине, дела оцениваются только по намерениям, и каждому воздастся лишь за то, что он намеревался совершить." to "Сахих аль-Бухари и Муслим • Умар ибн аль-Хаттаб")
-                    "ms" -> listOf("Sesungguhnya amalan itu bergantung pada niat, dan setiap orang mendapat menurut niatnya." to "Sahih al-Bukhari & Muslim • Umar bin al-Khattab")
-                    "sw" -> listOf("Hakika matendo hulipwa kwa nia, na kila mtu atapata alichokinuia." to "Sahih al-Bukhari na Muslim • Umar ibn al-Khattab")
-                    else -> listOf("Actions are but by intentions, and every person shall have only that which they intended." to "Sahih al-Bukhari & Muslim • Umar ibn Al-Khattab")
-                }
+            val hadith = remember(currentLang) {
+                dev.barakah.app.data.DailyContent.hadith(currentLang)
             }
-            val hadith = remember(currentLang) { hadiths.random() }
             Card(Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 4.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .15f)), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = .3f))) {
                 Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(UiStrings.of("Today's Hadith"), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(8.dp))
-                    Text(hadith.first, style = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Serif, lineHeight = 28.sp), textAlign = TextAlign.Center)
+                    Text(hadith.text, style = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Serif, lineHeight = 28.sp), textAlign = TextAlign.Center)
                     Spacer(Modifier.height(8.dp))
-                    Text(hadith.second, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                    Text(hadith.source, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
                 }
             }
         }

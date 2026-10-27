@@ -24,7 +24,7 @@ class ReligiousTextAssetTest {
 
     @Test
     fun quranTranslationsAndTafsirCoverEveryVerse() {
-        val translations = listOf("id", "ur", "bn", "tr", "fa", "ha", "ms", "sw")
+        val translations = listOf("id", "ur", "bn", "tr", "fa", "ha", "ms", "sw", "ru")
         for (language in translations) {
             var verses = 0
             for (surah in 1..114) {
