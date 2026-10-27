@@ -109,13 +109,21 @@ object ReligiousTextLanguages {
         tag = "ckb",
         nameEn = "Sorani Kurdish",
         nameAr = "الكردية السورانية",
+        quranEdition = "Muhammad Saleh Bamoki (QuranEnc)",
         tafsirSource = "Kurdish Al-Mukhtasar (Tarteel QUL)",
         duaTranslations = true
     )
 
+    val german = ReligiousLanguage(
+        tag = "de",
+        nameEn = "German",
+        nameAr = "الألمانية",
+        quranEdition = "Bubenheim & Elyas (QuranEnc)"
+    )
+
     val all = listOf(
         english, arabic, indonesian, urdu, bengali, turkish, persian,
-        hausa, malay, swahili, russian, sorani
+        hausa, malay, swahili, russian, sorani, german
     )
 
     fun byTag(tag: String?): ReligiousLanguage? = all.firstOrNull { it.tag == tag }
