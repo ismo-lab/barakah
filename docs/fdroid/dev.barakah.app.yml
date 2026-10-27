@@ -1,30 +1,37 @@
 # F-Droid build metadata for Barakah (app ID dev.barakah.app).
 #
-# This is a working copy of the file that belongs in the fdroiddata repository at
-# metadata/dev.barakah.app.yml. It lives here so the build recipe is reviewed next to the
-# build it describes; the merge request to https://gitlab.com/fdroid/fdroiddata carries a
-# copy of it.
+# This is a snapshot of the file that lives in fdroiddata at metadata/dev.barakah.app.yml,
+# kept here so the recipe is reviewed next to the build it describes. fdroiddata is the copy
+# that counts: F-Droid's autoupdate rewrites versionName/versionCode there on every tagged
+# release, so expect the numbers below to lag behind. Refresh this file by hand when the
+# recipe itself changes, not for every release.
 #
 # Updating for a release:
 #   1. Bump BUILD_NUMBER, VERSION_CODE and VERSION_NAME in app/version.properties and commit.
 #   2. Tag that commit v<VERSION_NAME> (e.g. v1.0.0.1344). CI fails if the tag and the file
 #      disagree, and only a tag publishes a GitHub release.
-#   3. Copy the tag's versionCode/versionName here, point commit at the tag, and bump
-#      CurrentVersion/CurrentVersionCode.
+#   3. Point commit at the tag and bump CurrentVersion/CurrentVersionCode.
 #
-# The versionCode is NOT passed in from here on purpose. fdroidserver never evaluates
+# The versionCode is not passed in from here on purpose. fdroidserver never evaluates
 # build.gradle.kts, so anything it needs has to be reproducible from the commit alone: the
 # number in app/version.properties is the source of truth, and a rebuild of the same tag gets
-# the same code. Only set barakahVersionCode in gradleprops if a tag genuinely needs a number
-# the file does not carry.
+# the same code. UpdateCheckData reads that file inside each tag for the same reason.
+#
+# compileSdk is 37 (see app/build.gradle.kts). There is no metadata key that installs an SDK
+# platform: the buildserver ships only SDK tools, and AGP downloads what the build asks for.
+# A build of v1.0.0.1343 confirmed it installs "Android SDK Platform 37.0" itself.
+#
+# The APK carries no dependency metadata block (android.dependenciesInfo in build.gradle.kts):
+# F-Droid's scanner rejects that signing block, and nothing reads it outside Google Play.
 
+AntiFeatures:
+  NonFreeAssets:
+    en-US: The English Tafsir al-Jalalayn translation is redistributed under the publisher's
+      terms, which are not a free licence; the Tanzil translations are licensed for
+      non-commercial use only.
 Categories:
   - Religion
 License: GPL-3.0-only
-# The English Tafsir al-Jalalayn translation is redistributed under the publisher's terms, which
-# are not a free licence. The code is GPL-3.0 and the assets are committed and built from source.
-AntiFeatures:
-  - NonFreeAssets
 AuthorName: ismo-lab
 WebSite: https://github.com/ismo-lab/barakah
 SourceCode: https://github.com/ismo-lab/barakah
@@ -32,37 +39,27 @@ IssueTracker: https://github.com/ismo-lab/barakah/issues
 
 RepoType: git
 Repo: https://github.com/ismo-lab/barakah.git
+Binaries: https://github.com/ismo-lab/barakah/releases/download/v%v/Barakah-v%v.apk
 
 Builds:
-  - versionName: REPLACE_WITH_VERSION_NAME
-    versionCode: REPLACE_WITH_VERSION_CODE
-    # A tag is accepted here and is preferable to a commit id: it states which release was built
-    # and makes the version.properties numbers checkable against it.
-    commit: REPLACE_WITH_TAG
+  - versionName: 1.0.0.1344
+    versionCode: 101344
+    commit: 49f1772fa9baecab0e76b5c990ea4644e4b094fe
     subdir: app
     # This list is Gradle flavors, not tasks. fdroidserver appends "Release" and runs
     # assembleRelease itself; naming the task here would ask for assembleAssembleReleaseRelease.
     gradle:
       - yes
     gradleprops:
-      # fdroidserver signs the APK with its own key, so the build must not try to sign it with
-      # this project's keystore (or generate a throwaway one first).
+      # fdroidserver re-signs the APK with the key in AllowedAPKSigningKeys, so the build must
+      # not try to sign with this project's keystore (or generate a throwaway one first).
       - signingDisabled
-    # The offline city catalog, the Quran, the tafsir, the supplications and the adhan
-    # recordings are all committed, so the build needs no network beyond Maven and the
-    # Android SDK.
-    #
-    # compileSdk is 37 (see app/build.gradle.kts). There is no metadata key that installs an SDK
-    # platform ("sdks:" is not a build flag — fdroidserver warns and drops it), so the buildserver
-    # image has to carry platforms;android-37, or AGP has to be allowed to download it. That is the
-    # one question to ask the maintainers before this lands. The Gradle version is not pinned
-    # here either: gradlew-fdroid reads gradle/wrapper/gradle-wrapper.properties and fetches what
-    # the project asks for.
 
-# Tags are cut by hand (see the header), so nothing here should generate a build entry on its
-# own. UpdateCheckMode: Tags / AutoUpdateMode: Version can be enabled once the first release is
-# accepted, since the tag name then carries the version.
-AutoUpdateMode: None
-UpdateCheckMode: None
-CurrentVersion: REPLACE_WITH_VERSION_NAME
-CurrentVersionCode: REPLACE_WITH_VERSION_CODE
+AllowedAPKSigningKeys: c506110a0f08c720f1d19ef8b3db765f9805d3b6c568e7cb5d45ce0756a89cec
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+UpdateCheckName: v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+
+UpdateCheckData: app/version.properties|VERSION_CODE=(\d+)|.|VERSION_NAME=([0-9.]+)
+CurrentVersion: 1.0.0.1344
+CurrentVersionCode: 101344
