@@ -36,7 +36,7 @@ class ReligiousTextAssetTest {
             assertEquals("$language translation verse count", 6236, verses)
         }
 
-        for (language in listOf("id", "bn", "tr", "fa", "ur", "ru", "ckb")) {
+        for (language in listOf("id", "bn", "tr", "fa", "ur", "ru", "ckb", "sw")) {
             var ayahs = 0
             for (surah in 1..114) {
                 val root = JSONObject(asset("assets/quran/tafsir/$language/$surah.json").readText())

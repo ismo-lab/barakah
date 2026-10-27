@@ -1,0 +1,1 @@
+Swahili readers now get a Swahili tafsir alongside their Quran translation, with the source credited in Settings > About.

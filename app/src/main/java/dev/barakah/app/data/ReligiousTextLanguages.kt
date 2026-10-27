@@ -93,7 +93,8 @@ object ReligiousTextLanguages {
         tag = "sw",
         nameEn = "Swahili",
         nameAr = "السواحلية",
-        quranEdition = "Ali Muhsin Al Barwani (Tanzil)"
+        quranEdition = "Ali Muhsin Al Barwani (Tanzil)",
+        tafsirSource = "As-Saadi Swahili (QuranEnc)"
     )
 
     val russian = ReligiousLanguage(
