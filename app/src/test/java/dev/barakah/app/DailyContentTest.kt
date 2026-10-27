@@ -32,10 +32,10 @@ class DailyContentTest {
     @Test
     fun `language without a bundled edition gets English`() {
         UiStrings.setCurrentLanguage("en")
-        val german = DailyContent.verse(context, "de", dayOfYear = 1)
+        val unknown = DailyContent.verse(context, "fr", dayOfYear = 1)
         val english = DailyContent.verse(context, "en", dayOfYear = 1)
 
-        assertEquals(english.text, german.text)
+        assertEquals(english.text, unknown.text)
     }
 
     @Test

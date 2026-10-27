@@ -68,9 +68,9 @@ class UiStringsLanguageTest {
     @Test
     fun religiousTextFollowsTheInterfaceLanguage() {
         check(ReligiousTextLanguages.quranTagFor("ha") == "ha")
-        check(ReligiousTextLanguages.quranTagFor("de") == "en")
+        check(ReligiousTextLanguages.quranTagFor("de") == "de")
         check(ReligiousTextLanguages.quranTagFor("ru") == "ru")
-        check(ReligiousTextLanguages.quranTagFor("ckb") == "en")
+        check(ReligiousTextLanguages.quranTagFor("ckb") == "ckb")
         check(ReligiousTextLanguages.duaTagFor("fa") == "fa")
         check(ReligiousTextLanguages.duaTagFor("ar") == "")
     }

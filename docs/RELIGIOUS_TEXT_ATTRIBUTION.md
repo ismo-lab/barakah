@@ -29,6 +29,8 @@ Bundled from the editions published by [fawazahmed0/quran-api](https://github.co
 | Malay | Abdullah Muhammad Basmeih | Tanzil |
 | Swahili | Ali Muhsin Al Barwani | Tanzil |
 | Russian | Elmir Kuliev | Tanzil |
+| German | A. S. F. Bubenheim and N. Elyas | [QuranEnc](https://quranenc.com/en/browse/german_bubenheim) |
+| Sorani Kurdish | Muhammad Saleh Bamoki | [QuranEnc](https://quranenc.com/en/browse/kurdish_bamoki) |
 
 English is the Sahih International translation, attributed to Saheeh International and bundled
 through `rn0x/Quran-Data`. The repository's MIT licence covers its packaging; the translation
