@@ -34,6 +34,9 @@ class TafsirLanguageFollowTest {
         viewModel.setQuranTranslationLanguage("bn")
         assertEquals("bn", viewModel.tafsirLanguage.value)
 
+        viewModel.setQuranTranslationLanguage("sw")
+        assertEquals("sw", viewModel.tafsirLanguage.value)
+
         viewModel.setQuranTranslationLanguage("ha")
         assertEquals("en", viewModel.tafsirLanguage.value)
     }

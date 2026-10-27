@@ -1350,7 +1350,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                     text = if (isAr) {
                                         "التفسير: الجلالين (QUL وAltafsir)، والمختصر عبر Tarteel QUL، وتفسير أبو بكر زكريا بالبنغالية، والسعدي بالأردية (QuranEnc، الإصدار 1.0.0)."
                                     } else {
-                                        UiStrings.of("Tafsir: Tafsir al-Jalalayn (English, altafsir.com), Al-Mukhtasar (Tarteel QUL), Tafsir Abu Bakr Zakaria (Bengali), and As-Saadi Urdu (QuranEnc, V1.0.0).")
+                                        UiStrings.of("Tafsir: Tafsir al-Jalalayn (English, altafsir.com), Al-Mukhtasar (Tarteel QUL), Tafsir Abu Bakr Zakaria (Bengali), As-Saadi Urdu (QuranEnc, V1.0.0), and As-Saadi Swahili (QuranEnc).")
                                     },
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
