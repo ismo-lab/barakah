@@ -28,15 +28,16 @@ Bundled from the editions published by [fawazahmed0/quran-api](https://github.co
 | Hausa | Abubakar Mahmood Jummi | QuranEnc |
 | Malay | Abdullah Muhammad Basmeih | Tanzil |
 | Swahili | Ali Muhsin Al Barwani | Tanzil |
+| Russian | Elmir Kuliev | Tanzil |
 
 English is the Sahih International translation, attributed to Saheeh International and bundled
 through `rn0x/Quran-Data`. The repository's MIT licence covers its packaging; the translation
-remains attributed to its publisher. The English, Urdu, Malay and Swahili editions are hosted by
-[Tanzil](https://tanzil.net) and are used under Tanzil's non-commercial redistribution terms;
-Barakah is free and non-commercial. Tanzil asks apps that use more than three of its translations
-to link back to [tanzil.net/trans](https://tanzil.net/trans/); Barakah bundles four and provides
-that link in Settings > About. The collection repositories' licences cover packaging, not
-necessarily every edition's underlying text.
+remains attributed to its publisher. The English, Urdu, Malay, Swahili and Russian editions are
+hosted by [Tanzil](https://tanzil.net) and are used under Tanzil's non-commercial redistribution
+terms; Barakah is free and non-commercial. Tanzil asks apps that use more than three of its
+translations to link back to [tanzil.net/trans](https://tanzil.net/trans/); Barakah bundles five
+and provides that link in Settings > About. The collection repositories' licences cover packaging,
+not necessarily every edition's underlying text.
 
 ## Tafsir
 

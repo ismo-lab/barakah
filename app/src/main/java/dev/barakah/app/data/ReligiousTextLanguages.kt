@@ -100,6 +100,7 @@ object ReligiousTextLanguages {
         tag = "ru",
         nameEn = "Russian",
         nameAr = "الروسية",
+        quranEdition = "Elmir Kuliev (Tanzil)",
         tafsirSource = "Russian Al-Mukhtasar (Tarteel QUL)",
         duaTranslations = true
     )

@@ -1340,7 +1340,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                     text = if (isAr) {
                                         "ترجمات القرآن: وزارة الشؤون الدينية الإندونيسية (QuranEnc)، محمد جناغرهي، أبو بكر زكريا، مسلم شاهين، فريق Islamhouse.com الفارسي، أبوبكر محمود جومي، عبدالله محمد بسميه، علي محسن البرواني (Tanzil)."
                                     } else {
-                                        UiStrings.of("Quran translations: Indonesian Ministry of Religious Affairs (QuranEnc), Muhammad Junagarhi, Abu Bakr Zakaria, Muslim Shahin, Islamhouse.com Persian Team, Abubakar Mahmood Jummi, Abdullah Muhammad Basmeih, Ali Muhsin Al Barwani (Tanzil).")
+                                        UiStrings.of("Quran translations: Indonesian Ministry of Religious Affairs (QuranEnc), Muhammad Junagarhi, Abu Bakr Zakaria, Muslim Shahin, Islamhouse.com Persian Team, Abubakar Mahmood Jummi, Abdullah Muhammad Basmeih, Ali Muhsin Al Barwani (Tanzil), Elmir Kuliev (Tanzil).")
                                     },
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
