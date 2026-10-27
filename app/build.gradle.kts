@@ -55,7 +55,15 @@ ksp {
 
 android {
   namespace = "dev.barakah.app"
-  compileSdk = 37
+  // API 37 is published as platform "android-37.0": a bare 37 resolves to the hash "android-37",
+  // which does not exist, so a builder that has to download the platform fails with "Failed to
+  // find target with hash string 'android-37'". Naming the minor level asks for the platform that
+  // actually exists, which is what a fresh Android SDK has to fetch when it has no platform 37.
+  compileSdk {
+    version = release(37) {
+      minorApiLevel = 0
+    }
+  }
 
   defaultConfig {
     applicationId = "dev.barakah.app"
