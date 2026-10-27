@@ -57,6 +57,15 @@ android {
   namespace = "dev.barakah.app"
   compileSdk = 37
 
+  // AGP writes a "Dependency metadata" block into the APK signing block by default: a list of the
+  // libraries the APK was built from, encrypted for Google Play. Nothing on the device reads it,
+  // Play does not read it from sideloaded builds either, and F-Droid's scanner rejects a build that
+  // carries it, so it is left out of both the APK and the bundle.
+  dependenciesInfo {
+    includeInApk = false
+    includeInBundle = false
+  }
+
   defaultConfig {
     applicationId = "dev.barakah.app"
     minSdk = 24
