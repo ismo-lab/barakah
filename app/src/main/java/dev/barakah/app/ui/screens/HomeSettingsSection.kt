@@ -2,6 +2,8 @@ package dev.barakah.app.ui.screens
 
 import dev.barakah.app.data.UiStrings
 
+import android.content.Intent
+import androidx.core.content.ContextCompat
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -44,6 +46,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.barakah.app.ui.BarakahViewModel
+import dev.barakah.app.notifications.AdhanPlaybackService
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import dev.barakah.app.util.PrayerCalculator
@@ -354,6 +357,21 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                         checked = adhanAudioEnabled,
                                         onCheckedChange = { viewModel.setAdhanAudioEnabled(it) }
                                     )
+                                }
+
+                                OutlinedButton(
+                                    onClick = {
+                                        ContextCompat.startForegroundService(
+                                            context,
+                                            Intent(context, AdhanPlaybackService::class.java).apply {
+                                                putExtra(AdhanPlaybackService.EXTRA_PRAYER_NAME, "Dhuhr")
+                                                putExtra(AdhanPlaybackService.EXTRA_TEST, true)
+                                            }
+                                        )
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(if (isAr) "تجربة الأذان" else UiStrings.of("Test Adhan"))
                                 }
 
                                 if (adhanAudioEnabled) {
