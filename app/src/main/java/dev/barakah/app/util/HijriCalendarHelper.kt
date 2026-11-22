@@ -242,23 +242,9 @@ object HijriCalendarHelper {
                 }
             }
         }
-        
-        // Phase 2: Fallback search of the entire period (Jan 1 of current year to Dec 31 of next year)
-        for (year in searchYears) {
-            for (month in 1..12) {
-                val daysInMonth = when (month) {
-                    2 -> if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) 29 else 28
-                    4, 6, 9, 11 -> 30
-                    else -> 31
-                }
-                for (day in 1..daysInMonth) {
-                    val hijri = hijriFor(year, month, day, adjustmentDays)
-                    if (hijri.month == hijriMonth && hijri.day == hijriDay) {
-                        return "$day ${gregorianMonthShort(month, language)} $year"
-                    }
-                }
-            }
-        }
+        // No second pass over the past months: an occasion without an occurrence left in the
+        // search window has no upcoming date. Searching from January again used to pair a future
+        // start with a past end when a Hijri month had no 30th day.
         return ""
     }
 

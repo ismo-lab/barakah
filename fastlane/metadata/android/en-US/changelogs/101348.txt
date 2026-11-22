@@ -1,0 +1,1 @@
+Fixed city search returning no results. Added a calculation-method picker so Fajr and Isha can follow your local authority, with more methods available. Replaced the adhan recordings with smaller, freely licensed audio including a real Fajr adhan. Removed the global clock and Hijri date adjustment controls from Settings. Version names now follow MAJOR.MINOR.PATCH.

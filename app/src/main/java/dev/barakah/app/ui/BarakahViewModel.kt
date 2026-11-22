@@ -27,6 +27,7 @@ import dev.barakah.app.util.HijriCalendarHelper
 import dev.barakah.app.util.LocationProvider
 import dev.barakah.app.util.NawafilTimes
 import dev.barakah.app.util.PrayerCalculator
+import dev.barakah.app.util.PrayerMethodResolver
 import dev.barakah.app.util.QiblaManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -285,28 +286,16 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
     val adjAsr = MutableStateFlow(prefs.getInt(AppPrefs.ADJ_ASR, 0))
     val adjMaghrib = MutableStateFlow(prefs.getInt(AppPrefs.ADJ_MAGHRIB, 0))
     val adjIsha = MutableStateFlow(prefs.getInt(AppPrefs.ADJ_ISHA, 0))
-    val adjGlobal = MutableStateFlow(prefs.getInt(AppPrefs.ADJ_GLOBAL, 0))
-
     /**
-     * Where the Hijri shift comes from. Countries that wait for a local sighting usually start the
-     * month a day after the Umm al-Qura table this app computes from, so their default is -1. A
-     * value the user picks is kept; clearing it goes back to the country default.
+     * Countries that wait for a local sighting usually start the month a day after the Umm al-Qura
+     * table this app computes from, so the country default is -1 there. No manual override is
+     * exposed in Settings any more; a stored one is ignored.
      */
     private fun countryHijriAdjustment(): Int =
         HijriCalendarHelper.countryAdjustmentDays(prefs.getString(AppPrefs.LOC_COUNTRY, null))
 
-    private fun savedHijriAdjustment(): Int =
-        if (prefs.contains(AppPrefs.HIJRI_ADJUSTMENT)) {
-            prefs.getInt(AppPrefs.HIJRI_ADJUSTMENT, 0)
-        } else {
-            countryHijriAdjustment()
-        }
-
     /** Days to shift the calculated Hijri date by, so it can follow the local moon sighting. */
-    val hijriAdjustment = MutableStateFlow(savedHijriAdjustment())
-
-    /** False while [hijriAdjustment] is the country default rather than a choice the user made. */
-    val hijriAdjustmentIsManual = MutableStateFlow(prefs.contains(AppPrefs.HIJRI_ADJUSTMENT))
+    val hijriAdjustment = MutableStateFlow(countryHijriAdjustment())
 
     // Cached parsed prayer seconds to eliminate 1s loop allocations
     private var CachedFajrSec = 0
@@ -353,15 +342,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         City("Toronto, Canada", 43.6532, -79.3832)
     )
 
-    private val _calculationMethod = MutableStateFlow(
-        run {
-            try {
-                PrayerCalculator.CalculationMethod.valueOf(prefs.getString(AppPrefs.CALC_METHOD, "MWL") ?: "MWL")
-            } catch(e: Exception) {
-                PrayerCalculator.CalculationMethod.MWL
-            }
-        }
-    )
+    private val _calculationMethod = MutableStateFlow(PrayerMethodResolver.resolve(prefs))
     val calculationMethod: StateFlow<PrayerCalculator.CalculationMethod> = _calculationMethod
 
     // 2. PRAYER TIMES STATE initialized dynamically with stored values and proper TZ offset from launch
@@ -369,11 +350,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         run {
             val lat = prefs.getFloat(AppPrefs.LOC_LAT, LocationDefaults.LATITUDE.toFloat()).toDouble()
             val lng = prefs.getFloat(AppPrefs.LOC_LNG, LocationDefaults.LONGITUDE.toFloat()).toDouble()
-            val m = try {
-                PrayerCalculator.CalculationMethod.valueOf(prefs.getString(AppPrefs.CALC_METHOD, "MWL") ?: "MWL")
-            } catch(e: Exception) {
-                PrayerCalculator.CalculationMethod.MWL
-            }
+            val m = PrayerMethodResolver.resolve(prefs)
             val asrM = prefs.getString(AppPrefs.ASR_METHOD, "standard") ?: "standard"
             val ishaM = prefs.getString(AppPrefs.ISHA_METHOD, "standard") ?: "standard"
             val adjF = prefs.getInt(AppPrefs.ADJ_FAJR, 0)
@@ -382,7 +359,6 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             val adjA = prefs.getInt(AppPrefs.ADJ_ASR, 0)
             val adjM = prefs.getInt(AppPrefs.ADJ_MAGHRIB, 0)
             val adjI = prefs.getInt(AppPrefs.ADJ_ISHA, 0)
-            val adjG = prefs.getInt(AppPrefs.ADJ_GLOBAL, 0)
             val isAutoLocation = prefs.getString(AppPrefs.LOCATION_METHOD, "manual") == "auto"
             val timeZoneId = PrayerCalculator.resolveTimeZoneId(
                 if (isAutoLocation) TimeZone.getDefault().id else prefs.getString(AppPrefs.LOC_TIMEZONE, null)
@@ -402,8 +378,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
                 adjDhuhr = adjD,
                 adjAsr = adjA,
                 adjMaghrib = adjM,
-                adjIsha = adjI,
-                clockOffsetMinutes = adjG
+                adjIsha = adjI
             )
         }
     )
@@ -724,8 +699,10 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             putString(AppPrefs.LOC_TIMEZONE, resolvedTimeZoneId)
             if (countryCode != null) putString(AppPrefs.LOC_COUNTRY, countryCode.uppercase())
         }
-        if (!hijriAdjustmentIsManual.value) {
-            hijriAdjustment.value = countryHijriAdjustment()
+        hijriAdjustment.value = countryHijriAdjustment()
+        // A country only matters until the reader has picked a method themselves.
+        if (!prefs.contains(AppPrefs.CALC_METHOD)) {
+            _calculationMethod.value = PrayerMethodResolver.resolve(prefs)
         }
         recalculatePrayerTimes()
         if (isSuccessFeedback) {
@@ -968,8 +945,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             adjDhuhr = adjDhuhr.value,
             adjAsr = adjAsr.value,
             adjMaghrib = adjMaghrib.value,
-            adjIsha = adjIsha.value,
-            clockOffsetMinutes = adjGlobal.value
+            adjIsha = adjIsha.value
         )
         _prayerTimes.value = newTimes
         updateParsedSeconds(newTimes)
@@ -1137,35 +1113,6 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         recalculatePrayerTimes()
     }
 
-    /**
-     * Moves every prayer by [value] minutes, in one step. Meant for a device whose time zone
-     * rules still carry an hour the country has since dropped, where all five prayers are off by
-     * the same amount. Kept separate from the per-prayer adjustments so resetting it to 0 keeps
-     * any fine tuning the user made.
-     */
-    fun setAdjGlobal(value: Int) {
-        adjGlobal.value = value
-        prefs.edit { putInt(AppPrefs.ADJ_GLOBAL, value) }
-        recalculatePrayerTimes()
-    }
-
-    /**
-     * Shifts the Hijri date by [value] days. Prayer times are unaffected, so nothing has to be
-     * rescheduled; the screens that show the date observe [hijriAdjustment] and redraw.
-     */
-    fun setHijriAdjustment(value: Int) {
-        hijriAdjustment.value = value
-        hijriAdjustmentIsManual.value = true
-        prefs.edit { putInt(AppPrefs.HIJRI_ADJUSTMENT, value) }
-    }
-
-    /** Drops the manual shift and goes back to the saved location's country default. */
-    fun resetHijriAdjustment() {
-        prefs.edit { remove(AppPrefs.HIJRI_ADJUSTMENT) }
-        hijriAdjustmentIsManual.value = false
-        hijriAdjustment.value = countryHijriAdjustment()
-    }
-
     fun resetToDefaults() {
         setAppTheme("system")
         setUseDynamicColor(true)
@@ -1173,6 +1120,8 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         setArabicFontSize(24f)
         setEnglishFontSize(16f)
         setLocationMethod("manual")
+        // Clearing the explicit choice lets the saved country decide, with MWL as the fallback.
+        prefs.edit { remove(AppPrefs.CALC_METHOD) }
         val defaultLabel = LocationDefaults.unsetLabel(prefs.getString(AppPrefs.APP_LANG, "ar") == "ar")
         updateLocation(LocationDefaults.LATITUDE, LocationDefaults.LONGITUDE, defaultLabel, false)
         setAsrMethod("standard")
@@ -1185,7 +1134,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         setAdjAsr(0)
         setAdjMaghrib(0)
         setAdjIsha(0)
-        setHijriAdjustment(0)
+        hijriAdjustment.value = countryHijriAdjustment()
     }
 
 

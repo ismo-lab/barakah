@@ -19,8 +19,21 @@ object PrayerCalculator {
         MWL(18.0, 17.0),          // Muslim World League
         ISNA(15.0, 15.0),         // Islamic Society of North America
         EGYPT(19.5, 17.5),        // Egyptian General Authority of Survey
+        EGYPT_BIS(20.0, 18.0),    // Egyptian General Authority of Survey, revised
         UMM_AL_QURA(18.5, 90.0),  // Umm al-Qura (Isha is 90 mins after Maghrib, solved specially)
-        KARACHI(18.0, 18.0)       // University of Islamic Sciences, Karachi
+        KARACHI(18.0, 18.0),      // University of Islamic Sciences, Karachi
+        TURKEY(18.0, 17.0),       // Diyanet approximation, not the published Diyanet tables
+        SINGAPORE(20.0, 18.0),    // MUIS angles; the official monthly table can differ by minutes
+        TEHRAN(17.7, 14.0),       // Institute of Geophysics, University of Tehran
+        KUWAIT(18.0, 17.5),       // Kuwait University
+        UOIF(12.0, 12.0),         // Union of Islamic Organisations of France
+        RUSSIA(16.0, 15.0),       // Spiritual Administration of Muslims of Russia
+        DUBAI(18.2, 18.2),        // Dubai
+        MOROCCO(19.0, 17.0),      // Morocco, Ministry of Habous
+        ALGERIA(18.0, 17.0),      // Algeria
+        TUNISIA(18.0, 18.0),      // Tunisia
+        KEMENAG(20.0, 18.0),      // Indonesia, Kementerian Agama
+        JAKIM(20.0, 18.0)         // Malaysia and Brunei, JAKIM
     }
 
     data class PrayerTimes(

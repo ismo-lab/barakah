@@ -28,6 +28,7 @@ import dev.barakah.app.data.LocationDefaults
 import dev.barakah.app.widget.WidgetRefreshState
 import dev.barakah.app.util.ClockTime
 import dev.barakah.app.util.PrayerCalculator
+import dev.barakah.app.util.PrayerMethodResolver
 import dev.barakah.app.util.localize
 import java.util.*
 
@@ -55,11 +56,7 @@ class PrayerRemainingWidget : GlanceAppWidget() {
         
             val asrMethod = prefs.getString(AppPrefs.ASR_METHOD, "standard") ?: "standard"
             val ishaMethod = prefs.getString(AppPrefs.ISHA_METHOD, "standard") ?: "standard"
-            val m = try {
-                PrayerCalculator.CalculationMethod.valueOf(prefs.getString(AppPrefs.CALC_METHOD, "MWL") ?: "MWL")
-            } catch(e: Exception) {
-                PrayerCalculator.CalculationMethod.MWL
-            }
+            val m = PrayerMethodResolver.resolve(prefs)
 
             val adjFajr = prefs.getInt(AppPrefs.ADJ_FAJR, 0)
             val adjSunrise = prefs.getInt(AppPrefs.ADJ_SUNRISE, 0)
@@ -67,14 +64,12 @@ class PrayerRemainingWidget : GlanceAppWidget() {
             val adjAsr = prefs.getInt(AppPrefs.ADJ_ASR, 0)
             val adjMaghrib = prefs.getInt(AppPrefs.ADJ_MAGHRIB, 0)
             val adjIsha = prefs.getInt(AppPrefs.ADJ_ISHA, 0)
-            val clockOffset = prefs.getInt(AppPrefs.ADJ_GLOBAL, 0)
-        
+
             val times = PrayerCalculator.calculate(
                 lat, lng, offsetHours, calendar,
                 method = m, asrMethod = asrMethod, ishaMethod = ishaMethod,
                 adjFajr = adjFajr, adjSunrise = adjSunrise, adjDhuhr = adjDhuhr,
-                adjAsr = adjAsr, adjMaghrib = adjMaghrib, adjIsha = adjIsha,
-                clockOffsetMinutes = clockOffset
+                adjAsr = adjAsr, adjMaghrib = adjMaghrib, adjIsha = adjIsha
             )
         
             val currentTimeInSec = calendar.get(Calendar.HOUR_OF_DAY) * 3600 + calendar.get(Calendar.MINUTE) * 60 + calendar.get(Calendar.SECOND)

@@ -320,17 +320,6 @@ fun HomeScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    // The Hijri date above is calculated, not sighted, so it can be a day out where
-                    // the user is. Point at the setting that fixes that rather than just caveating.
-                    Text(
-                        text = (if (isAr) {
-                            "تاريخ محسوب — قد يختلف بيوم، ويمكن ضبطه من الإعدادات."
-                        } else {
-                            UiStrings.of("Calculated — may differ by a day; adjustable in Settings.")
-                        }).localize(isAr, useWesternNumbersInArabic),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
-                    )
                 }
 
                 // Unified Settings Button

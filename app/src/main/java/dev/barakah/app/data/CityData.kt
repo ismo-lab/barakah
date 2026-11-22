@@ -32,6 +32,7 @@ data class CitySuggestion(
 object CityData {
     private const val TAG = "CityData"
     private const val DATABASE_PREFIX = "geonames-cities500-"
+    private const val CATALOG_ASSET = "cities500.sqlite"
     private val databaseMutex = Mutex()
     @Volatile private var database: SQLiteDatabase? = null
 
@@ -93,16 +94,26 @@ object CityData {
         require(catalogVersion.matches(Regex("[0-9a-f]{64}"))) { "Invalid GeoNames catalog version" }
         val databaseFileName = "$DATABASE_PREFIX$catalogVersion.sqlite"
         val file = context.getDatabasePath(databaseFileName)
-        if (!file.exists()) {
+        // openFd only works on stored assets (see androidResources.noCompress). It also gives the
+        // exact expected size, so a truncated copy is caught instead of looking like an empty catalog.
+        val expectedLength = context.assets.openFd(CATALOG_ASSET).use { it.length }
+        if (!file.exists() || file.length() != expectedLength) {
             file.parentFile?.mkdirs()
             val temporaryFile = File(file.parentFile, "$databaseFileName.tmp")
             try {
-                context.assets.open("cities500.sqlite").use { input ->
-                    FileOutputStream(temporaryFile).use { output -> input.copyTo(output) }
+                context.assets.openFd(CATALOG_ASSET).use { descriptor ->
+                    descriptor.createInputStream().use { input ->
+                        FileOutputStream(temporaryFile).use { output -> input.copyTo(output) }
+                    }
+                }
+                val copiedLength = temporaryFile.length()
+                require(copiedLength == expectedLength) {
+                    "Incomplete city catalog copy: $copiedLength of $expectedLength bytes"
                 }
                 if (!temporaryFile.renameTo(file)) {
                     throw IllegalStateException("Could not install the offline city catalog")
                 }
+                Log.i(TAG, "Installed offline city catalog ($copiedLength bytes)")
             } finally {
                 temporaryFile.delete()
             }

@@ -63,12 +63,12 @@ jobs:
         BUILD=$(prop BUILD_NUMBER)
         VERSION_NAME=$(prop VERSION_NAME)
         VERSION_CODE=$(prop VERSION_CODE)
-        # The build computes both numbers from MAJOR/MINOR/PATCH/BUILD_NUMBER; the VERSION_* lines
-        # exist so the metadata file and the release notes can be written without running Gradle.
+        # The build derives VERSION_NAME from MAJOR/MINOR/PATCH and VERSION_CODE from BUILD_NUMBER;
+        # the VERSION_* lines exist so the metadata and release notes can be written without Gradle.
         # If they disagree the tag is described by one number and shipped as another, so fail here
         # rather than publish something that cannot be matched to its source.
-        EXPECTED_CODE=$((MAJOR * 100000 + MINOR * 10000 + PATCH * 100 + BUILD))
-        EXPECTED_NAME="${MAJOR}.${MINOR}.${PATCH}.${BUILD}"
+        EXPECTED_CODE=$((100000 + BUILD))
+        EXPECTED_NAME="${MAJOR}.${MINOR}.${PATCH}"
         if [ "$VERSION_CODE" != "$EXPECTED_CODE" ] || [ "$VERSION_NAME" != "$EXPECTED_NAME" ]; then
           echo "ERROR: version.properties is inconsistent."
           echo "MAJOR/MINOR/PATCH/BUILD_NUMBER imply ${EXPECTED_NAME} (${EXPECTED_CODE}),"
