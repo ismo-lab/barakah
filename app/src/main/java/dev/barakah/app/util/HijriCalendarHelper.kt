@@ -93,7 +93,9 @@ object HijriCalendarHelper {
             set(year, month - 1, day)
             add(Calendar.DAY_OF_MONTH, adjustmentDays)
         }
-        val cal = android.icu.util.IslamicCalendar(zone).apply {
+        val cal = android.icu.util.IslamicCalendar(
+            android.icu.util.ULocale("en@calendar=islamic-umalqura")
+        ).apply {
             setCalculationType(android.icu.util.IslamicCalendar.CalculationType.ISLAMIC_UMALQURA)
             clear()
             set(gregorian.get(Calendar.YEAR), gregorian.get(Calendar.MONTH), gregorian.get(Calendar.DAY_OF_MONTH))
