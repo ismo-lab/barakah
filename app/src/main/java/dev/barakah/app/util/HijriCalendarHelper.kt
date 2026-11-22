@@ -42,7 +42,7 @@ object HijriCalendarHelper {
      * a local sighting usually begin a day after the Umm al-Qura table this app computes from.
      *
      * Only a default, not a claim of the actual sighting: any single month can go either way, so
-     * an unknown country keeps the plain date.
+     * the manual adjustment stays as the override and an unknown country keeps the plain date.
      */
     fun countryAdjustmentDays(countryCode: String?): Int {
         val code = countryCode?.trim()?.uppercase(java.util.Locale.ROOT) ?: return 0
@@ -53,14 +53,15 @@ object HijriCalendarHelper {
         setOf("BD", "DZ", "ID", "IN", "LK", "MA", "MY", "PK", "TN")
 
     /**
-     * The one conversion the whole app goes through: Umm al-Qura on every supported API level.
+     * The one conversion the whole app goes through: Umm al-Qura where the platform has it, and
+     * the arithmetic fallback on older devices.
      *
      * Keep every caller on this. The date shown on the home screen, the day an occasion reminder
      * fires and the date listed for that occasion used to use two different calendars, so the app
      * could show one Eid date and remind on another.
      *
-     * [adjustmentDays] shifts the result by that many days, which is how the date lines up with
-     * the moon sighting a country follows.
+     * [adjustmentDays] shifts the result by that many days, which is how a user lines the
+     * calculated date up with the moon sighting their community follows.
      */
     private fun hijriFor(year: Int, month: Int, day: Int, adjustmentDays: Int): HijriDate {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -68,43 +69,11 @@ object HijriCalendarHelper {
                 val date = java.time.LocalDate.of(year, month, day).plusDays(adjustmentDays.toLong())
                 return getHijriDateFor(date)
             } catch (e: Exception) {
-                Log.e(TAG, "Falling back to the ICU Hijri conversion", e)
-            }
-        }
-
-        // API 24/25 have no java.time. ICU's Umm al-Qura table ships with the platform, so the
-        // old arithmetic branch (tabular, Thursday epoch) is no longer needed for any device.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            try {
-                return hijriFromIcu(year, month, day, adjustmentDays)
-            } catch (e: Exception) {
                 Log.e(TAG, "Falling back to the arithmetic Hijri conversion", e)
             }
         }
 
         return getHijriFromJulian(getJulianDay(year, month, day) + adjustmentDays)
-    }
-
-    @RequiresApi(Build.VERSION_CODES.N)
-    internal fun hijriFromIcu(year: Int, month: Int, day: Int, adjustmentDays: Int): HijriDate {
-        val zone = java.util.TimeZone.getTimeZone("UTC")
-        val gregorian = Calendar.getInstance(zone).apply {
-            clear()
-            set(year, month - 1, day)
-            add(Calendar.DAY_OF_MONTH, adjustmentDays)
-        }
-        val cal = android.icu.util.IslamicCalendar(
-            android.icu.util.ULocale("en@calendar=islamic-umalqura")
-        ).apply {
-            setCalculationType(android.icu.util.IslamicCalendar.CalculationType.ISLAMIC_UMALQURA)
-            clear()
-            set(gregorian.get(Calendar.YEAR), gregorian.get(Calendar.MONTH), gregorian.get(Calendar.DAY_OF_MONTH))
-        }
-        return HijriDate(
-            day = cal.get(Calendar.DAY_OF_MONTH),
-            month = cal.get(Calendar.MONTH) + 1,
-            year = cal.get(Calendar.YEAR)
-        )
     }
 
     fun getTodayHijriDate(adjustmentDays: Int = 0): HijriDate {
