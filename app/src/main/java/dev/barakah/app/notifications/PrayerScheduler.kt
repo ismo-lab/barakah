@@ -92,8 +92,7 @@ object PrayerScheduler {
             val adjAsr = prefs.getInt(AppPrefs.ADJ_ASR, 0)
             val adjMaghrib = prefs.getInt(AppPrefs.ADJ_MAGHRIB, 0)
             val adjIsha = prefs.getInt(AppPrefs.ADJ_ISHA, 0)
-            val clockOffset = prefs.getInt(AppPrefs.ADJ_GLOBAL, 0)
-            
+
             val times = PrayerCalculator.calculate(
                 lat, lng, offsetHours, calendar, 
                 method = m,
@@ -104,8 +103,7 @@ object PrayerScheduler {
                 adjDhuhr = adjDhuhr,
                 adjAsr = adjAsr,
                 adjMaghrib = adjMaghrib,
-                adjIsha = adjIsha,
-                clockOffsetMinutes = clockOffset
+                adjIsha = adjIsha
             )
             
             scheduleWidgetRefresh(

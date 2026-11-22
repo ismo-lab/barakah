@@ -34,6 +34,24 @@ class HijriCalendarHelperTest {
     }
 
     @Test
+    fun `icu umm al qura matches the java time conversion used on newer devices`() {
+        // API 24/25 have no java.time; the ICU path has to agree with the table the rest of the
+        // app uses, or a device's Android version would change the date shown for an occasion.
+        for (date in listOf(
+            LocalDate.of(2024, 3, 11),
+            LocalDate.of(2024, 7, 7),
+            LocalDate.of(2026, 11, 22),
+            LocalDate.of(2030, 1, 5)
+        )) {
+            assertEquals(
+                "$date",
+                HijriCalendarHelper.getHijriDateFor(date),
+                HijriCalendarHelper.hijriFromIcu(date.year, date.monthValue, date.dayOfMonth, 0)
+            )
+        }
+    }
+
+    @Test
     fun `every day advances the date by exactly one`() {
         val start = LocalDate.of(2024, 2, 1)
         var previous = HijriCalendarHelper.getHijriDateFor(start)

@@ -65,6 +65,26 @@ import java.util.*
  * It reads the settings it edits from the view model itself, the way the other screens here do,
  * rather than taking thirty of them as parameters.
  */
+/** Method names are standards bodies, not app copy, so the abbreviations stay as-is. */
+private fun calculationMethodLabel(method: PrayerCalculator.CalculationMethod, isAr: Boolean): String =
+    if (!isAr) method.name.replace('_', ' ')
+    else when (method) {
+        PrayerCalculator.CalculationMethod.MWL -> "رابطة العالم الإسلامي"
+        PrayerCalculator.CalculationMethod.ISNA -> "الجمعية الإسلامية لأمريكا الشمالية"
+        PrayerCalculator.CalculationMethod.EGYPT -> "الهيئة المصرية العامة للمساحة"
+        PrayerCalculator.CalculationMethod.EGYPT_BIS -> "الهيئة المصرية (المعدّلة)"
+        PrayerCalculator.CalculationMethod.UMM_AL_QURA -> "أم القرى"
+        PrayerCalculator.CalculationMethod.KARACHI -> "جامعة العلوم الإسلامية كراتشي"
+        PrayerCalculator.CalculationMethod.TURKEY -> "تركيا (تقريب)"
+        PrayerCalculator.CalculationMethod.SINGAPORE -> "سنغافورة"
+        PrayerCalculator.CalculationMethod.TEHRAN -> "طهران"
+        PrayerCalculator.CalculationMethod.KUWAIT -> "الكويت"
+        PrayerCalculator.CalculationMethod.UOIF -> "اتحاد المنظمات الإسلامية بفرنسا"
+        PrayerCalculator.CalculationMethod.RUSSIA -> "روسيا"
+        PrayerCalculator.CalculationMethod.DUBAI -> "دبي"
+        PrayerCalculator.CalculationMethod.QUM -> "قم"
+    }
+
 @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun HomeSettingsSection(
@@ -90,16 +110,15 @@ fun HomeSettingsSection(
 
     val asrMethod by viewModel.asrMethod.collectAsStateWithLifecycle()
     val ishaMethod by viewModel.ishaMethod.collectAsStateWithLifecycle()
+    val calculationMethod by viewModel.calculationMethod.collectAsStateWithLifecycle()
+    var methodMenuExpanded by remember { mutableStateOf(false) }
     val showNawafil by viewModel.showNawafil.collectAsStateWithLifecycle()
     val adjFajr by viewModel.adjFajr.collectAsStateWithLifecycle()
     val adjDhuhr by viewModel.adjDhuhr.collectAsStateWithLifecycle()
     val adjAsr by viewModel.adjAsr.collectAsStateWithLifecycle()
     val adjMaghrib by viewModel.adjMaghrib.collectAsStateWithLifecycle()
     val adjIsha by viewModel.adjIsha.collectAsStateWithLifecycle()
-val adjGlobal by viewModel.adjGlobal.collectAsStateWithLifecycle()
 val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
-    val hijriAdjustment by viewModel.hijriAdjustment.collectAsStateWithLifecycle()
-    val hijriAdjustmentIsManual by viewModel.hijriAdjustmentIsManual.collectAsStateWithLifecycle()
 
     val adhanAudioEnabled by viewModel.adhanAudioEnabled.collectAsStateWithLifecycle()
     val adhanAudioMode by viewModel.adhanAudioMode.collectAsStateWithLifecycle()
@@ -984,7 +1003,63 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                         }
                     }
 
-                    // Card 5: Manual Adjustments
+                    // Card 5: Calculation method. Fajr/Isha angles are conventions, not measurement
+                    // error, so this is what actually changes a timetable to match a local authority.
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = if (isAr) "طريقة حساب الصلاة" else UiStrings.of("Calculation Method"),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+
+                                Text(
+                                    text = if (isAr) "زوايا الفجر والعشاء تختلف بحسب الجهة؛ الأوقات تقديرية" else UiStrings.of("Fajr and Isha angles differ by authority; times are estimates"),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+
+                                Box {
+                                    OutlinedButton(
+                                        onClick = { methodMenuExpanded = true },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(calculationMethodLabel(calculationMethod, isAr))
+                                    }
+                                    DropdownMenu(
+                                        expanded = methodMenuExpanded,
+                                        onDismissRequest = { methodMenuExpanded = false }
+                                    ) {
+                                        PrayerCalculator.CalculationMethod.entries.forEach { method ->
+                                            DropdownMenuItem(
+                                                text = { Text(calculationMethodLabel(method, isAr)) },
+                                                onClick = {
+                                                    viewModel.selectMethod(method)
+                                                    methodMenuExpanded = false
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Card 6: Manual Adjustments
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
@@ -1013,78 +1088,6 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
 
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
-                                        .padding(horizontal = 8.dp, vertical = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = if (isAr) "توقيت الهاتف" else UiStrings.of("Phone clock"),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                        Text(
-                                            text = if (isAr) "إن كان الهاتف ما زال على التوقيت القديم، أزح كل الصلوات بنفس المقدار."
-                                            else UiStrings.of("Shift every prayer at once if the phone still uses the old time zone rules."),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        IconButton(
-                                            onClick = { if (adjGlobal > -180) viewModel.setAdjGlobal(adjGlobal - 60) },
-                                            enabled = adjGlobal > -180,
-                                            modifier = Modifier.size(32.dp)
-                                        ) {
-                                            Icon(
-                                                Icons.Default.Remove,
-                                                contentDescription = if (isAr) "ساعة أقل" else UiStrings.of("An hour earlier"),
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                        }
-                                        val globalPrefix = if (adjGlobal > 0) "+" else ""
-                                        Text(
-                                            text = if (adjGlobal == 0) "0" else "$globalPrefix${adjGlobal / 60} " + (if (isAr) "س" else UiStrings.of("h")),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            fontWeight = FontWeight.Bold,
-                                            textAlign = TextAlign.Center,
-                                            modifier = Modifier.width(50.dp)
-                                        )
-                                        IconButton(
-                                            onClick = { if (adjGlobal < 180) viewModel.setAdjGlobal(adjGlobal + 60) },
-                                            enabled = adjGlobal < 180,
-                                            modifier = Modifier.size(32.dp)
-                                        ) {
-                                            Icon(
-                                                Icons.Default.Add,
-                                                contentDescription = if (isAr) "ساعة أكثر" else UiStrings.of("An hour later"),
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                        }
-                                    }
-                                }
-
-                                if (adjGlobal != 0) {
-                                    Text(
-                                        text = if (isAr) {
-                                            if (adjGlobal > 0) "أُزيحت كل الصلوات ${kotlin.math.abs(adjGlobal)} دقيقة متأخرًا."
-                                            else "أُزيحت كل الصلوات ${kotlin.math.abs(adjGlobal)} دقيقة مبكرًا."
-                                        } else {
-                                            if (adjGlobal > 0) UiStrings.format("All prayers moved %s min later.", kotlin.math.abs(adjGlobal))
-                                            else UiStrings.format("All prayers moved %s min earlier.", kotlin.math.abs(adjGlobal))
-                                        },
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
 
                                 val adjList = listOf(
                                     Quadruple("Fajr", if (isAr) "الفجر" else UiStrings.of("Fajr"), adjFajr) { v: Int -> viewModel.setAdjFajr(v) },
@@ -1185,101 +1188,6 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                         }
                     }
 
-                    // Card: Hijri date adjustment
-                    item {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)),
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                        ) {
-                            Column(
-                                modifier = Modifier.fillMaxWidth().padding(12.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Default.DateRange, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = if (isAr) "التاريخ الهجري" else UiStrings.of("Hijri Date"),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-
-                                Text(
-                                    text = if (isAr) "التاريخ محسوب على أم القرى، ويُزاح تلقائياً في البلدان التي تعتمد الرؤية المحلية. عدّله هنا عند الحاجة، واضغط الرقم للرجوع إلى التلقائي." else UiStrings.of("The date is calculated from Umm al-Qura, shifted automatically for countries that follow a local sighting. Override it here if needed; tap the number to go back to automatic."),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f))
-                                        .padding(horizontal = 8.dp, vertical = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        text = if (isAr) "الإزاحة" else UiStrings.of("Adjustment"),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        IconButton(
-                                            onClick = { viewModel.setHijriAdjustment(hijriAdjustment - 1) },
-                                            enabled = hijriAdjustment > -2,
-                                            modifier = Modifier.size(32.dp)
-                                        ) {
-                                            Icon(Icons.Default.Remove, contentDescription = if (isAr) "يوم أقل" else UiStrings.of("One day earlier"), modifier = Modifier.size(16.dp))
-                                        }
-                                        val adjustmentLabel = when {
-                                            !hijriAdjustmentIsManual -> if (isAr) "تلقائي" else UiStrings.of("Auto")
-                                            hijriAdjustment == 0 -> if (isAr) "محسوب" else UiStrings.of("Calculated")
-                                            hijriAdjustment > 0 -> "+$hijriAdjustment " + (if (isAr) "يوم" else UiStrings.of("d"))
-                                            else -> "$hijriAdjustment " + (if (isAr) "يوم" else UiStrings.of("d"))
-                                        }
-                                        Text(
-                                            text = adjustmentLabel.localize(isAr, useWesternNumbersInArabic),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            fontWeight = FontWeight.Bold,
-                                            textAlign = TextAlign.Center,
-                                            modifier = Modifier
-                                                .width(70.dp)
-                                                .clickable(enabled = hijriAdjustmentIsManual) {
-                                                    viewModel.resetHijriAdjustment()
-                                                }
-                                        )
-                                        IconButton(
-                                            onClick = { viewModel.setHijriAdjustment(hijriAdjustment + 1) },
-                                            enabled = hijriAdjustment < 2,
-                                            modifier = Modifier.size(32.dp)
-                                        ) {
-                                            Icon(Icons.Default.Add, contentDescription = if (isAr) "يوم أكثر" else UiStrings.of("One day later"), modifier = Modifier.size(16.dp))
-                                        }
-                                    }
-                                }
-
-                                // Show what the shift does, rather than leaving the arrows as guesswork.
-                                val previewDate = dev.barakah.app.util.HijriCalendarHelper
-                                    .getTodayHijriDateString(isAr, hijriAdjustment)
-                                Text(
-                                    text = ((if (isAr) "اليوم: " else UiStrings.of("Today: ")) + previewDate)
-                                        .localize(isAr, useWesternNumbersInArabic),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    textAlign = TextAlign.End
-                                )
-                            }
-                        }
-                    }
 
                     // Card 8: About App
                     item {
@@ -1361,6 +1269,16 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                         "ترجمات الأدعية: MuslimData بترخيص Apache 2.0 (الروسية والفارسية والكردية السورانية)."
                                     } else {
                                         UiStrings.of("Supplication translations: MuslimData, Apache License 2.0 (Russian, Persian, Sorani Kurdish).")
+                                    },
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+
+                                Text(
+                                    text = if (isAr) {
+                                        "صوت الأذان: «أذان الفجر في مسجد مالمو»، المركز الإسلامي في مالمو / بسيم عزامي، CC BY 3.0. الأذان العادي: Beautiful adhan، آدم سيناغدا، CC0."
+                                    } else {
+                                        UiStrings.of("Adhan audio: Fajr azan at Malmo Mosque, Islamic Center Malmo / Besim Azemi, CC BY 3.0; regular adhan: Beautiful adhan by Adam-synagda, CC0.")
                                     },
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant

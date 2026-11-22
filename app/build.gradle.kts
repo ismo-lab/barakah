@@ -25,17 +25,20 @@ val buildNumber = versionProps.getProperty("BUILD_NUMBER", "1006").toInt()
 // tag and refuses a version code it has already published, and the tag has to name what it points
 // at. So version.properties is the only input a release build reads.
 //
+// MAJOR.MINOR.PATCH is the user-facing name. BUILD_NUMBER is the only input to versionCode and
+// must always increase: making MINOR/PATCH affect the code would let a MAJOR bump lower it.
+//
 // Releasing means bumping those numbers, committing, and tagging that commit with
-// v<MAJOR>.<MINOR>.<PATCH>.<BUILD_NUMBER>. The workflows refuse a tag that does not match. The
+// v<MAJOR>.<MINOR>.<PATCH>. The workflows refuse a tag that does not match. The
 // -PbarakahVersionName override exists only for the test-release workflow's staging APK.
 val signingStorePassword = System.getenv("BARAKAH_KEYSTORE_PASSWORD") ?: "android"
 val signingKeyAlias = System.getenv("BARAKAH_KEY_ALIAS") ?: "androiddebugkey"
 val signingKeyPassword = System.getenv("BARAKAH_KEY_PASSWORD") ?: "android"
 
 val currentVersionCode = (findProperty("barakahVersionCode") as String?)?.toIntOrNull()
-  ?: (majorVersion * 100000 + minorVersion * 10000 + patchVersion * 100 + buildNumber)
+  ?: (100000 + buildNumber)
 val currentVersionName = (findProperty("barakahVersionName") as String?)?.takeIf { it.isNotEmpty() }
-  ?: "$majorVersion.$minorVersion.$patchVersion.$buildNumber"
+  ?: "$majorVersion.$minorVersion.$patchVersion"
 
 // F-Droid signs the finished APK itself, so a build can opt out with -PsigningDisabled and never
 // looks for a key at all. Otherwise the keystore is materialised in the build directory instead of
@@ -64,6 +67,13 @@ android {
   dependenciesInfo {
     includeInApk = false
     includeInBundle = false
+  }
+
+  // The 75 MB city catalog is read with AssetManager.openFd(), which only works on stored
+  // (uncompressed) assets. Compressed assets over ~1 MB can also fail to read on some Android
+  // builds, which is why search silently returned no results while GPS kept working.
+  androidResources {
+    noCompress += "sqlite"
   }
 
   defaultConfig {
@@ -265,7 +275,7 @@ tasks.named("preBuild") {
 // Tasks for professional Version Management as per official Android documentation
 tasks.register("incrementBuildNumber") {
   group = "versioning"
-  description = "Increments the BUILD_NUMBER in version.properties and updates VERSION_CODE/VERSION_NAME."
+  description = "Bumps PATCH and BUILD_NUMBER, then updates VERSION_CODE/VERSION_NAME."
   doLast {
     val props = Properties()
     if (versionFile.exists()) {
@@ -273,11 +283,11 @@ tasks.register("incrementBuildNumber") {
     }
     val maj = props.getProperty("MAJOR", "1").toInt()
     val min = props.getProperty("MINOR", "0").toInt()
-    val pat = props.getProperty("PATCH", "0").toInt()
+    val pat = props.getProperty("PATCH", "0").toInt() + 1
     val bld = props.getProperty("BUILD_NUMBER", "1004").toInt() + 1
 
-    val newCode = maj * 100000 + min * 10000 + pat * 100 + bld
-    val newName = "$maj.$min.$pat.$bld"
+    val newCode = 100000 + bld
+    val newName = "$maj.$min.$pat"
 
     props.setProperty("MAJOR", maj.toString())
     props.setProperty("MINOR", min.toString())
@@ -286,8 +296,8 @@ tasks.register("incrementBuildNumber") {
     props.setProperty("VERSION_CODE", newCode.toString())
     props.setProperty("VERSION_NAME", newName)
 
-    versionFile.outputStream().use { 
-      props.store(it, "Updated by incrementBuildNumber task") 
+    versionFile.outputStream().use {
+      props.store(it, "Updated by incrementBuildNumber task")
     }
     println("Updated Version: Code=$newCode ($newName Build #$bld)")
   }
@@ -306,8 +316,8 @@ tasks.register("incrementMinorVersion") {
     val pat = 0
     val bld = props.getProperty("BUILD_NUMBER", "1004").toInt() + 1
 
-    val newCode = maj * 100000 + min * 10000 + pat * 100 + bld
-    val newName = "$maj.$min.$pat.$bld"
+    val newCode = 100000 + bld
+    val newName = "$maj.$min.$pat"
 
     props.setProperty("MAJOR", maj.toString())
     props.setProperty("MINOR", min.toString())
@@ -316,8 +326,8 @@ tasks.register("incrementMinorVersion") {
     props.setProperty("VERSION_CODE", newCode.toString())
     props.setProperty("VERSION_NAME", newName)
 
-    versionFile.outputStream().use { 
-      props.store(it, "Updated by incrementMinorVersion task") 
+    versionFile.outputStream().use {
+      props.store(it, "Updated by incrementMinorVersion task")
     }
     println("Updated Minor Version: Code=$newCode ($newName Build #$bld)")
   }
@@ -336,8 +346,8 @@ tasks.register("incrementMajorVersion") {
     val pat = 0
     val bld = props.getProperty("BUILD_NUMBER", "1004").toInt() + 1
 
-    val newCode = maj * 100000 + min * 10000 + pat * 100 + bld
-    val newName = "$maj.$min.$pat.$bld"
+    val newCode = 100000 + bld
+    val newName = "$maj.$min.$pat"
 
     props.setProperty("MAJOR", maj.toString())
     props.setProperty("MINOR", min.toString())
@@ -346,8 +356,8 @@ tasks.register("incrementMajorVersion") {
     props.setProperty("VERSION_CODE", newCode.toString())
     props.setProperty("VERSION_NAME", newName)
 
-    versionFile.outputStream().use { 
-      props.store(it, "Updated by incrementMajorVersion task") 
+    versionFile.outputStream().use {
+      props.store(it, "Updated by incrementMajorVersion task")
     }
     println("Updated Major Version: Code=$newCode ($newName Build #$bld)")
   }

@@ -247,6 +247,29 @@ class PrayerCalculatorTest {
     }
 
     @Test
+    fun `every selectable calculation method produces usable times`() {
+        for (method in PrayerCalculator.CalculationMethod.entries) {
+            val times = PrayerCalculator.calculate(
+                51.5074, -0.1278, 0.0, day(2026, 6, 21), method = method
+            )
+            for (value in listOf(times.fajr, times.sunrise, times.dhuhr, times.asr, times.maghrib, times.isha)) {
+                assertTrue("$method produced '$value'", Regex("""\d{2}:\d{2}""").matches(value))
+            }
+        }
+    }
+
+    @Test
+    fun `a shallower fajr angle moves fajr later`() {
+        val mwl = PrayerCalculator.calculate(21.4225, 39.8262, 3.0, day(2024, 3, 11))
+        val isna = PrayerCalculator.calculate(
+            21.4225, 39.8262, 3.0, day(2024, 3, 11),
+            method = PrayerCalculator.CalculationMethod.ISNA
+        )
+
+        assertTrue("MWL ${mwl.fajr}, ISNA ${isna.fajr}", minutes(isna.fajr) > minutes(mwl.fajr))
+    }
+
+    @Test
     fun `time zone ids fall back when missing or unknown`() {
         assertEquals("Asia/Riyadh", PrayerCalculator.resolveTimeZoneId(null))
         assertEquals("UTC", PrayerCalculator.resolveTimeZoneId(null, "UTC"))

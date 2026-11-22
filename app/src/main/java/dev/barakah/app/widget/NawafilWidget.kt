@@ -64,7 +64,6 @@ class NawafilWidget : GlanceAppWidget() {
             val adjAsr = prefs.getInt(AppPrefs.ADJ_ASR, 0)
             val adjMaghrib = prefs.getInt(AppPrefs.ADJ_MAGHRIB, 0)
             val adjIsha = prefs.getInt(AppPrefs.ADJ_ISHA, 0)
-            val clockOffset = prefs.getInt(AppPrefs.ADJ_GLOBAL, 0)
 
             val m = try {
                 PrayerCalculator.CalculationMethod.valueOf(prefs.getString(AppPrefs.CALC_METHOD, "MWL") ?: "MWL")
@@ -85,8 +84,7 @@ class NawafilWidget : GlanceAppWidget() {
                 adjDhuhr = adjDhuhr,
                 adjAsr = adjAsr,
                 adjMaghrib = adjMaghrib,
-                adjIsha = adjIsha,
-                clockOffsetMinutes = clockOffset
+                adjIsha = adjIsha
             )
 
             // The four times come from the same night division the home screen and alarms use.
