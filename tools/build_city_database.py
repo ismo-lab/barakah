@@ -135,6 +135,10 @@ def build(source: Path, output: Path, alternate_names_source: Path | None = None
                     database.executemany(alias_sql, aliases)
 
         if alternate_names_source is not None:
+            # Alternate names cover every GeoNames feature, not just the populated places bundled
+            # here. Without this set most localized names point at cities that are not in the
+            # catalog, can never be searched, and used to make up most of the database.
+            city_ids = {row[0] for row in database.execute("SELECT id FROM city")}
             localized_names: list[tuple[int, str, str, int]] = []
             with zipfile.ZipFile(alternate_names_source) as archive:
                 with archive.open("alternateNamesV2.txt") as rows:
@@ -145,6 +149,8 @@ def build(source: Path, output: Path, alternate_names_source: Path | None = None
                         try:
                             geoname_id = int(fields[1])
                         except ValueError:
+                            continue
+                        if geoname_id not in city_ids:
                             continue
 
                         language_tag = fields[2].strip().lower()
@@ -173,6 +179,8 @@ def build(source: Path, output: Path, alternate_names_source: Path | None = None
         database.execute("CREATE INDEX city_alias_name ON city_alias(name COLLATE NOCASE, city_id)")
         database.execute("ANALYZE")
         database.commit()
+        # Rows deleted before this point still leave free pages in the file that ships in the APK.
+        database.execute("VACUUM")
         return count
     finally:
         database.close()
@@ -215,8 +223,9 @@ def main() -> None:
 
     try:
         count = build(source, arguments.output, alternate_names_source)
-        version_input = f"{sha256_file(source)}:{sha256_file(alternate_names_source)}"
-        version = hashlib.sha256(version_input.encode("ascii")).hexdigest()
+        # The installed file is named after the database itself, so any change to the build steps
+        # that alters its bytes also invalidates an older copy on a device.
+        version = sha256_file(arguments.output)
         version_file = arguments.output.with_name("cities500.version")
         version_file.write_text(version + "\n", encoding="ascii")
         print(f"Built {arguments.output} with {count:,} populated places and localized names.")

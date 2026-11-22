@@ -67,8 +67,12 @@ import java.util.*
  */
 /** Method names are standards bodies, not app copy, so the abbreviations stay as-is. */
 private fun calculationMethodLabel(method: PrayerCalculator.CalculationMethod, isAr: Boolean): String =
-    if (!isAr) method.name.replace('_', ' ')
-    else when (method) {
+    if (!isAr) when (method) {
+        PrayerCalculator.CalculationMethod.QUM -> "Qum (Shia Ithna-Ashari)"
+        PrayerCalculator.CalculationMethod.KEMENAG -> "Kemenag (Indonesia)"
+        PrayerCalculator.CalculationMethod.JAKIM -> "JAKIM (Malaysia / Brunei)"
+        else -> method.name.replace('_', ' ')
+    } else when (method) {
         PrayerCalculator.CalculationMethod.MWL -> "رابطة العالم الإسلامي"
         PrayerCalculator.CalculationMethod.ISNA -> "الجمعية الإسلامية لأمريكا الشمالية"
         PrayerCalculator.CalculationMethod.EGYPT -> "الهيئة المصرية العامة للمساحة"
@@ -82,7 +86,12 @@ private fun calculationMethodLabel(method: PrayerCalculator.CalculationMethod, i
         PrayerCalculator.CalculationMethod.UOIF -> "اتحاد المنظمات الإسلامية بفرنسا"
         PrayerCalculator.CalculationMethod.RUSSIA -> "روسيا"
         PrayerCalculator.CalculationMethod.DUBAI -> "دبي"
-        PrayerCalculator.CalculationMethod.QUM -> "قم"
+        PrayerCalculator.CalculationMethod.QUM -> "قم (الشيعة الإثنا عشرية)"
+        PrayerCalculator.CalculationMethod.MOROCCO -> "المغرب"
+        PrayerCalculator.CalculationMethod.ALGERIA -> "الجزائر"
+        PrayerCalculator.CalculationMethod.TUNISIA -> "تونس"
+        PrayerCalculator.CalculationMethod.KEMENAG -> "إندونيسيا (كيميناغ)"
+        PrayerCalculator.CalculationMethod.JAKIM -> "ماليزيا (جاكيم)"
     }
 
 @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
@@ -1055,6 +1064,15 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                         }
                                     }
                                 }
+                                Text(
+                                    text = if (isAr) {
+                                        "الافتراضي رابطة العالم الإسلامي، وتُستخدم طريقة البلد عند توفرها. قم هي طريقة الشيعة الإثنا عشرية (الفجر 16° والعشاء 14°)."
+                                    } else {
+                                        UiStrings.of("Defaults to Muslim World League, with a country authority where available. Qum is the Shia Ithna-Ashari convention (Fajr 16°, Isha 14°).")
+                                    },
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
                         }
                     }

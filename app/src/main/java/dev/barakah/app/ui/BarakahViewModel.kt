@@ -27,6 +27,7 @@ import dev.barakah.app.util.HijriCalendarHelper
 import dev.barakah.app.util.LocationProvider
 import dev.barakah.app.util.NawafilTimes
 import dev.barakah.app.util.PrayerCalculator
+import dev.barakah.app.util.PrayerMethodResolver
 import dev.barakah.app.util.QiblaManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -341,15 +342,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         City("Toronto, Canada", 43.6532, -79.3832)
     )
 
-    private val _calculationMethod = MutableStateFlow(
-        run {
-            try {
-                PrayerCalculator.CalculationMethod.valueOf(prefs.getString(AppPrefs.CALC_METHOD, "MWL") ?: "MWL")
-            } catch(e: Exception) {
-                PrayerCalculator.CalculationMethod.MWL
-            }
-        }
-    )
+    private val _calculationMethod = MutableStateFlow(PrayerMethodResolver.resolve(prefs))
     val calculationMethod: StateFlow<PrayerCalculator.CalculationMethod> = _calculationMethod
 
     // 2. PRAYER TIMES STATE initialized dynamically with stored values and proper TZ offset from launch
@@ -357,11 +350,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         run {
             val lat = prefs.getFloat(AppPrefs.LOC_LAT, LocationDefaults.LATITUDE.toFloat()).toDouble()
             val lng = prefs.getFloat(AppPrefs.LOC_LNG, LocationDefaults.LONGITUDE.toFloat()).toDouble()
-            val m = try {
-                PrayerCalculator.CalculationMethod.valueOf(prefs.getString(AppPrefs.CALC_METHOD, "MWL") ?: "MWL")
-            } catch(e: Exception) {
-                PrayerCalculator.CalculationMethod.MWL
-            }
+            val m = PrayerMethodResolver.resolve(prefs)
             val asrM = prefs.getString(AppPrefs.ASR_METHOD, "standard") ?: "standard"
             val ishaM = prefs.getString(AppPrefs.ISHA_METHOD, "standard") ?: "standard"
             val adjF = prefs.getInt(AppPrefs.ADJ_FAJR, 0)
@@ -711,6 +700,10 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             if (countryCode != null) putString(AppPrefs.LOC_COUNTRY, countryCode.uppercase())
         }
         hijriAdjustment.value = countryHijriAdjustment()
+        // A country only matters until the reader has picked a method themselves.
+        if (!prefs.contains(AppPrefs.CALC_METHOD)) {
+            _calculationMethod.value = PrayerMethodResolver.resolve(prefs)
+        }
         recalculatePrayerTimes()
         if (isSuccessFeedback) {
             viewModelScope.launch {
@@ -1127,11 +1120,12 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         setArabicFontSize(24f)
         setEnglishFontSize(16f)
         setLocationMethod("manual")
+        // Clearing the explicit choice lets the saved country decide, with MWL as the fallback.
+        prefs.edit { remove(AppPrefs.CALC_METHOD) }
         val defaultLabel = LocationDefaults.unsetLabel(prefs.getString(AppPrefs.APP_LANG, "ar") == "ar")
         updateLocation(LocationDefaults.LATITUDE, LocationDefaults.LONGITUDE, defaultLabel, false)
         setAsrMethod("standard")
         setIshaMethod("standard")
-        selectMethod(PrayerCalculator.CalculationMethod.MWL)
         setShowNawafil(false)
         setEnableTasbihHaptics(true)
         setAdjFajr(0)

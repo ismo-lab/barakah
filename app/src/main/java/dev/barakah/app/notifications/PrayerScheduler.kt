@@ -9,6 +9,7 @@ import android.content.Intent
 import dev.barakah.app.util.ClockTime
 import dev.barakah.app.util.NawafilTimes
 import dev.barakah.app.util.PrayerCalculator
+import dev.barakah.app.util.PrayerMethodResolver
 import java.util.Calendar
 import java.util.TimeZone
 
@@ -80,11 +81,7 @@ object PrayerScheduler {
             
             val asrMethod = prefs.getString(AppPrefs.ASR_METHOD, "standard") ?: "standard"
             val ishaMethod = prefs.getString(AppPrefs.ISHA_METHOD, "standard") ?: "standard"
-            val m = try {
-                PrayerCalculator.CalculationMethod.valueOf(prefs.getString(AppPrefs.CALC_METHOD, "MWL") ?: "MWL")
-            } catch(e: Exception) {
-                PrayerCalculator.CalculationMethod.MWL
-            }
+            val m = PrayerMethodResolver.resolve(prefs)
 
             val adjFajr = prefs.getInt(AppPrefs.ADJ_FAJR, 0)
             val adjSunrise = prefs.getInt(AppPrefs.ADJ_SUNRISE, 0)

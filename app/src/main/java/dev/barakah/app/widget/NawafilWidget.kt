@@ -29,6 +29,7 @@ import dev.barakah.app.widget.WidgetRefreshState
 import dev.barakah.app.util.ClockTime
 import dev.barakah.app.util.NawafilTimes
 import dev.barakah.app.util.PrayerCalculator
+import dev.barakah.app.util.PrayerMethodResolver
 import dev.barakah.app.util.localize
 import java.util.*
 
@@ -65,11 +66,7 @@ class NawafilWidget : GlanceAppWidget() {
             val adjMaghrib = prefs.getInt(AppPrefs.ADJ_MAGHRIB, 0)
             val adjIsha = prefs.getInt(AppPrefs.ADJ_ISHA, 0)
 
-            val m = try {
-                PrayerCalculator.CalculationMethod.valueOf(prefs.getString(AppPrefs.CALC_METHOD, "MWL") ?: "MWL")
-            } catch(e: Exception) {
-                PrayerCalculator.CalculationMethod.MWL
-            }
+            val m = PrayerMethodResolver.resolve(prefs)
         
             val times = PrayerCalculator.calculate(
                 latitude = lat,

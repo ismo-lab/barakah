@@ -135,6 +135,11 @@ class HijriCalendarHelperTest {
         val range = HijriCalendarHelper.getGregorianEquivalentRange(9, 21, 30, false)
 
         assertTrue("range was '$range'", range.contains(" to "))
+        // Ramadan 1448 has 29 days in Umm al-Qura. A past 30 Ramadan must not be used as the end
+        // of a range whose start is in the following year.
+        val years = Regex("""\d{4}""").findAll(range).map { it.value.toInt() }.toList()
+        assertEquals(2, years.size)
+        assertEquals(years[0], years[1])
     }
 
     @Test
