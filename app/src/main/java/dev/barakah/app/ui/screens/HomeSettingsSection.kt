@@ -68,7 +68,6 @@ import java.util.*
 /** Method names are standards bodies, not app copy, so the abbreviations stay as-is. */
 private fun calculationMethodLabel(method: PrayerCalculator.CalculationMethod, isAr: Boolean): String =
     if (!isAr) when (method) {
-        PrayerCalculator.CalculationMethod.QUM -> "Qum (Shia Ithna-Ashari)"
         PrayerCalculator.CalculationMethod.KEMENAG -> "Kemenag (Indonesia)"
         PrayerCalculator.CalculationMethod.JAKIM -> "JAKIM (Malaysia / Brunei)"
         else -> method.name.replace('_', ' ')
@@ -86,7 +85,6 @@ private fun calculationMethodLabel(method: PrayerCalculator.CalculationMethod, i
         PrayerCalculator.CalculationMethod.UOIF -> "اتحاد المنظمات الإسلامية بفرنسا"
         PrayerCalculator.CalculationMethod.RUSSIA -> "روسيا"
         PrayerCalculator.CalculationMethod.DUBAI -> "دبي"
-        PrayerCalculator.CalculationMethod.QUM -> "قم (الشيعة الإثنا عشرية)"
         PrayerCalculator.CalculationMethod.MOROCCO -> "المغرب"
         PrayerCalculator.CalculationMethod.ALGERIA -> "الجزائر"
         PrayerCalculator.CalculationMethod.TUNISIA -> "تونس"
@@ -1066,9 +1064,9 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                 }
                                 Text(
                                     text = if (isAr) {
-                                        "الافتراضي رابطة العالم الإسلامي، وتُستخدم طريقة البلد عند توفرها. قم هي طريقة الشيعة الإثنا عشرية (الفجر 16° والعشاء 14°)."
+                                        "الافتراضي رابطة العالم الإسلامي، وتُستخدم طريقة البلد عند توفرها."
                                     } else {
-                                        UiStrings.of("Defaults to Muslim World League, with a country authority where available. Qum is the Shia Ithna-Ashari convention (Fajr 16°, Isha 14°).")
+                                        UiStrings.of("Defaults to Muslim World League, with a country authority where available.")
                                     },
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant

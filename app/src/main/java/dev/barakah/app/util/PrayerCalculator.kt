@@ -29,7 +29,6 @@ object PrayerCalculator {
         UOIF(12.0, 12.0),         // Union of Islamic Organisations of France
         RUSSIA(16.0, 15.0),       // Spiritual Administration of Muslims of Russia
         DUBAI(18.2, 18.2),        // Dubai
-        QUM(16.0, 14.0),          // Shia Ithna-Ashari, Qum
         MOROCCO(19.0, 17.0),      // Morocco, Ministry of Habous
         ALGERIA(18.0, 17.0),      // Algeria
         TUNISIA(18.0, 18.0),      // Tunisia

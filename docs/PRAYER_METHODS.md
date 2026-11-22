@@ -43,13 +43,6 @@ Only angle-based methods are mapped. Authorities that publish fixed monthly tabl
 to Maghrib (for example Qatar, Jordan and Portugal) are deliberately left out rather than
 approximated. An unlisted country keeps the MWL fallback, and the picker lets anyone override it.
 
-## Qum
-
-**QUM** is the Shia Ithna-Ashari convention from the Leva Research Institute in Qum (Fajr 16°,
-Isha 14°). It is not a variant of a Sunni authority and is not the same as the Tehran method. It is
-offered for readers who follow that school; the app applies ordinary twilight angles, so published
-tables that add their own rules can still differ.
-
 ## Other entries in the picker
 
 `EGYPT_BIS` is the revised Egyptian 20°/18° set. `TURKEY` and `SINGAPORE` approximate the published
