@@ -259,23 +259,21 @@ class PrayerCalculatorTest {
     }
 
     @Test
-    fun `the morocco method moves every time back by an hour`() {
-        // MWL and Morocco share every angle but Fajr (18 vs 19 degrees), so five of the six
-        // times must be exactly an hour earlier and Fajr only a few minutes more than that.
+    fun `the morocco method differs from mwl only in the fajr angle`() {
         val date = day(2026, 3, 11)
         val mwl = PrayerCalculator.calculate(33.5731, -7.5898, 1.0, date, method = PrayerCalculator.CalculationMethod.MWL)
         val morocco = PrayerCalculator.calculate(33.5731, -7.5898, 1.0, date, method = PrayerCalculator.CalculationMethod.MOROCCO)
 
-        for ((base, shifted) in listOf(
+        for ((base, actual) in listOf(
             mwl.sunrise to morocco.sunrise,
             mwl.dhuhr to morocco.dhuhr,
             mwl.asr to morocco.asr,
             mwl.maghrib to morocco.maghrib,
             mwl.isha to morocco.isha
         )) {
-            assertEquals("$base vs $shifted", -60, minutes(shifted) - minutes(base))
+            assertEquals("$base vs $actual", base, actual)
         }
-        assertTrue("fajr ${mwl.fajr} vs ${morocco.fajr}", minutes(morocco.fajr) - minutes(mwl.fajr) <= -50)
+        assertTrue("fajr ${mwl.fajr} vs ${morocco.fajr}", minutes(morocco.fajr) < minutes(mwl.fajr))
     }
 
     @Test

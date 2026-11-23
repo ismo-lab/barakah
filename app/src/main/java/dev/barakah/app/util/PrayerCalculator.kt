@@ -152,19 +152,13 @@ object PrayerCalculator {
         val asrHourAngle = hourAngle(altitudeAsr, latitude, declination) ?: 3.5
         val asrTime = dhuhrTime + asrHourAngle
 
-        // Morocco's published timetable runs about an hour ahead of the civil clock, so its
-        // method reads an hour earlier than the raw twilight angles. Keep the shift at the final
-        // clock step: the home screen, widgets, alarms and the nawafil derived from these times
-        // then all agree without each caller having to know about it.
-        val clockShiftMinutes = clockOffsetMinutes + if (method == CalculationMethod.MOROCCO) -60 else 0
-
         return PrayerTimes(
-            fajr = formatTime(fajrTime, adjFajr + clockShiftMinutes),
-            sunrise = formatTime(sunriseTime, adjSunrise + clockShiftMinutes),
-            dhuhr = formatTime(dhuhrTime, adjDhuhr + clockShiftMinutes),
-            asr = formatTime(asrTime, adjAsr + clockShiftMinutes),
-            maghrib = formatTime(maghribTime, adjMaghrib + clockShiftMinutes),
-            isha = formatTime(ishaTime, adjIsha + clockShiftMinutes)
+            fajr = formatTime(fajrTime, adjFajr + clockOffsetMinutes),
+            sunrise = formatTime(sunriseTime, adjSunrise + clockOffsetMinutes),
+            dhuhr = formatTime(dhuhrTime, adjDhuhr + clockOffsetMinutes),
+            asr = formatTime(asrTime, adjAsr + clockOffsetMinutes),
+            maghrib = formatTime(maghribTime, adjMaghrib + clockOffsetMinutes),
+            isha = formatTime(ishaTime, adjIsha + clockOffsetMinutes)
         )
     }
 
