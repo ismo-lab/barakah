@@ -1,6 +1,7 @@
 package dev.barakah.app.ui.screens
 
 import android.app.Application
+import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -22,6 +23,12 @@ class HomeSettingsCitySearchTest {
     @get:Rule
     val compose = createComposeRule()
 
+    private fun dump(node: SemanticsNode, depth: Int = 0) {
+        if (depth > 8) return
+        println("${"  ".repeat(depth)}NODE=${node.config}")
+        node.children.forEach { dump(it, depth + 1) }
+    }
+
     @Test
     fun `manual city search works while location method is auto`() {
         val context = ApplicationProvider.getApplicationContext<Application>()
@@ -33,9 +40,7 @@ class HomeSettingsCitySearchTest {
             BarakahTheme { HomeSettingsSection(viewModel, onDismiss = {}) }
         }
         compose.waitForIdle()
-        val root = compose.onRoot().fetchSemanticsNode()
-        println("ROOT_CHILDREN=${root.children.size}")
-        root.children.take(8).forEach { println("CHILD=${it.config}") }
+        dump(compose.onRoot().fetchSemanticsNode())
 
         compose.onNodeWithText("Search city name...").performTextInput("London")
         compose.mainClock.advanceTimeBy(1_000)
