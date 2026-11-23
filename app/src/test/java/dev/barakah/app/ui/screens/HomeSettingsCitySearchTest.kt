@@ -2,7 +2,6 @@ package dev.barakah.app.ui.screens
 
 import android.app.Application
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.fetchSemanticsNode
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performTextInput
