@@ -230,7 +230,8 @@ def main() -> None:
         version = sha256_file(arguments.output)
         version_file = arguments.output.with_name("cities500.version")
         version_file.write_text(version + "\n", encoding="ascii")
-        compressed = arguments.output.with_name(arguments.output.name + ".gz")
+        # AGP gunzips assets ending in .gz during merge, so use .tgz to keep the gzip bytes.
+        compressed = arguments.output.with_name(arguments.output.name + ".tgz")
         with (
             open(arguments.output, "rb") as source_file,
             open(compressed, "wb") as compressed_file,

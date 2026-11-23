@@ -71,9 +71,10 @@ android {
 
   // The city catalog ships as gzip so the APK does not carry 55 MB of stored SQLite pages. It is
   // still a stored asset; CityData decompresses it on first use and keeps the SQLite file in app
-  // storage, so search stays offline. No double compression by aapt.
+  // storage, so search stays offline. No double compression by aapt. The suffix is `.tgz`, not
+  // `.gz`: AGP's asset merge gunzips and renames `.gz` assets before aapt sees them.
   androidResources {
-    noCompress += "gz"
+    noCompress += "tgz"
   }
 
   defaultConfig {

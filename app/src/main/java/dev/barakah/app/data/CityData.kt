@@ -33,7 +33,8 @@ data class CitySuggestion(
 object CityData {
     private const val TAG = "CityData"
     private const val DATABASE_PREFIX = "geonames-cities500-"
-    private const val CATALOG_ASSET = "cities500.sqlite.gz"
+    // AGP's asset merge gunzips and renames any `.gz` asset; `.tgz` keeps the gzip bytes intact.
+    private const val CATALOG_ASSET = "cities500.sqlite.tgz"
     private val databaseMutex = Mutex()
     @Volatile private var database: SQLiteDatabase? = null
 
