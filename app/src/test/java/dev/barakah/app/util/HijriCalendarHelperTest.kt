@@ -19,15 +19,18 @@ import org.robolectric.annotation.Config
 @Config(sdk = [36])
 class HijriCalendarHelperTest {
 
+    private fun hijriOf(date: LocalDate) =
+        HijriCalendarHelper.getHijriDateFor(date.year, date.monthValue, date.dayOfMonth)
+
     @Test
     fun `known dates land on the umm al qura calendar`() {
         // 1 Ramadan 1445 was 11 March 2024, and 1 Muharram 1446 was 7 July 2024.
-        val ramadan = HijriCalendarHelper.getHijriDateFor(LocalDate.of(2024, 3, 11))
+        val ramadan = hijriOf(LocalDate.of(2024, 3, 11))
         assertEquals(1, ramadan.day)
         assertEquals(9, ramadan.month)
         assertEquals(1445, ramadan.year)
 
-        val newYear = HijriCalendarHelper.getHijriDateFor(LocalDate.of(2024, 7, 7))
+        val newYear = hijriOf(LocalDate.of(2024, 7, 7))
         assertEquals(1, newYear.day)
         assertEquals(1, newYear.month)
         assertEquals(1446, newYear.year)
@@ -36,10 +39,10 @@ class HijriCalendarHelperTest {
     @Test
     fun `every day advances the date by exactly one`() {
         val start = LocalDate.of(2024, 2, 1)
-        var previous = HijriCalendarHelper.getHijriDateFor(start)
+        var previous = hijriOf(start)
 
         for (offset in 1..400L) {
-            val current = HijriCalendarHelper.getHijriDateFor(start.plusDays(offset))
+            val current = hijriOf(start.plusDays(offset))
 
             val nextDayInMonth = current.month == previous.month &&
                 current.year == previous.year &&
@@ -106,7 +109,7 @@ class HijriCalendarHelperTest {
                 assertTrue("$day/$month ($adjustment) showed '$shown'", shown.isNotEmpty())
 
                 val gregorian = LocalDate.parse(shown, DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH))
-                val hijri = HijriCalendarHelper.getHijriDateFor(gregorian.plusDays(adjustment.toLong()))
+                val hijri = hijriOf(gregorian.plusDays(adjustment.toLong()))
 
                 assertEquals("$day/$month ($adjustment) showed $shown", day, hijri.day)
                 assertEquals("$day/$month ($adjustment) showed $shown", month, hijri.month)

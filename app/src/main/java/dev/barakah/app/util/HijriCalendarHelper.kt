@@ -4,31 +4,21 @@ import dev.barakah.app.data.UiStrings
 
 import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import java.util.Calendar
+import java.util.GregorianCalendar
 import java.util.Locale
+import java.util.TimeZone
 
 object HijriCalendarHelper {
 
     private const val TAG = "HijriCalendarHelper"
+    private const val MILLIS_PER_DAY = 86_400_000L
 
     data class HijriDate(val day: Int, val month: Int, val year: Int)
 
-    /**
-     * The Umm al-Qura conversion for an explicit date, so it can be exercised against known
-     * dates instead of whenever a test happens to run.
-     *
-     * Uses java.time, so only call this on API 26 and up.
-     */
-    @RequiresApi(Build.VERSION_CODES.O)
-    fun getHijriDateFor(localDate: java.time.LocalDate): HijriDate {
-        val hijriDate = java.time.chrono.HijrahDate.from(localDate)
-        return HijriDate(
-            day = hijriDate.get(java.time.temporal.ChronoField.DAY_OF_MONTH),
-            month = hijriDate.get(java.time.temporal.ChronoField.MONTH_OF_YEAR),
-            year = hijriDate.get(java.time.temporal.ChronoField.YEAR)
-        )
-    }
+    /** The Umm al-Qura conversion for an explicit Gregorian date, from the bundled table. */
+    fun getHijriDateFor(year: Int, month: Int, day: Int): HijriDate =
+        fromEpochDay(epochDayOf(year, month, day))
 
     /**
      * True when the calculated Umm al-Qura date falls in Ramadan. Umm al-Qura lengthens its Isha
@@ -53,8 +43,8 @@ object HijriCalendarHelper {
         setOf("BD", "DZ", "ID", "IN", "LK", "MA", "MY", "PK", "TN")
 
     /**
-     * The one conversion the whole app goes through: Umm al-Qura where the platform has it, and
-     * the arithmetic fallback on older devices.
+     * The one conversion the whole app goes through: the bundled Umm al-Qura table on every
+     * device, with the arithmetic fallback only for dates outside the table.
      *
      * Keep every caller on this. The date shown on the home screen, the day an occasion reminder
      * fires and the date listed for that occasion used to use two different calendars, so the app
@@ -63,17 +53,45 @@ object HijriCalendarHelper {
      * [adjustmentDays] shifts the result by that many days, which is how a user lines the
      * calculated date up with the moon sighting their community follows.
      */
-    private fun hijriFor(year: Int, month: Int, day: Int, adjustmentDays: Int): HijriDate {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            try {
-                val date = java.time.LocalDate.of(year, month, day).plusDays(adjustmentDays.toLong())
-                return getHijriDateFor(date)
-            } catch (e: Exception) {
-                Log.e(TAG, "Falling back to the arithmetic Hijri conversion", e)
-            }
+    private fun hijriFor(year: Int, month: Int, day: Int, adjustmentDays: Int): HijriDate =
+        fromEpochDay(epochDayOf(year, month, day, adjustmentDays))
+
+    /** UTC only: the table counts civil days, so device timezone must not enter the conversion. */
+    private fun utcCalendar(): GregorianCalendar =
+        GregorianCalendar(TimeZone.getTimeZone("UTC")).apply { clear() }
+
+    private fun epochDayOf(year: Int, month: Int, day: Int, adjustmentDays: Int = 0): Long {
+        val calendar = utcCalendar()
+        calendar.set(year, month - 1, day)
+        calendar.add(Calendar.DAY_OF_MONTH, adjustmentDays)
+        return Math.floorDiv(calendar.timeInMillis, MILLIS_PER_DAY)
+    }
+
+    private fun fromEpochDay(epochDay: Long): HijriDate {
+        val starts = UmmAlQuraTable.monthStartEpochDays
+        if (epochDay < starts[0] || epochDay >= UmmAlQuraTable.END_EPOCH_DAY) {
+            val calendar = utcCalendar().apply { timeInMillis = epochDay * MILLIS_PER_DAY }
+            return getHijriFromJulian(
+                getJulianDay(
+                    calendar.get(Calendar.YEAR),
+                    calendar.get(Calendar.MONTH) + 1,
+                    calendar.get(Calendar.DAY_OF_MONTH)
+                )
+            )
         }
 
-        return getHijriFromJulian(getJulianDay(year, month, day) + adjustmentDays)
+        var low = 0
+        var high = starts.size
+        while (low < high) {
+            val mid = (low + high) ushr 1
+            if (starts[mid] <= epochDay) low = mid + 1 else high = mid
+        }
+        val index = low - 1
+        return HijriDate(
+            (epochDay - starts[index] + 1).toInt(),
+            index % 12 + 1,
+            UmmAlQuraTable.FIRST_YEAR + index / 12
+        )
     }
 
     fun getTodayHijriDate(adjustmentDays: Int = 0): HijriDate {

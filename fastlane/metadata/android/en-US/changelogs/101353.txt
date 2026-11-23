@@ -1,0 +1,1 @@
+Hijri dates now come from a bundled Umm al-Qura table, so every device shows the same dates. The offline city catalog is gzipped, cutting the APK by about 28 MB; city search still works offline.

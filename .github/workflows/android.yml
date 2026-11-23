@@ -145,6 +145,20 @@ jobs:
         fi
         echo "Signed, and not debuggable."
 
+    # AGP silently gunzips and renames any `.gz` asset during merge. The app would then look for
+    # a gzip file that is not in the APK and city search would quietly return nothing, so check
+    # the packaged entry rather than trusting the source filename.
+    - name: Check the offline catalog is packaged as gzip
+      run: |
+        APK=app/build/outputs/apk/release/Barakah-v${{ env.VERSION_NAME }}.apk
+        ENTRY=$(unzip -v "$APK" | grep -F 'assets/cities500.sqlite.tgz')
+        echo "$ENTRY"
+        echo "$ENTRY" | grep -q 'Stored'
+        if unzip -Z1 "$APK" | grep -qx 'assets/cities500.sqlite'; then
+          echo "ERROR: AGP decompressed the catalog; city search would fail at runtime."
+          exit 1
+        fi
+
     - name: Upload build artifact
       uses: actions/upload-artifact@v5
       with:
