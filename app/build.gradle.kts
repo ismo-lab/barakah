@@ -145,7 +145,20 @@ android {
     compose = true
     buildConfig = true
   }
-  testOptions { unitTests { isIncludeAndroidResources = true } }
+  testOptions {
+    unitTests {
+      isIncludeAndroidResources = true
+      all {
+        // Robolectric downloads its Android runtime itself at test time, outside Gradle's
+        // repositories. CI shares an egress IP that repo1.maven.org rate-limits, so point it
+        // at the same Maven Central mirror used for dependency resolution.
+        it.systemProperty(
+          "robolectric.dependency.repo.url",
+          "https://maven-central.storage-download.googleapis.com/maven2/",
+        )
+      }
+    }
+  }
 }
 
 /**
