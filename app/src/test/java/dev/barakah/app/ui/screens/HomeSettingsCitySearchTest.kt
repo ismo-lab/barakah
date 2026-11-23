@@ -2,7 +2,9 @@ package dev.barakah.app.ui.screens
 
 import android.app.Application
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.fetchSemanticsNode
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ApplicationProvider
 import dev.barakah.app.data.UiStrings
@@ -31,6 +33,10 @@ class HomeSettingsCitySearchTest {
         compose.setContent {
             BarakahTheme { HomeSettingsSection(viewModel, onDismiss = {}) }
         }
+        compose.waitForIdle()
+        val root = compose.onRoot().fetchSemanticsNode()
+        println("ROOT_CHILDREN=${root.children.size}")
+        root.children.take(8).forEach { println("CHILD=${it.config}") }
 
         compose.onNodeWithText("Search city name...").performTextInput("London")
         compose.mainClock.advanceTimeBy(1_000)
