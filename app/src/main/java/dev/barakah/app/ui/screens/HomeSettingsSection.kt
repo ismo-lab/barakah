@@ -2,6 +2,7 @@ package dev.barakah.app.ui.screens
 
 import dev.barakah.app.data.UiStrings
 
+import androidx.compose.ui.platform.testTag
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -215,7 +216,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     contentPadding = PaddingValues(bottom = 16.dp),
-                    modifier = Modifier.fillMaxWidth().weight(1f)
+                    modifier = Modifier.fillMaxWidth().weight(1f).testTag("settings_list")
                 ) {
                     // Card 1: Language & Theme Preferences
                     item {
@@ -847,8 +848,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                     }
                                 }
 
-                                if (locationMethod == "manual") {
-                                    OutlinedTextField(
+                                OutlinedTextField(
                                         value = locationQuery,
                                         onValueChange = {
                                             locationQuery = it
@@ -887,6 +887,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                                         .clip(RoundedCornerShape(8.dp))
                                                         .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
                                                         .clickable {
+                                                            viewModel.setLocationMethod("manual")
                                                             viewModel.updateLocation(city.lat, city.lng, city.displayName(currentLang), isSuccessFeedback = true, timeZoneId = city.timeZoneId, countryCode = city.countryCode)
                                                             locationQuery = ""
                                                             keyboardController?.hide()
@@ -904,7 +905,6 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                             }
                                         }
                                     }
-                                }
                             }
                         }
                     }
