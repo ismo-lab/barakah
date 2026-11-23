@@ -1,0 +1,1 @@
+Morocco prayer times now run one hour earlier to match the country's published timetable, and the voluntary prayers (Duha, Witr, Tahajjud, Qiyam) follow. The regular adhan is now the call to prayer from the Prophet's Mosque. Removed the Qum calculation method.
