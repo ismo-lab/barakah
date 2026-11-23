@@ -7,13 +7,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileOutputStream
-import java.security.DigestOutputStream
 import java.security.MessageDigest
 import java.util.Locale
-import java.util.zip.GZIPInputStream
 
 data class CitySuggestion(
     val id: Int,
@@ -36,8 +33,7 @@ data class CitySuggestion(
 object CityData {
     private const val TAG = "CityData"
     private const val DATABASE_PREFIX = "geonames-cities500-"
-    // AGP's asset merge gunzips and renames any `.gz` asset; `.tgz` keeps the gzip bytes intact.
-    private const val CATALOG_ASSET = "cities500.sqlite.tgz"
+    private const val CATALOG_ASSET = "cities500.sqlite"
     private val databaseMutex = Mutex()
     @Volatile private var database: SQLiteDatabase? = null
 
@@ -113,23 +109,13 @@ object CityData {
         if (!file.exists() || file.length() == 0L) {
             file.parentFile?.mkdirs()
             try {
-                val digest = MessageDigest.getInstance("SHA-256")
-                // openFd needs a stored asset (CI checks this). It was the path that worked before
-                // gzip, and avoids reading a 30 MB stream through AssetManager.open on devices.
+                // openFd needs a stored asset (CI checks this). Raw SQLite asset, copied as-is.
                 context.assets.openFd(CATALOG_ASSET).use { descriptor ->
-                    descriptor.createInputStream().use { asset ->
-                        BufferedInputStream(asset).use { buffered ->
-                            GZIPInputStream(buffered).use { input ->
-                                FileOutputStream(temporaryFile).use { output ->
-                                    DigestOutputStream(output, digest).use { digested ->
-                                        input.copyTo(digested)
-                                    }
-                                }
-                            }
-                        }
+                    descriptor.createInputStream().use { input ->
+                        FileOutputStream(temporaryFile).use { output -> input.copyTo(output) }
                     }
                 }
-                val actualHash = digest.digest().toHex()
+                val actualHash = sha256(temporaryFile)
                 require(actualHash == catalogVersion) {
                     "Incomplete city catalog: $actualHash, expected $catalogVersion"
                 }
