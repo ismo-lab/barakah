@@ -1310,9 +1310,9 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
 
                                 Text(
                                     text = if (isAr) {
-                                        "صوت الأذان: «أذان الفجر في مسجد مالمو»، المركز الإسلامي في مالمو / بسيم عزامي، CC BY 3.0. الأذان العادي: Beautiful adhan، آدم سيناغدا، CC0."
+                                        "صوت الأذان: «أذان الفجر في مسجد مالمو»، المركز الإسلامي في مالمو / بسيم عزامي، CC BY 3.0. الأذان العادي: «نداء الصلاة من المسجد النبوي» لـ ejaz215، CC BY 3.0."
                                     } else {
-                                        UiStrings.of("Adhan audio: Fajr azan at Malmo Mosque, Islamic Center Malmo / Besim Azemi, CC BY 3.0; regular adhan: Beautiful adhan by Adam-synagda, CC0.")
+                                        UiStrings.of("Adhan audio: Fajr azan at Malmo Mosque, Islamic Center Malmo / Besim Azemi, CC BY 3.0; regular adhan: call to prayer from the Prophet's Mosque by ejaz215, CC BY 3.0.")
                                     },
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
