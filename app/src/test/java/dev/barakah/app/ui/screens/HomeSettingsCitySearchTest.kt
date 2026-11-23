@@ -3,6 +3,7 @@ package dev.barakah.app.ui.screens
 import android.app.Application
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ApplicationProvider
 import dev.barakah.app.ui.BarakahViewModel
@@ -28,6 +29,7 @@ class HomeSettingsCitySearchTest {
             BarakahTheme { HomeSettingsSection(viewModel, onDismiss = {}) }
         }
 
+        compose.onNodeWithText("Location Settings").performScrollTo()
         compose.onNodeWithText("Search city name...").performTextInput("London")
         Thread.sleep(3_000)
         compose.onNodeWithText("London", substring = true).assertExists()
