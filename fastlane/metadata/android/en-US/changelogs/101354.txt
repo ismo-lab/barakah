@@ -1,0 +1,1 @@
+Fixed offline city search on devices where the gzipped catalog did not unpack correctly.
