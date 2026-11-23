@@ -6,6 +6,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ApplicationProvider
+import dev.barakah.app.data.UiStrings
 import dev.barakah.app.ui.BarakahViewModel
 import dev.barakah.app.ui.theme.BarakahTheme
 import org.junit.Rule
@@ -25,6 +26,8 @@ class HomeSettingsCitySearchTest {
     fun `manual city search shows results`() {
         val context = ApplicationProvider.getApplicationContext<Application>()
         val viewModel = BarakahViewModel(context)
+        UiStrings.setCurrentLanguage("en")
+        viewModel.setAppLanguage("en")
         compose.setContent {
             BarakahTheme { HomeSettingsSection(viewModel, onDismiss = {}) }
         }
