@@ -69,11 +69,12 @@ android {
     includeInBundle = false
   }
 
-  // The 75 MB city catalog is read with AssetManager.openFd(), which only works on stored
-  // (uncompressed) assets. Compressed assets over ~1 MB can also fail to read on some Android
-  // builds, which is why search silently returned no results while GPS kept working.
+  // The city catalog ships as gzip so the APK does not carry 55 MB of stored SQLite pages. It is
+  // still a stored asset; CityData decompresses it on first use and keeps the SQLite file in app
+  // storage, so search stays offline. No double compression by aapt. The suffix is `.tgz`, not
+  // `.gz`: AGP's asset merge gunzips and renames `.gz` assets before aapt sees them.
   androidResources {
-    noCompress += "sqlite"
+    noCompress += "tgz"
   }
 
   defaultConfig {

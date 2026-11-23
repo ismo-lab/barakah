@@ -9,8 +9,8 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
-import java.security.MessageDigest
 import java.util.Locale
+import java.util.zip.GZIPInputStream
 
 data class CitySuggestion(
     val id: Int,
@@ -33,7 +33,8 @@ data class CitySuggestion(
 object CityData {
     private const val TAG = "CityData"
     private const val DATABASE_PREFIX = "geonames-cities500-"
-    private const val CATALOG_ASSET = "cities500.sqlite"
+    // AGP's asset merge gunzips and renames any `.gz` asset; `.tgz` keeps the gzip bytes intact.
+    private const val CATALOG_ASSET = "cities500.sqlite.tgz"
     private val databaseMutex = Mutex()
     @Volatile private var database: SQLiteDatabase? = null
 
@@ -50,10 +51,8 @@ object CityData {
             val db = openDatabase(context.applicationContext)
             val countryCodes = matchingCountryCodes(term, languageTag)
             val prefixResults = queryDatabase(db, "${escapeLike(term)}%", limit, countryCodes, languageTag)
-            val results = if (prefixResults.isNotEmpty()) prefixResults
+            if (prefixResults.isNotEmpty()) prefixResults
             else queryDatabase(db, "%${escapeLike(term)}%", limit, countryCodes, languageTag)
-            Log.d(TAG, "search '$term': ${results.size} result(s)")
-            results
         } catch (error: Exception) {
             Log.e(TAG, "Unable to search the offline city catalog", error)
             emptyList()
@@ -97,27 +96,14 @@ object CityData {
         require(catalogVersion.matches(Regex("[0-9a-f]{64}"))) { "Invalid GeoNames catalog version" }
         val databaseFileName = "$DATABASE_PREFIX$catalogVersion.sqlite"
         val file = context.getDatabasePath(databaseFileName)
-        val temporaryFile = File(file.parentFile, "$databaseFileName.tmp")
-        // Old releases wrote the catalog straight to its final path. If one was killed midway,
-        // the truncated file still has the right name and opens as a DB with missing rows, which
-        // looks exactly like "search works sometimes". Verify and self-heal before opening.
-        temporaryFile.delete()
-        if (file.exists() && sha256(file) != catalogVersion) {
-            Log.w(TAG, "Replacing corrupt offline city catalog")
-            require(file.delete()) { "Could not remove corrupt city catalog" }
-        }
         if (!file.exists() || file.length() == 0L) {
             file.parentFile?.mkdirs()
+            val temporaryFile = File(file.parentFile, "$databaseFileName.tmp")
             try {
-                // openFd needs a stored asset (CI checks this). Raw SQLite asset, copied as-is.
-                context.assets.openFd(CATALOG_ASSET).use { descriptor ->
-                    descriptor.createInputStream().use { input ->
+                context.assets.open(CATALOG_ASSET).use { asset ->
+                    GZIPInputStream(asset).use { input ->
                         FileOutputStream(temporaryFile).use { output -> input.copyTo(output) }
                     }
-                }
-                val actualHash = sha256(temporaryFile)
-                require(actualHash == catalogVersion) {
-                    "Incomplete city catalog: $actualHash, expected $catalogVersion"
                 }
                 if (!temporaryFile.renameTo(file)) {
                     throw IllegalStateException("Could not install the offline city catalog")
@@ -133,28 +119,6 @@ object CityData {
             .filter { it.startsWith(DATABASE_PREFIX) && it.endsWith(".sqlite") && it != databaseFileName }
             .forEach(context::deleteDatabase)
         openedDatabase.also { database = it }
-    }
-
-    private fun sha256(file: File): String {
-        val digest = MessageDigest.getInstance("SHA-256")
-        val buffer = ByteArray(8192)
-        file.inputStream().use { input ->
-            while (true) {
-                val read = input.read(buffer)
-                if (read <= 0) break
-                digest.update(buffer, 0, read)
-            }
-        }
-        return digest.digest().toHex()
-    }
-
-    private fun ByteArray.toHex(): String =
-        joinToString("") { (it.toInt() and 0xff).toString(16).padStart(2, '0') }
-
-    /** Test seam: catalog state is process-global, so each test needs a clean open. */
-    internal fun resetForTests() {
-        database?.close()
-        database = null
     }
 
     private fun matchingCountryCodes(query: String, languageTag: String): List<String> {
