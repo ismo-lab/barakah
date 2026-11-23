@@ -23,7 +23,6 @@ import dev.barakah.app.data.AppPrefs
 class AdhanPlaybackService : Service() {
     companion object {
         const val EXTRA_PRAYER_NAME = "extra_prayer_name"
-        const val EXTRA_TEST = "extra_test"
         const val ACTION_STOP = "dev.barakah.app.action.STOP_ADHAN"
         private const val CHANNEL_ID = "adhan_playback"
         private const val NOTIFICATION_ID = 2101
@@ -52,9 +51,7 @@ class AdhanPlaybackService : Service() {
         }
 
         val prefs = getSharedPreferences(AppPrefs.FILE, MODE_PRIVATE)
-        // The Settings preview has to play even while the scheduled Adhan is switched off.
-        val isTest = intent?.getBooleanExtra(EXTRA_TEST, false) == true
-        if (!isTest && !prefs.getBoolean(AppPrefs.ADHAN_AUDIO_ENABLED, false)) {
+        if (!prefs.getBoolean(AppPrefs.ADHAN_AUDIO_ENABLED, false)) {
             stopSelf(startId)
             return START_NOT_STICKY
         }
