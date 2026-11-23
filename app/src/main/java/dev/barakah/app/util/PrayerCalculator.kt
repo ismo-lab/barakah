@@ -45,6 +45,23 @@ object PrayerCalculator {
         val isha: String
     )
 
+    /**
+     * Display-only clock correction for Morocco. Alarms are absolute instants and stay untouched;
+     * only the strings shown by Home and the widgets are moved back an hour.
+     */
+    fun forDisplay(times: PrayerTimes, countryCode: String?): PrayerTimes {
+        if (!countryCode.equals("MA", ignoreCase = true)) return times
+        fun back(value: String) = ClockTime.offset(value, -60, TimeZone.getTimeZone("UTC"))
+        return times.copy(
+            fajr = back(times.fajr),
+            sunrise = back(times.sunrise),
+            dhuhr = back(times.dhuhr),
+            asr = back(times.asr),
+            maghrib = back(times.maghrib),
+            isha = back(times.isha)
+        )
+    }
+
     fun calculate(
         latitude: Double,
         longitude: Double,

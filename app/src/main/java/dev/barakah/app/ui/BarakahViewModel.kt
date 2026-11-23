@@ -365,7 +365,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             )
             val cal = Calendar.getInstance(TimeZone.getTimeZone(timeZoneId))
             val offsetHours = PrayerCalculator.getTimeZoneOffset(timeZoneId, cal)
-            PrayerCalculator.calculate(
+            val calculated = PrayerCalculator.calculate(
                 latitude = lat,
                 longitude = lng,
                 timezoneOffset = offsetHours,
@@ -380,6 +380,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
                 adjMaghrib = adjM,
                 adjIsha = adjI
             )
+            PrayerCalculator.forDisplay(calculated, prefs.getString(AppPrefs.LOC_COUNTRY, null))
         }
     )
     val prayerTimes: StateFlow<PrayerCalculator.PrayerTimes> = _prayerTimes
@@ -932,7 +933,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
         val calendar = Calendar.getInstance(TimeZone.getTimeZone(timeZoneId))
         val offsetHours = PrayerCalculator.getTimeZoneOffset(timeZoneId, calendar)
 
-        val newTimes = PrayerCalculator.calculate(
+        val calculated = PrayerCalculator.calculate(
             latitude = _currentLocation.value.first,
             longitude = _currentLocation.value.second,
             timezoneOffset = offsetHours,
@@ -947,6 +948,7 @@ class BarakahViewModel(application: Application) : AndroidViewModel(application)
             adjMaghrib = adjMaghrib.value,
             adjIsha = adjIsha.value
         )
+        val newTimes = PrayerCalculator.forDisplay(calculated, prefs.getString(AppPrefs.LOC_COUNTRY, null))
         _prayerTimes.value = newTimes
         updateParsedSeconds(newTimes)
         try { dev.barakah.app.notifications.PrayerScheduler.scheduleNextPrayers(getApplication()) } catch(e: Exception) {}
