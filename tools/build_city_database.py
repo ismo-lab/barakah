@@ -4,9 +4,7 @@
 from __future__ import annotations
 
 import argparse
-import gzip
 import hashlib
-import shutil
 import sqlite3
 import unicodedata
 import urllib.request
@@ -230,16 +228,7 @@ def main() -> None:
         version = sha256_file(arguments.output)
         version_file = arguments.output.with_name("cities500.version")
         version_file.write_text(version + "\n", encoding="ascii")
-        # AGP gunzips assets ending in .gz during merge, so use .tgz to keep the gzip bytes.
-        compressed = arguments.output.with_name(arguments.output.name + ".tgz")
-        with (
-            open(arguments.output, "rb") as source_file,
-            open(compressed, "wb") as compressed_file,
-            gzip.GzipFile(filename="", fileobj=compressed_file, mtime=0, compresslevel=9) as gzip_file,
-        ):
-            shutil.copyfileobj(source_file, gzip_file)
-        arguments.output.unlink()
-        print(f"Built {compressed} with {count:,} populated places and localized names.")
+        print(f"Built {arguments.output} with {count:,} populated places and localized names.")
     finally:
         for path in downloaded:
             path.unlink(missing_ok=True)

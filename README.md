@@ -43,13 +43,12 @@ and no Google Play Services dependency.
 ./gradlew lintDebug         # Android Lint
 ```
 
-The offline city catalog is committed gzipped as `app/src/main/assets/cities500.sqlite.tgz` (not
-`.gz`, which AGP gunzips during asset merge), so building needs no network and the APK does not carry
-55 MB of stored SQLite pages. It is unpacked to app storage on first search. `python tools/build_city_database.py` (Python 3.12+) regenerates it from
-the GeoNames exports; pass `--source` and `--alternate-names-source` to reuse saved exports instead of
-downloading them. The SHA-256 of the built database is stored beside it in `cities500.version` and
-versions the on-device cache, so any rebuild that changes the catalog replaces an older cached copy
-on its next search. The Hijri table is regenerated with `python tools/generate_hijri_table.py`.
+The offline city catalog is committed as `app/src/main/assets/cities500.sqlite`, so building needs no
+network. `python tools/build_city_database.py` (Python 3.12+) regenerates it from the GeoNames
+exports; pass `--source` and `--alternate-names-source` to reuse saved exports instead of downloading
+them. The SHA-256 of the built database is stored beside it in `cities500.version` and versions the
+on-device cache, so any rebuild that changes the catalog replaces an older cached copy on its next
+search. The Hijri table is regenerated with `python tools/generate_hijri_table.py`.
 
 Signing: the build needs a keystore. CI decodes the release key to `app/keystore.jks` before
 Gradle runs and that file wins if present. Otherwise one is materialised from
