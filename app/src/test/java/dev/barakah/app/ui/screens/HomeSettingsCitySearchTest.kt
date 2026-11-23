@@ -2,10 +2,8 @@ package dev.barakah.app.ui.screens
 
 import android.app.Application
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithPlaceholder
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.waitUntil
 import androidx.test.core.app.ApplicationProvider
 import dev.barakah.app.ui.BarakahViewModel
 import dev.barakah.app.ui.theme.BarakahTheme
@@ -30,9 +28,8 @@ class HomeSettingsCitySearchTest {
             BarakahTheme { HomeSettingsSection(viewModel, onDismiss = {}) }
         }
 
-        compose.onNodeWithPlaceholder("Search city name...").performTextInput("London")
-        compose.waitUntil(10_000) {
-            compose.onNodeWithText("London", substring = true).exists()
-        }
+        compose.onNodeWithText("Search city name...").performTextInput("London")
+        Thread.sleep(3_000)
+        compose.onNodeWithText("London", substring = true).assertExists()
     }
 }
