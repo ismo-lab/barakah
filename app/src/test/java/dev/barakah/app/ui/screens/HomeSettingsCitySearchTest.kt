@@ -6,6 +6,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.test.core.app.ApplicationProvider
 import dev.barakah.app.data.UiStrings
 import dev.barakah.app.ui.BarakahViewModel
@@ -24,7 +25,7 @@ class HomeSettingsCitySearchTest {
     val compose = createComposeRule()
 
     @Test
-    fun `manual city search works while location method is auto`() {
+    fun `manual city search works for successive queries`() {
         val context = ApplicationProvider.getApplicationContext<Application>()
         val viewModel = BarakahViewModel(context)
         UiStrings.setCurrentLanguage("en")
@@ -36,9 +37,15 @@ class HomeSettingsCitySearchTest {
 
         compose.onNodeWithTag("settings_list").performScrollToIndex(2)
         compose.waitForIdle()
-        compose.onNodeWithText("Search city name...").performTextInput("London")
+        val field = compose.onNodeWithTag("city_search_field")
+        field.performTextInput("London")
         compose.mainClock.advanceTimeBy(1_000)
         compose.waitForIdle()
         compose.onNodeWithText("London", substring = true).assertExists()
+
+        field.performTextReplacement("Paris")
+        compose.mainClock.advanceTimeBy(1_000)
+        compose.waitForIdle()
+        compose.onNodeWithText("Paris", substring = true).assertExists()
     }
 }
