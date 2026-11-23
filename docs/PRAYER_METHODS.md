@@ -37,8 +37,10 @@ three agree on the method in force.
 Angles from [AlAdhan's method list](https://api.aladhan.com/v1/methods) and its
 [calculation-method documentation](https://aladhan.com/calculation-methods). Morocco is also
 described as using the Muslim World League family by the Moroccan Ministry of Habous; AlAdhan gives
-its own 19°/17° entry, which is what the app uses. No clock-time shift is applied: Morocco uses the
-same angles as every other method, so the only difference from Muslim World League is the Fajr angle.
+its own 19°/17° entry, which is what the app uses. Morocco also shifts every clock time 60 minutes
+earlier on top of the angles, matching the country's published timetable. The shift lands in
+`PrayerCalculator.calculate()`, so Home, the widgets, the alarms and the nawafil derived from those
+times (Duha, Witr, Tahajjud, Qiyam-ul-Layl) all move with it.
 
 Only angle-based methods are mapped. Authorities that publish fixed monthly tables or add minutes
 to Maghrib (for example Qatar, Jordan and Portugal) are deliberately left out rather than
