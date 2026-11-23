@@ -65,17 +65,20 @@ class PrayerWidget : GlanceAppWidget() {
             val adjMaghrib = prefs.getInt(AppPrefs.ADJ_MAGHRIB, 0)
             val adjIsha = prefs.getInt(AppPrefs.ADJ_ISHA, 0)
 
-            val times = PrayerCalculator.calculate(
-                lat, lng, offsetHours, calendar, 
-                method = m,
-                asrMethod = asrMethod,
-                ishaMethod = ishaMethod,
-                adjFajr = adjFajr,
-                adjSunrise = adjSunrise,
-                adjDhuhr = adjDhuhr,
-                adjAsr = adjAsr,
-                adjMaghrib = adjMaghrib,
-                adjIsha = adjIsha
+            val times = PrayerCalculator.forDisplay(
+                PrayerCalculator.calculate(
+                    lat, lng, offsetHours, calendar,
+                    method = m,
+                    asrMethod = asrMethod,
+                    ishaMethod = ishaMethod,
+                    adjFajr = adjFajr,
+                    adjSunrise = adjSunrise,
+                    adjDhuhr = adjDhuhr,
+                    adjAsr = adjAsr,
+                    adjMaghrib = adjMaghrib,
+                    adjIsha = adjIsha
+                ),
+                prefs.getString(AppPrefs.LOC_COUNTRY, null)
             )
 
             val is24Hour = android.text.format.DateFormat.is24HourFormat(context)

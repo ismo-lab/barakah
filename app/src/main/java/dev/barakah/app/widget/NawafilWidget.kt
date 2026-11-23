@@ -68,20 +68,23 @@ class NawafilWidget : GlanceAppWidget() {
 
             val m = PrayerMethodResolver.resolve(prefs)
         
-            val times = PrayerCalculator.calculate(
-                latitude = lat,
-                longitude = lng,
-                timezoneOffset = offsetHours,
-                calendar = calendar, 
-                method = m,
-                asrMethod = asrMethod,
-                ishaMethod = ishaMethod,
-                adjFajr = adjFajr,
-                adjSunrise = adjSunrise,
-                adjDhuhr = adjDhuhr,
-                adjAsr = adjAsr,
-                adjMaghrib = adjMaghrib,
-                adjIsha = adjIsha
+            val times = PrayerCalculator.forDisplay(
+                PrayerCalculator.calculate(
+                    latitude = lat,
+                    longitude = lng,
+                    timezoneOffset = offsetHours,
+                    calendar = calendar,
+                    method = m,
+                    asrMethod = asrMethod,
+                    ishaMethod = ishaMethod,
+                    adjFajr = adjFajr,
+                    adjSunrise = adjSunrise,
+                    adjDhuhr = adjDhuhr,
+                    adjAsr = adjAsr,
+                    adjMaghrib = adjMaghrib,
+                    adjIsha = adjIsha
+                ),
+                prefs.getString(AppPrefs.LOC_COUNTRY, null)
             )
 
             // The four times come from the same night division the home screen and alarms use.

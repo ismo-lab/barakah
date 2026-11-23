@@ -277,6 +277,29 @@ class PrayerCalculatorTest {
     }
 
     @Test
+    fun `morocco display alone runs an hour earlier`() {
+        val date = day(2026, 3, 11)
+        val times = PrayerCalculator.calculate(
+            33.5731, -7.5898, 1.0, date,
+            method = PrayerCalculator.CalculationMethod.MOROCCO
+        )
+        val shown = PrayerCalculator.forDisplay(times, "ma")
+
+        for ((base, display) in listOf(
+            times.fajr to shown.fajr,
+            times.sunrise to shown.sunrise,
+            times.dhuhr to shown.dhuhr,
+            times.asr to shown.asr,
+            times.maghrib to shown.maghrib,
+            times.isha to shown.isha
+        )) {
+            assertEquals("$base vs $display", -60, minutes(display) - minutes(base))
+        }
+        assertEquals(times, PrayerCalculator.forDisplay(times, "FR"))
+        assertEquals(times, PrayerCalculator.forDisplay(times, null))
+    }
+
+    @Test
     fun `a shallower fajr angle moves fajr later`() {
         val mwl = PrayerCalculator.calculate(21.4225, 39.8262, 3.0, day(2024, 3, 11))
         val isna = PrayerCalculator.calculate(
