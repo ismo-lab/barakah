@@ -20,7 +20,7 @@
 ## 🌟 Key Features
 
 * **Home Dashboard**: View real-time prayer schedule trackers, choose voluntary (Nawafil) prayers to track, configure high-fidelity Mecca Al-Haram Adhan background play, and set flexible reminder notifications.
-* **Hijri Calendar**: The home screen shows today's Hijri date, and the occasions list is dated from it. A ±2-day shift in Settings lines the calendar up with the moon sighting your community follows.
+* **Hijri Calendar**: The home screen shows today's Hijri date, and the occasions list is dated from it. Dates come from a bundled Umm al-Qura table, so all devices agree without needing a platform calendar. A ±2-day shift in Settings lines the calendar up with the moon sighting your community follows.
 * **Quran Reader**: Access the complete Holy Quran text alongside tafsir in Arabic, English, Urdu, Bengali, Kurdish, Persian, Indonesian, Russian and Turkish, adjustable font scaling, and an optional Uthmani-script face (Amiri Quran) applied to the Quran text alone.
 * **Qiblah Compass**: Locate the Kaaba directions instantly using interactive, hardware-sensor calibrated alignment with physical haptic vibrations.
 * **Haptic Tasbih**: Maintain focus during remembrance with a digital counter (misbaha) supporting custom targets and discrete haptic pulses.
@@ -43,12 +43,13 @@ and no Google Play Services dependency.
 ./gradlew lintDebug         # Android Lint
 ```
 
-The offline city catalog is committed as `app/src/main/assets/cities500.sqlite`, so building needs no
-network. `python tools/build_city_database.py` (Python 3.12+) regenerates it from the GeoNames
-exports; pass `--source` and `--alternate-names-source` to reuse saved exports instead of downloading
-them. The SHA-256 of the built database is stored beside it in `cities500.version` and versions the
-on-device cache, so any rebuild that changes the catalog replaces an older cached copy on its next
-search.
+The offline city catalog is committed gzipped as `app/src/main/assets/cities500.sqlite.gz`, so
+building needs no network and the APK does not carry 55 MB of stored SQLite pages. It is unpacked to
+app storage on first search. `python tools/build_city_database.py` (Python 3.12+) regenerates it from
+the GeoNames exports; pass `--source` and `--alternate-names-source` to reuse saved exports instead of
+downloading them. The SHA-256 of the built database is stored beside it in `cities500.version` and
+versions the on-device cache, so any rebuild that changes the catalog replaces an older cached copy
+on its next search. The Hijri table is regenerated with `python tools/generate_hijri_table.py`.
 
 Signing: the build needs a keystore. CI decodes the release key to `app/keystore.jks` before
 Gradle runs and that file wins if present. Otherwise one is materialised from
@@ -92,6 +93,7 @@ Barakah relies gratefully on the efforts of the global FOSS Islamic developer co
 - **Quran Script Font**: [Amiri Quran](https://github.com/aliftype/amiri) © Khaled Hosny and the Amiri Project Authors, licensed under the [SIL Open Font License 1.1](https://openfontlicense.org). The bundled licence text is in [docs/AmiriQuran-OFL.txt](docs/AmiriQuran-OFL.txt).
 - **Astronomical Mathematics**: the prayer-time solar geometry is implemented in this repository, following the [PrayTimes](http://praytimes.org/) method by Hamid Zarrabi-Zadeh. No third-party prayer-time library is bundled. Country defaults and the meaning of each method are documented in [docs/PRAYER_METHODS.md](docs/PRAYER_METHODS.md).
 - **Adhan Audio Assets**: [Islamic call to prayer from the Prophet's Mosque](https://commons.wikimedia.org/wiki/File:33937_ejaz215_call-to-prayer-from-the-prophet-s-mo.ogg) by ejaz215 (CC BY 3.0, originally from [Freesound](https://freesound.org/people/ejaz215/sounds/33937/)) for regular prayers, and [Eid al-Fitr Fajr azan at Malmö Mosque](https://commons.wikimedia.org/wiki/File:Eid_al-Fitr_Fajr_azan_at_Malm%C3%B6_Mosque_-_19_August_2012.webm) by Islamic Center Malmö / Besim Azemi (CC BY 3.0) for Fajr. See [docs/ADHAN_AUDIO_ATTRIBUTION.md](docs/ADHAN_AUDIO_ATTRIBUTION.md).
+- **Hijri Calendar Data**: the bundled Umm al-Qura month table is generated from [umalqura/umalqura](https://github.com/umalqura/umalqura) by Alaa Masoud (MIT). Licence text in [docs/UMMALQURA_DATA_LICENSE.txt](docs/UMMALQURA_DATA_LICENSE.txt).
 - **Offline City Search, Localized Names, and City Timezones**: [GeoNames cities500](https://download.geonames.org/export/dump/cities500.zip) and [GeoNames alternateNamesV2](https://download.geonames.org/export/dump/alternateNamesV2.zip), © GeoNames, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The bundled catalog keeps canonical city records separate from language-tagged alternate names. Arabic labels use GeoNames entries tagged as Arabic; when no localized name exists, the app shows the canonical city name instead of guessing from its script. The catalog contains populated places with a population above 500 or designated capitals. It is broad global coverage, but does not claim to include every named village or settlement. GPS mode uses the device's configured timezone; manual city selections use the IANA timezone ID supplied with each city record.
 
 ---

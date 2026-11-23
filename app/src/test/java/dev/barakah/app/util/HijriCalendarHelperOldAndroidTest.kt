@@ -12,18 +12,13 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * The same helper on a device too old for `java.time`.
+ * The same helper on the oldest supported Android version.
  *
- * `hijriFor` holds two implementations of one conversion: Umm al-Qura through `java.time` where the
- * platform has it, and the arithmetic fallback everywhere else. Every other test in the suite runs
- * on API 36, so the fallback — the one that runs on every Android 7 device, which the app still
- * supports — has never been executed by a test.
- *
- * This does not claim the fallback agrees with Umm al-Qura. It is an approximation and can sit a
- * day either side. What it pins down is what the app actually depends on: that a day is followed by
- * the next day rather than by two days or a month, that the days of a month come out as consecutive
- * Gregorian days with no gaps or repeats, and that an occasion still resolves to a date instead of
- * quietly disappearing from the list.
+ * The Umm al-Qura dates now come from a bundled table, so there is no platform-specific conversion
+ * left to test. This class still pins down what the app depends on on API 24: a day is followed by
+ * the next day rather than by two days or a month, the days of a month come out as consecutive
+ * Gregorian days with no gaps or repeats, and an occasion resolves to a date instead of quietly
+ * disappearing from the list.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [24])
@@ -32,13 +27,16 @@ class HijriCalendarHelperOldAndroidTest {
     private val datePattern = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH)
 
     @Test
-    fun `this runs on the android version the fallback is for`() {
-        // The class is only worth anything while `hijriFor` takes its fallback branch, which is
-        // decided by SDK_INT. A Robolectric default or an @Config edit could move this class to a
-        // newer Android, where the java.time path would run and every test below would still pass
-        // while testing the implementation they claim to be an alternative to. So assert the
-        // premise rather than trusting the annotation.
+    fun `this runs on the oldest supported android version`() {
         assertEquals(24, Build.VERSION.SDK_INT)
+    }
+
+    @Test
+    fun `the bundled table gives the same umm al qura date here`() {
+        val ramadan = HijriCalendarHelper.getHijriDateFor(LocalDate.of(2024, 3, 11))
+        assertEquals(1, ramadan.day)
+        assertEquals(9, ramadan.month)
+        assertEquals(1445, ramadan.year)
     }
 
     @Test
