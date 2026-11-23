@@ -847,8 +847,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                     }
                                 }
 
-                                if (locationMethod == "manual") {
-                                    OutlinedTextField(
+                                OutlinedTextField(
                                         value = locationQuery,
                                         onValueChange = {
                                             locationQuery = it
@@ -887,6 +886,7 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                                         .clip(RoundedCornerShape(8.dp))
                                                         .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
                                                         .clickable {
+                                                            viewModel.setLocationMethod("manual")
                                                             viewModel.updateLocation(city.lat, city.lng, city.displayName(currentLang), isSuccessFeedback = true, timeZoneId = city.timeZoneId, countryCode = city.countryCode)
                                                             locationQuery = ""
                                                             keyboardController?.hide()
@@ -904,7 +904,6 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                             }
                                         }
                                     }
-                                }
                             }
                         }
                     }
