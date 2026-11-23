@@ -1,1 +1,1 @@
-Fixed offline city search on devices where the gzipped catalog did not unpack correctly.
+Fixed offline city search on devices where the gzipped catalog did not unpack correctly, and made city search available in Settings while GPS location is active.

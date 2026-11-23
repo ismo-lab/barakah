@@ -1,1 +1,0 @@
-Fixed city search in Settings when GPS location is active.
