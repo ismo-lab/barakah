@@ -4,7 +4,6 @@ import dev.barakah.app.data.UiStrings
 
 import android.os.Build
 import android.util.Log
-import java.time.LocalDate
 import java.util.Calendar
 import java.util.GregorianCalendar
 import java.util.Locale
@@ -17,8 +16,9 @@ object HijriCalendarHelper {
 
     data class HijriDate(val day: Int, val month: Int, val year: Int)
 
-    /** The Umm al-Qura conversion for an explicit date, from the table bundled in the app. */
-    fun getHijriDateFor(localDate: LocalDate): HijriDate = fromEpochDay(localDate.toEpochDay())
+    /** The Umm al-Qura conversion for an explicit Gregorian date, from the bundled table. */
+    fun getHijriDateFor(year: Int, month: Int, day: Int): HijriDate =
+        fromEpochDay(epochDayOf(year, month, day))
 
     /**
      * True when the calculated Umm al-Qura date falls in Ramadan. Umm al-Qura lengthens its Isha
@@ -53,16 +53,19 @@ object HijriCalendarHelper {
      * [adjustmentDays] shifts the result by that many days, which is how a user lines the
      * calculated date up with the moon sighting their community follows.
      */
-    private fun hijriFor(year: Int, month: Int, day: Int, adjustmentDays: Int): HijriDate {
-        val calendar = utcCalendar()
-        calendar.set(year, month - 1, day)
-        calendar.add(Calendar.DAY_OF_MONTH, adjustmentDays)
-        return fromEpochDay(Math.floorDiv(calendar.timeInMillis, MILLIS_PER_DAY))
-    }
+    private fun hijriFor(year: Int, month: Int, day: Int, adjustmentDays: Int): HijriDate =
+        fromEpochDay(epochDayOf(year, month, day, adjustmentDays))
 
     /** UTC only: the table counts civil days, so device timezone must not enter the conversion. */
     private fun utcCalendar(): GregorianCalendar =
         GregorianCalendar(TimeZone.getTimeZone("UTC")).apply { clear() }
+
+    private fun epochDayOf(year: Int, month: Int, day: Int, adjustmentDays: Int = 0): Long {
+        val calendar = utcCalendar()
+        calendar.set(year, month - 1, day)
+        calendar.add(Calendar.DAY_OF_MONTH, adjustmentDays)
+        return Math.floorDiv(calendar.timeInMillis, MILLIS_PER_DAY)
+    }
 
     private fun fromEpochDay(epochDay: Long): HijriDate {
         val starts = UmmAlQuraTable.monthStartEpochDays

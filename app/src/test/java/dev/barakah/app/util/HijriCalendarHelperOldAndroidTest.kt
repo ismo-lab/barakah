@@ -33,7 +33,7 @@ class HijriCalendarHelperOldAndroidTest {
 
     @Test
     fun `the bundled table gives the same umm al qura date here`() {
-        val ramadan = HijriCalendarHelper.getHijriDateFor(LocalDate.of(2024, 3, 11))
+        val ramadan = HijriCalendarHelper.getHijriDateFor(2024, 3, 11)
         assertEquals(1, ramadan.day)
         assertEquals(9, ramadan.month)
         assertEquals(1445, ramadan.year)
