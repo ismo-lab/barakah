@@ -857,7 +857,8 @@ val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
                                         placeholder = { Text(if (isAr) "ابحث عن مدينة..." else UiStrings.of("Search city name...")) },
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .height(56.dp),
+                                            .height(56.dp)
+                                            .testTag("city_search_field"),
                                         maxLines = 1,
                                         textStyle = MaterialTheme.typography.bodyMedium,
                                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
