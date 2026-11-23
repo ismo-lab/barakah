@@ -1,0 +1,1 @@
+Morocco: displayed prayer times now match notification times. Alarms are unchanged.
