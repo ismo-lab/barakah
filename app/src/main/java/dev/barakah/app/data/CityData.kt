@@ -119,7 +119,7 @@ object CityData {
                         }
                     }
                 }
-                val actualHash = digest.digest().joinToString("") { (it.toInt() and 0xff).toString(16).padStart(2, "0") }
+                val actualHash = digest.digest().joinToString("") { (it.toInt() and 0xff).toString(16).padStart(2, '0') }
                 require(actualHash == catalogVersion) {
                     "Incomplete city catalog: $actualHash, expected $catalogVersion"
                 }
